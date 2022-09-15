@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms as tx
 from matplotlib.ticker import AutoMinorLocator
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from matplotlib import cm
 import const as c
 import OtherConstants as oc
 from gadget import *
@@ -19,7 +20,7 @@ import copy
 import math
 import os
 
-snapNumber = 84
+snapNumber = 104
 loadpath = "/home/universe/c1838736/Auriga/level5_cgm/h5_hybrid-dev/output/"
 numthreads = 8
 
@@ -113,7 +114,7 @@ def plot_slices(snapGas,
     titleBool=True,
     Axes=[0, 1],
     boxsize=400.0,
-    pixres=0.2,
+    pixres=0.1,
     DPI=200,
     CMAP=None,
     numthreads=10,
@@ -259,7 +260,7 @@ def plot_slices(snapGas,
 
     ax1.set_ylabel(f"{AxesLabels[Axes[1]]}" + " (kpc)", fontsize=fontsize)
     # ax1.set_xlabel(f'{AxesLabels[Axes[0]]}"+" [kpc]"', fontsize = fontsize)
-    # ax1.set_aspect(aspect)
+    ax1.set_aspect(aspect)
 
     # Fudge the tick labels...
     plt.sca(ax1)
@@ -272,14 +273,29 @@ def plot_slices(snapGas,
     # print("pcm2")
     ax2 = axes[1]
 
+    # cmapVol = cm.get_cmap("seismic")
+    # # bounds = [0.125, 8.0, 64.0]
+    # norm = matplotlib.colors.LogNorm(clip=True)
+    # pcm2 = ax2.pcolormesh(
+    #     slice_vol["x"],
+    #     slice_vol["y"],
+    #     np.transpose(slice_vol["grid"]),
+    #     vmin = 1e-1,
+    #     vmax = 1e1,
+    #     norm=norm,
+    #     cmap=cmapVol,
+    #     rasterized=True,
+    # )
+
+    cmapVol = cm.get_cmap("seismic")
+    bounds = [0.125, 1.0, 8.0, 64.0]
+    norm = matplotlib.colors.BoundaryNorm(bounds, cmapVol.N, extend="both")
     pcm2 = ax2.pcolormesh(
         slice_vol["x"],
         slice_vol["y"],
         np.transpose(slice_vol["grid"]),
-        vmin=1e2,
-        vmax=1e-2,
-        norm=matplotlib.colors.LogNorm(),
-        cmap=cmap,
+        norm=norm,
+        cmap=cmapVol,
         rasterized=True,
     )
 
@@ -287,7 +303,7 @@ def plot_slices(snapGas,
 
     cax2 = inset_axes(ax2, width="5%", height="95%", loc="right")
     fig.colorbar(pcm2, cax=cax2, orientation="vertical").set_label(
-        label=r"V (kpc$^{-3}$)", size=fontsize, weight="bold"
+        label=r"V (kpc$^{3}$)", size=fontsize, weight="bold"
     )
     cax2.yaxis.set_ticks_position("left")
     cax2.yaxis.set_label_position("left")
@@ -295,7 +311,7 @@ def plot_slices(snapGas,
     cax2.tick_params(axis="y", colors="white", labelsize=fontsize)
     # ax2.set_ylabel(f'{AxesLabels[Axes[1]]} "+r" (kpc)"', fontsize=fontsize)
     # ax2.set_xlabel(f'{AxesLabels[Axes[0]]} "+r" (kpc)"', fontsize=fontsize)
-    # ax2.set_aspect(aspect)
+    ax2.set_aspect(aspect)
 
     # Fudge the tick labels...
     plt.sca(ax2)
@@ -324,7 +340,7 @@ def plot_slices(snapGas,
     return
 
 def phases_plot(
-    dataDict,
+    simDict,
     ylabel,
     xlimDict,
     logParameters,
@@ -480,7 +496,7 @@ def phases_plot(
             # x0,    y0,  delta x, delta y
         cax1 = fig.add_axes([0.925, 0.10, 0.05, 0.80])
 
-        fig.colorbar(img1, cax=cax1, ax=ax[:, -1].ravel().tolist(), orientation="vertical", pad=0.05).set_label(
+        fig.colorbar(img1, cax=cax1, ax=ax, orientation="vertical", pad=0.05).set_label(
             label=ylabel[weightKey], size=fontsize
         )
         cax1.yaxis.set_ticks_position("left")
@@ -525,6 +541,7 @@ if __name__ == "__main__":
         # subfind=snap_subfind,
     )
 
+    rotation_matrix = None
     snapGas.calc_sf_indizes(snap_subfind, halolist=[0])
     if rotation_matrix is None:
         rotation_matrix = snapGas.select_halo(snap_subfind, do_rotation=True)
@@ -534,8 +551,6 @@ if __name__ == "__main__":
             rotation_matrix[0], dir2=rotation_matrix[1], dir3=rotation_matrix[2]
         )
 
-
-    del tmp
 
     print(
         f"[@{int(snapNumber)}]: SnapShot loaded at RedShift z={snapGas.redshift:0.05e}"
@@ -599,7 +614,7 @@ if __name__ == "__main__":
         oc.omegabaryon0,
         snapNumber,
         logParameters = logParameters,
-        paramsOfInterest=["T"],
+        paramsOfInterest=["T","rho_rhomean"],
         mappingBool=True,
         box=box,
         numthreads=numthreads,
@@ -657,7 +672,9 @@ if __name__ == "__main__":
     )
 
     plot_slices(snapGas,
-        snapNumber)#
+        snapNumber,
+        boxsize=Rvir*0.95
+    )
 
     print(
         f"[@{int(snapNumber)}]: Phases plot"
