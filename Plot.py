@@ -273,31 +273,31 @@ def plot_slices(snapGas,
     # print("pcm2")
     ax2 = axes[1]
 
-    # cmapVol = cm.get_cmap("seismic")
-    # # bounds = [0.125, 8.0, 64.0]
-    # norm = matplotlib.colors.LogNorm(clip=True)
-    # pcm2 = ax2.pcolormesh(
-    #     slice_vol["x"],
-    #     slice_vol["y"],
-    #     np.transpose(slice_vol["grid"]),
-    #     vmin = 1e-1,
-    #     vmax = 1e1,
-    #     norm=norm,
-    #     cmap=cmapVol,
-    #     rasterized=True,
-    # )
-
     cmapVol = cm.get_cmap("seismic")
-    bounds = [0.125, 1.0, 8.0, 64.0]
-    norm = matplotlib.colors.BoundaryNorm(bounds, cmapVol.N, extend="both")
+    # bounds = [0.125, 8.0, 64.0]
+    norm = matplotlib.colors.LogNorm(clip=True)
     pcm2 = ax2.pcolormesh(
         slice_vol["x"],
         slice_vol["y"],
         np.transpose(slice_vol["grid"]),
+        vmin = 1e-1,
+        vmax = 1e1,
         norm=norm,
         cmap=cmapVol,
         rasterized=True,
     )
+
+    # cmapVol = cm.get_cmap("seismic")
+    # bounds = [0.125, 1.0, 8.0, 64.0]
+    # norm = matplotlib.colors.BoundaryNorm(bounds, cmapVol.N, extend="both")
+    # pcm2 = ax2.pcolormesh(
+    #     slice_vol["x"],
+    #     slice_vol["y"],
+    #     np.transpose(slice_vol["grid"]),
+    #     norm=norm,
+    #     cmap=cmapVol,
+    #     rasterized=True,
+    # )
 
     ax2.set_title(r"Volume Slice", fontsize=fontsize)
 
