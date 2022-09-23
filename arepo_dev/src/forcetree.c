@@ -799,7 +799,7 @@ int force_treebuild_construct(
 #endif
 #endif
 
-#if defined(REFINEMENT_CGM)
+#ifdef REFINEMENT_CGM
           export_Tree_Points[n].marked_flag = 0;
 #endif
 
