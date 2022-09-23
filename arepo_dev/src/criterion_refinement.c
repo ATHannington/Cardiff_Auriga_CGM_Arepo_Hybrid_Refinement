@@ -403,7 +403,7 @@ int refine_criterion_default(int i)
 #endif
 #ifdef REFINEMENT_CGM
  {
-  #ifdef REFINEMENT_SMALL_SCALE
+  #ifdef REFINEMENT_HYBRID
   {
    if(SphP[i].HighResMassCGM > HIGHRESMASSFAC * P[i].Mass)
    {
@@ -424,12 +424,12 @@ int refine_criterion_default(int i)
     #endif
 
 
-    if(temp_in_K <= All.TargetForSmallScaleRefinement)
+    if(temp_in_K <= All.TargetForHybridRefinement)
     {
-      if(SphP[i].Volume > 1.0 * All.TargetGasVolume * All.cf_a3inv)
+      if(SphP[i].Volume > 2.0 * All.TargetHybridGasVolume * All.cf_a3inv)
       {
-        mpi_printf("Calculated temperature in criterion_refinement.c %e versus less than target %e\n",temp_in_K,All.TargetForSmallScaleRefinement);
-        mpi_printf("Cell Volume in criterion_refinement.c %e versus (less than temeperature) greater than target %e\n",SphP[i].Volume , (1.0 * All.TargetGasVolume * All.cf_a3inv));
+        mpi_printf("Calculated temperature in criterion_refinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
+        mpi_printf("Cell Volume in criterion_refinement.c %e versus (less than temeperature) greater than target %e\n",SphP[i].Volume , (1.0 * All.TargetHybridGasVolume * All.cf_a3inv));
         mpi_printf("Cell refined - met temp and vol fancy refine!\n");
         return 1;
       }
@@ -438,7 +438,7 @@ int refine_criterion_default(int i)
     {
       if(SphP[i].Volume > 2.0 * All.TargetGasVolume * All.cf_a3inv)
       {
-        mpi_printf("Calculated temperature in criterion_refinement.c %e versus less than target %e\n",temp_in_K,All.TargetForSmallScaleRefinement);
+        mpi_printf("Calculated temperature in criterion_refinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
         mpi_printf("Cell Volume in criterion_refinement.c %e versus (greater than temeperature) greater than target %e\n",SphP[i].Volume , (2.0 * All.TargetGasVolume * All.cf_a3inv));
         mpi_printf("Cell refined - met vol CGM refine!\n");
         return 1;

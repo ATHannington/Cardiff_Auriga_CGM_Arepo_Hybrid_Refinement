@@ -327,7 +327,7 @@ static int derefine_criterion_default(int i)
 
 #ifdef REFINEMENT_CGM
   {
-    #ifdef REFINEMENT_SMALL_SCALE
+    #ifdef REFINEMENT_HYBRID
       {
       if(SphP[i].HighResMassCGM > HIGHRESMASSFAC * P[i].Mass)
       {
@@ -347,13 +347,13 @@ static int derefine_criterion_default(int i)
               double temp_in_K = GAMMA_MINUS1 * SphP[i].Utherm / BOLTZMANN * All.UnitEnergy_in_cgs / All.UnitMass_in_g * meanweight;
         #endif
 
-        if(temp_in_K <= All.TargetForSmallScaleRefinement)
+        if(temp_in_K <= All.TargetForHybridRefinement)
         {
 
-          if(P[i].Mass < 0.5 * TargetGasMass && SphP[i].Volume < 0.25 * All.TargetGasVolume * All.cf_a3inv)
+          if(P[i].Mass < 0.5 * TargetGasMass && SphP[i].Volume < 0.5 * All.TargetHybridGasVolume * All.cf_a3inv)
           {
-            mpi_printf("Calculated temperature in criterion_derefinement.c %e versus less than target %e\n",temp_in_K,All.TargetForSmallScaleRefinement);
-            mpi_printf("Cell Volume in criterion_derefinement.c %e versus (less than temeperature) less than target %e\n",SphP[i].Volume , (0.25 * All.TargetGasVolume * All.cf_a3inv));
+            mpi_printf("Calculated temperature in criterion_derefinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
+            mpi_printf("Cell Volume in criterion_derefinement.c %e versus (less than temeperature) less than target %e\n",SphP[i].Volume , (0.5 * All.TargetHybridGasVolume * All.cf_a3inv));
             mpi_printf("Cell derefined - met temp and vol fancy derefine!\n");
             return 1;
           }
@@ -362,7 +362,7 @@ static int derefine_criterion_default(int i)
         {
           if(P[i].Mass < 0.5 * TargetGasMass && SphP[i].Volume < 0.5 * All.TargetGasVolume * All.cf_a3inv)
           {
-            mpi_printf("Calculated temperature in criterion_derefinement.c %e versus less than target %e\n",temp_in_K,All.TargetForSmallScaleRefinement);
+            mpi_printf("Calculated temperature in criterion_derefinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
             mpi_printf("Cell Volume in criterion_derefinement.c %e versus (greater than temeperature) less than target %e\n",SphP[i].Volume , (0.5 * All.TargetGasVolume * All.cf_a3inv));
             mpi_printf("Cell derefined - met vol CGM derefine!\n");
             return 1;

@@ -627,9 +627,9 @@ void read_parameter_file(const char *const fname)
       addr[nt] = &All.FracRadiusForCGMRefinement;
       id[nt++] = PARAM_REAL;
 
-      #ifdef REFINEMENT_SMALL_SCALE
-            strcpy(tag[nt], "TargetForSmallScaleRefinement");
-            addr[nt] = &All.TargetForSmallScaleRefinement;
+      #ifdef REFINEMENT_HYBRID
+            strcpy(tag[nt], "TargetForHybridRefinement");
+            addr[nt] = &All.TargetForHybridRefinement;
             id[nt++] = PARAM_REAL;
       #endif
       
@@ -3995,8 +3995,8 @@ void read_parameter_file(const char *const fname)
 #error "Code was compiled with BH_BUBBLES, but not with BLACK_HOLES.\nThis is not allowed."
 #endif
 
-#if defined(REFINEMENT_SMALL_SCALE) && !defined(REFINEMENT_CGM)
-#error "Code was complied with REFINEMENT_SMALL_SCALE, but not with REFINEMENT_CGM.\nThis is not allowed."
+#if defined(REFINEMENT_HYBRID) && !defined(REFINEMENT_CGM)
+#error "Code was complied with REFINEMENT_HYBRID, but not with REFINEMENT_CGM.\nThis is not allowed."
 #endif
 
 #if defined(REPOSITION_ON_POTMIN) && !defined(EVALPOTENTIAL)

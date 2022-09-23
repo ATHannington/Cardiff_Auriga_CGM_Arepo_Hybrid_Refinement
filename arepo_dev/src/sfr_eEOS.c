@@ -430,8 +430,12 @@ void init_clouds(void)
 #ifdef REFINEMENT_CGM
       All.TargetGasVolume = All.TargetVolumeRelativeToSFRThreshold * All.TargetGasMass / All.PhysDensThresh;
       mpi_printf("REFINEMENT_CGM:  All.TargetGasVolume = %g\n", All.TargetGasVolume);
-      #ifdef REFINEMENT_SMALL_SCALE
-            mpi_printf("REFINEMENT_SMALL_SCALE: All.TargetForSmallScaleRefinement = %g\n", All.TargetForSmallScaleRefinement);
+      #ifdef REFINEMENT_HYBRID
+            All.TargetHybridGasVolume = All.TargetGasVolume / All.HybridVolumeDecreaseFactor;
+            mpi_printf("REFINEMENT_HYBRID: All.TargetForHybridRefinement = %g\n", All.TargetForHybridRefinement);
+            mpi_printf("REFINEMENT_HYBRID: All.HybridVolumeDecreaseFactor = %g\n", All.HybridVolumeDecreaseFactor);
+            mpi_printf("REFINEMENT_HYBRID: All.TargetHybridGasVolume = %g\n", All.TargetHybridGasVolume);
+
       #endif
 #endif
 

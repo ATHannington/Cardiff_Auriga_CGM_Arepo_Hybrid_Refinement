@@ -674,7 +674,7 @@ extern hwloc_cpuset_t cpuset_thread[NUM_THREADS];
 /* calculate appropriate value of MAXSCALARS */
 #if defined(EOS_DEGENERATE) || defined(REFINEMENT_HIGH_RES_GAS) || defined(METALS) || defined(GFM_STELLAR_EVOLUTION) ||         \
     defined(PASSIVE_SCALARS) || defined(REFINEMENT_RPS) || defined(SGCHEM) || defined(EOS_OPAL) || defined(COSMIC_RAYS) ||      \
-    defined(SGS_TURBULENCE) || defined(GFM_RPROCESS_CHANNELS) || defined(MRT) || defined(REFINEMENT_CGM) || defined(REFINEMENT_SMALL_SCALE) ||      \
+    defined(SGS_TURBULENCE) || defined(GFM_RPROCESS_CHANNELS) || defined(MRT) || defined(REFINEMENT_CGM) || defined(REFINEMENT_HYBRID) ||      \
     defined(GRACKLE) || defined(TURB_APPROX_MCS)
 
 #if defined(EOS_DEGENERATE) || defined(EOS_OPAL)
@@ -707,10 +707,10 @@ extern hwloc_cpuset_t cpuset_thread[NUM_THREADS];
 #define COUNT_REFINE_CGM 0
 #endif
 
-#ifdef REFINEMENT_SMALL_SCALE
-#define COUNT_REFINE_SMALL_SCALE 1
+#ifdef REFINEMENT_HYBRID
+#define COUNT_REFINE_HYBRID 1
 #else
-#define COUNT_REFINE_SMALL_SCALE 0
+#define COUNT_REFINE_HYBRID 0
 #endif
 
 
@@ -782,7 +782,7 @@ extern hwloc_cpuset_t cpuset_thread[NUM_THREADS];
   (COUNT_EOS + COUNT_MHD_TES + COUNT_REFINE + COUNT_METALS + \
    COUNT_STELLAR_EVOLUTION + COUNT_PASSIVE_SCALARS + COUNT_RPS + \
    COUNT_SGCHEM + COUNT_CR + COUNT_SGS_T + COUNT_GFM_RPROCESS + \
-   COUNT_REFINE_CGM + COUNT_REFINE_SMALL_SCALE + COUNT_MRT_IONS + \
+   COUNT_REFINE_CGM + COUNT_REFINE_HYBRID + COUNT_MRT_IONS + \
    COUNT_GRACKLE + COUNT_TURB_APPROX_MCS)
 #endif
 
@@ -2477,8 +2477,10 @@ extern struct global_data_all_processes
   double TargetVolumeRelativeToSFRThreshold;
   double MinMassForCGMRefinement;
   double FracRadiusForCGMRefinement;
-  #ifdef REFINEMENT_SMALL_SCALE
-    double TargetForSmallScaleRefinement;
+  #ifdef REFINEMENT_HYBRID
+    double TargetForHybridRefinement;
+    double TargetHybridGasVolume;
+    double HybridVolumeDecreaseFactor;
   #endif
 #endif
 
