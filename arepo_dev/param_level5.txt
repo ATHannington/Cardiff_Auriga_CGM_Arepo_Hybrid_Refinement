@@ -5,10 +5,7 @@
 
 %---- Hybrid Refinement
 %TargetForHybridRefinement    1e5
-
-% vv Note: This should be the cube of length scale reduction from REFINEMENT_CGM
-% vv 1kpc -> 0.5kpc => HybridVolumeDecreaseFactor = 8.0 vv
-%HybridVolumeDecreaseFactor   8.0   
+%HybridCGMResLenDecrFac   2.0   % CGM refine length scale reduction factor for hybrid
 
 %---- Limit (neighbour) cell size
 %MinVolume		    0.

@@ -1746,7 +1746,7 @@ int init(void)
 #endif
 
 #ifdef GFM_STELLAR_EVOLUTION
-#if defined (REFINEMENT_CGM)
+#ifdef REFINEMENT_CGM
   if(RestartFlag == RESTART_SNAPSHOT)
     for(i = 0; i < NumPart; i++)
       if(P[i].Type == PTYPE_STARS)
