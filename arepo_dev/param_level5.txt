@@ -1,11 +1,14 @@
 %---- CGM refinement
-%TargetVolumeRelativeToSFRThreshold  64
-%MinMassForCGMRefinement     0.005
-%FracRadiusForCGMRefinement   1.2
+TargetVolumeRelativeToSFRThreshold  64
+MinMassForCGMRefinement     0.005
+FracRadiusForCGMRefinement   1.2
 
 %---- Hybrid Refinement
-%TargetForHybridRefinement    1e5
-%HybridCGMResLenDecrFac   2.0   % CGM refine length scale reduction factor for hybrid
+TargetForHybridRefinement    1e5
+
+% vv Note: This should be the cube of length scale reduction from REFINEMENT_CGM
+% vv 1kpc -> 0.5kpc => HybridVolumeDecreaseFactor = 8.0 vv
+HybridVolumeDecreaseFactor   8.0   
 
 %---- Limit (neighbour) cell size
 %MinVolume		    0.
@@ -37,8 +40,8 @@ MHDSeedValue        1e-14
 %CRDiffusionCoefficient 1e28
 
 %---- CPU-time limits
-TimeLimitCPU              3600  % in seconds
-CpuTimeBetRestartFile     1200    % in seconds
+TimeLimitCPU              86000  % in seconds
+CpuTimeBetRestartFile     3400    % in seconds
 ResubmitOn        0
 ResubmitCommand   my-scriptfile
 
@@ -73,8 +76,8 @@ OutputListOn              1
 TimeBetSnapshot           0.0
 TimeOfFirstSnapshot       0.0
 TimeBetStatistics         0.01
-NumFilesPerSnapshot       1
-NumFilesWrittenInParallel 1
+NumFilesPerSnapshot       2
+NumFilesWrittenInParallel 2
 
 
 %---- Accuracy of time integration

@@ -3,14 +3,17 @@ TargetVolumeRelativeToSFRThreshold  64
 MinMassForCGMRefinement     0.005
 FracRadiusForCGMRefinement   1.2
 
-%---- (Dev) Small Scale Refinement
-TargetForSmallScaleRefinement    1e5
+%---- Hybrid Refinement
+TargetForHybridRefinement    1e5
+
+% vv Note: This should be the cube of length scale reduction from REFINEMENT_CGM
+% vv 1kpc -> 0.5kpc => HybridVolumeDecreaseFactor = 8.0 vv
+HybridVolumeDecreaseFactor   8.0   
 
 %---- Limit (neighbour) cell size
 %MinVolume		    0.
 %MaxVolume		    1e30
 %MaxVolumeDiff	    8.
-
 
 %----  Relevant files
 InitCondFile         /cosma8/data/dp221/dc-vand4/Auriga/ICs/ics4/ic_file.5
@@ -37,8 +40,8 @@ MHDSeedValue        1e-14
 %CRDiffusionCoefficient 1e28
 
 %---- CPU-time limits
-TimeLimitCPU              3600  % in seconds
-CpuTimeBetRestartFile     1200    % in seconds
+TimeLimitCPU              86000  % in seconds
+CpuTimeBetRestartFile     3400    % in seconds
 ResubmitOn        0
 ResubmitCommand   my-scriptfile
 
@@ -73,8 +76,8 @@ OutputListOn              1
 TimeBetSnapshot           0.0
 TimeOfFirstSnapshot       0.0
 TimeBetStatistics         0.01
-NumFilesPerSnapshot       1
-NumFilesWrittenInParallel 1
+NumFilesPerSnapshot       2
+NumFilesWrittenInParallel 2
 
 
 %---- Accuracy of time integration
@@ -131,15 +134,15 @@ MinimumComovingHydroSoftening   0.0005
 AdaptiveHydroSofteningSpacing   1.2
 GasSoftFactor                   2.8
 
-SofteningComovingType0 0.0025
-SofteningComovingType1 0.0005
+SofteningComovingType0 0.005
+SofteningComovingType1 0.001
 SofteningComovingType2 0.010
 SofteningComovingType3 0.020
 SofteningComovingType4 0.040
 SofteningComovingType5 0.080
 
-SofteningMaxPhysType0  0.00125
-SofteningMaxPhysType1  0.00025
+SofteningMaxPhysType0  0.0025
+SofteningMaxPhysType1  0.0005
 SofteningMaxPhysType2  0.005
 SofteningMaxPhysType3  0.010
 SofteningMaxPhysType4  0.020
@@ -201,7 +204,7 @@ BlackHoleFeedbackFactor          0.07
 BlackHoleEddingtonFactor         1.0
 SeedBlackHoleMass                1.e-5
 MinFoFMassForNewSeed             5.0
-DesNumNgbBlackHole               384
+DesNumNgbBlackHole               48
 BlackHoleMaxAccretionRadius      1.0e5
 BlackHoleRadiativeEfficiency     0.2
 BHFrictionCoefficient            1.4
