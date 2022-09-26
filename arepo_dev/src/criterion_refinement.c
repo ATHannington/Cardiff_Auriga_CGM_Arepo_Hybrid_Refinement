@@ -429,7 +429,7 @@ int refine_criterion_default(int i)
       if(SphP[i].Volume > 2.0 * All.TargetHybridGasVolume * All.cf_a3inv)
       {
         mpi_printf("Calculated temperature in criterion_refinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
-        mpi_printf("Cell Volume in criterion_refinement.c %e versus (less than temeperature) greater than target %e\n",SphP[i].Volume , (1.0 * All.TargetHybridGasVolume * All.cf_a3inv));
+        mpi_printf("Cell Volume in criterion_refinement.c %e versus (less than temeperature) greater than target %e\n",SphP[i].Volume , (2.0 * All.TargetHybridGasVolume * All.cf_a3inv));
         mpi_printf("Cell refined - met temp and vol fancy refine!\n");
         return 1;
       }
