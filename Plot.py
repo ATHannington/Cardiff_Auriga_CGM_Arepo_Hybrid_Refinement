@@ -21,7 +21,8 @@ import math
 import os
 
 snapNumber = 104
-loadpath = "/home/universe/c1838736/Auriga/level5_cgm/h5_hybrid-dev/output/"
+snapsAfter = 5
+loadpath = "/home/universe/c1838736/Auriga/level5_cgm/h5_2kpc/output/"
 numthreads = 8
 
 ylabel = {
@@ -59,6 +60,7 @@ ylabel = {
     "dens": r"Density (g cm$^{-3}$)",
     "ndens": r"Number density (cm$^{-3}$)",
     "mass": r"Mass (M$_{\odot}$)",
+    "vol": r"Volume (kpc$^{3}$)",
 }
 
 xlimDict = {
@@ -69,7 +71,7 @@ xlimDict = {
     "n_H": {"xmin": -5.5, "xmax": -0.5},
     "B": {"xmin": -2.5, "xmax": 1.0},
     "vrad": {"xmin": -150.0, "xmax": 150.0},
-    "gz": {"xmin": -1.5, "xmax": 0.5},
+    "gz": {"xmin": -1.5, "xmax": 0.75},
     "P_thermal": {"xmin": 0.5, "xmax": 3.5},
     "P_CR": {"xmin": -1.5, "xmax": 5.5},
     "PCR_Pthermal": {"xmin": -2.0, "xmax": 2.0},
@@ -274,21 +276,20 @@ def plot_slices(snapGas,
     ax2 = axes[1]
 
     cmapVol = cm.get_cmap("seismic")
-    # bounds = [0.125, 8.0, 64.0]
     norm = matplotlib.colors.LogNorm(clip=True)
     pcm2 = ax2.pcolormesh(
         slice_vol["x"],
         slice_vol["y"],
         np.transpose(slice_vol["grid"]),
-        vmin = 1e-1,
-        vmax = 1e1,
+        vmin = 1e-1,#5e-1,
+        vmax = 1e1,#2e1,
         norm=norm,
         cmap=cmapVol,
         rasterized=True,
     )
 
     # cmapVol = cm.get_cmap("seismic")
-    # bounds = [0.125, 1.0, 8.0, 64.0]
+    # bounds = [0.5, 2.0, 4.0, 16.0]
     # norm = matplotlib.colors.BoundaryNorm(bounds, cmapVol.N, extend="both")
     # pcm2 = ax2.pcolormesh(
     #     slice_vol["x"],
@@ -329,7 +330,7 @@ def plot_slices(snapGas,
     # fig.tight_layout()
 
     SaveSnapNumber = str(snapNumber).zfill(4)
-    savePath = savePath + f"Slice_Plot_{int(SaveSnapNumber)}.pdf"
+    savePath = savePath + f"Slice_Plot_{int(SaveSnapNumber)}.pdf" #_binary-split
 
     print(f" Save {savePath}")
     plt.savefig(savePath, transparent=False)
@@ -338,6 +339,330 @@ def plot_slices(snapGas,
     print(f" ...done!")
 
     return
+
+def plot_slices_quad(snapGas,
+    snapNumber,
+    fontsize=13,
+    fontsizeTitle=14,
+    titleBool=True,
+    Axes=[0, 1],
+    boxsize=400.0,
+    pixres=0.1,
+    DPI=200,
+    CMAP=None,
+    numthreads=10,
+):
+    savePath = f"./Plots/Slices/"
+    tmp = "./"
+
+    for savePathChunk in savePath.split("/")[1:-1]:
+        tmp += savePathChunk + "/"
+        try:
+            os.mkdir(tmp)
+        except:
+            pass
+        else:
+            pass
+
+    if CMAP == None:
+        cmap = plt.get_cmap("inferno")
+    else:
+        cmap = CMAP
+
+    # Axes Labels to allow for adaptive axis selection
+    AxesLabels = ["x", "y", "z"]
+
+    # Centre image on centre of simulation (typically [0.,0.,0.] for centre of HaloID in set_centre)
+    imgcent = [0.0, 0.0, 0.0]
+
+    # --------------------------#
+    ## Slices and Projections ##
+    # --------------------------#
+    # PLOTTING TIME
+    # Set plot figure sizes
+    xsize = 10.0
+    ysize = 10.0
+    # Define halfsize for histogram ranges which are +/-
+    halfbox = boxsize / 2.0
+
+    if titleBool is True:
+        # Redshift
+        redshift = snapGas.redshift  # z
+        aConst = 1.0 / (1.0 + redshift)  # [/]
+
+        # [0] to remove from numpy array for purposes of plot title
+        tlookback = snapGas.cosmology_get_lookback_time_from_a(np.array([aConst]))[
+            0
+        ]  # [Gyrs]
+    # ==============================================================================#
+    #
+    #           Quad Plot for standard video
+    #
+    # ==============================================================================#
+    print(f" Quad Plot...")
+
+    fullTicks = [xx for xx in np.linspace(-1.0 * halfbox, halfbox, 9)]
+    fudgeTicks = fullTicks[1:]
+
+    aspect = "equal"
+
+    # DPI Controlled by user as lower res needed for videos #
+    fig, axes = plt.subplots(
+        nrows=1, ncols=2, figsize=(xsize, ysize), dpi=DPI, sharex=True, sharey=True
+    )
+
+    nprojections = 4
+    # print(np.unique(snapGas.type))
+    print("\n" + f"[@{int(snapNumber)}]: Projection 1 of {nprojections}")
+    slice_T = snapGas.get_Aslice(
+        "T",
+        box=[boxsize, boxsize],
+        center=imgcent,
+        nx=int(boxsize / pixres),
+        ny=int(boxsize / pixres),
+        axes=Axes,
+        proj=False,
+        numthreads=numthreads,
+    )
+
+    print("\n" + f"[@{int(snapNumber)}]: Projection 2 of {nprojections}")
+
+    slice_tcool = snapGas.get_Aslice(
+        "tcool",
+        box=[boxsize, boxsize],
+        center=imgcent,
+        nx=int(boxsize / pixres),
+        ny=int(boxsize / pixres),
+        axes=Axes,
+        proj=False,
+        numthreads=numthreads,
+    )
+
+    print("\n" + f"[@{int(snapNumber)}]: Projection 3 of {nprojections}")
+
+    slice_nH = snapGas.get_Aslice(
+        "n_H",
+        box=[boxsize, boxsize],
+        center=imgcent,
+        nx=int(boxsize / pixres),
+        ny=int(boxsize / pixres),
+        axes=Axes,
+        proj=False,
+        numthreads=numthreads,
+    )
+
+    print("\n" + f"[@{int(snapNumber)}]: Projection 4 of {nprojections}")
+
+    slice_gz = snapGas.get_Aslice(
+        "gz",
+        box=[boxsize, boxsize],
+        center=imgcent,
+        nx=int(boxsize / pixres),
+        ny=int(boxsize / pixres),
+        axes=Axes,
+        proj=False,
+        numthreads=numthreads,
+    )
+
+    fig, axes = plt.subplots(
+        nrows=2, ncols=2, figsize=(xsize, ysize), dpi=DPI, sharex=True, sharey=True
+    )
+
+
+    if titleBool is True:
+        # Add overall figure plot
+        TITLE = (
+            r"Redshift $(z) =$"
+            + f"{redshift:0.03f} "
+            + " "
+            + r"$t_{Lookback}=$"
+            + f"{tlookback :0.03f} Gyr"
+        )
+        fig.suptitle(TITLE, fontsize=fontsizeTitle)
+
+    # cmap = plt.get_cmap(CMAP)
+    cmap.set_bad(color="grey")
+
+    # -----------#
+    # Plot Temperature #
+    # -----------#
+    # print("pcm1")
+    ax1 = axes[0,0]
+
+    pcm1 = ax1.pcolormesh(
+        slice_T["x"],
+        slice_T["y"],
+        np.transpose(slice_T["grid"]),
+        vmin=1e4,
+        vmax=10 ** (6.5),
+        norm=matplotlib.colors.LogNorm(),
+        cmap=cmap,
+        rasterized=True,
+    )
+
+    ax1.set_title(f"Temperature Slice", fontsize=fontsize)
+    cax1 = inset_axes(ax1, width="5%", height="95%", loc="right")
+    fig.colorbar(pcm1, cax=cax1, orientation="vertical").set_label(
+        label="T (K)", size=fontsize, weight="bold"
+    )
+    cax1.yaxis.set_ticks_position("left")
+    cax1.yaxis.set_label_position("left")
+    cax1.yaxis.label.set_color("white")
+    cax1.tick_params(axis="y", colors="white", labelsize=fontsize)
+
+    ax1.set_ylabel(f"{AxesLabels[Axes[1]]}" + " (kpc)", fontsize=fontsize)
+    # ax1.set_xlabel(f'{AxesLabels[Axes[0]]}"+" [kpc]"', fontsize = fontsize)
+    # ax1.set_aspect(aspect)
+
+    # Fudge the tick labels...
+    plt.sca(ax1)
+    plt.xticks(fullTicks)
+    plt.yticks(fudgeTicks)
+
+    # -----------#
+    # Plot n_H Projection #
+    # -----------#
+    # print("pcm2")
+    ax2 = axes[0,1]
+
+    pcm2 = ax2.pcolormesh(
+        slice_tcool["x"],
+        slice_tcool["y"],
+        np.transpose(slice_tcool["grid"]),
+        vmin = (10)**(-3.5),
+        vmax = 1e2,
+        norm=matplotlib.colors.LogNorm(),
+        cmap=cmap,
+        rasterized=True,
+    )
+
+    # cmapVol = cm.get_cmap("seismic")
+    # bounds = [0.5, 2.0, 4.0, 16.0]
+    # norm = matplotlib.colors.BoundaryNorm(bounds, cmapVol.N, extend="both")
+    # pcm2 = ax2.pcolormesh(
+    #     slice_vol["x"],
+    #     slice_vol["y"],
+    #     np.transpose(slice_vol["grid"]),
+    #     norm=norm,
+    #     cmap=cmapVol,
+    #     rasterized=True,
+    # )
+
+    ax2.set_title(r"Cooling Time Slice", fontsize=fontsize)
+
+    cax2 = inset_axes(ax2, width="5%", height="95%", loc="right")
+    fig.colorbar(pcm2, cax=cax2, orientation="vertical").set_label(
+        label=r"t$_{cool}$ (Gyr)", size=fontsize, weight="bold"
+    )
+    cax2.yaxis.set_ticks_position("left")
+    cax2.yaxis.set_label_position("left")
+    cax2.yaxis.label.set_color("white")
+    cax2.tick_params(axis="y", colors="white", labelsize=fontsize)
+    # ax2.set_ylabel(f'{AxesLabels[Axes[1]]} "+r" (kpc)"', fontsize=fontsize)
+    # ax2.set_xlabel(f'{AxesLabels[Axes[0]]} "+r" (kpc)"', fontsize=fontsize)
+    # ax2.set_aspect(aspect)
+
+    # Fudge the tick labels...
+    plt.sca(ax2)
+    plt.xticks(fullTicks)
+    plt.yticks(fullTicks)
+
+    # -----------#
+    # Plot Metallicity #
+    # -----------#
+    # print("pcm3")
+    ax3 = axes[1, 0]
+
+    pcm3 = ax3.pcolormesh(
+        slice_gz["x"],
+        slice_gz["y"],
+        np.transpose(slice_gz["grid"]),
+        vmin=1e-2,
+        vmax=1e1,
+        norm=matplotlib.colors.LogNorm(),
+        cmap=cmap,
+        rasterized=True,
+    )
+
+    ax3.set_title(f"Metallicity Slice", y=-0.2, fontsize=fontsize)
+
+    cax3 = inset_axes(ax3, width="5%", height="95%", loc="right")
+    fig.colorbar(pcm3, cax=cax3, orientation="vertical").set_label(
+        label=r"$Z/Z_{\odot}$", size=fontsize, weight="bold"
+    )
+    cax3.yaxis.set_ticks_position("left")
+    cax3.yaxis.set_label_position("left")
+    cax3.yaxis.label.set_color("white")
+    cax3.tick_params(axis="y", colors="white", labelsize=fontsize)
+
+    ax3.set_ylabel(f"{AxesLabels[Axes[1]]} " + r" (kpc)", fontsize=fontsize)
+    ax3.set_xlabel(f"{AxesLabels[Axes[0]]} " + r" (kpc)", fontsize=fontsize)
+
+    # ax3.set_aspect(aspect)
+
+    # Fudge the tick labels...
+    plt.sca(ax3)
+    plt.xticks(fullTicks)
+    plt.yticks(fullTicks)
+
+    # -----------#
+    # Plot Magnetic Field Projection #
+    # -----------#
+    # print("pcm4")
+    ax4 = axes[1, 1]
+
+    pcm4 = ax4.pcolormesh(
+        slice_nH["x"],
+        slice_nH["y"],
+        np.transpose(slice_nH["grid"]),
+        vmin=1e-7,
+        vmax=1e-1,
+        norm=matplotlib.colors.LogNorm(),
+        cmap=cmap,
+        rasterized=True,
+    )
+
+    ax4.set_title(r"HI Number Density Slice",
+                  y=-0.2, fontsize=fontsize)
+
+    cax4 = inset_axes(ax4, width="5%", height="95%", loc="right")
+    fig.colorbar(pcm4, cax=cax4, orientation="vertical").set_label(
+        label=r"n$_{H}$ (cm$^{-3}$)", size=fontsize, weight="bold"
+    )
+    cax4.yaxis.set_ticks_position("left")
+    cax4.yaxis.set_label_position("left")
+    cax4.yaxis.label.set_color("white")
+    cax4.tick_params(axis="y", colors="white", labelsize=fontsize)
+
+    # ax4.set_ylabel(f'{AxesLabels[Axes[1]]} "+r" (kpc)"', fontsize=fontsize)
+    ax4.set_xlabel(f"{AxesLabels[Axes[0]]} " + r" (kpc)", fontsize=fontsize)
+    # ax4.set_aspect(aspect)
+
+    # Fudge the tick labels...
+    plt.sca(ax4)
+    plt.xticks(fudgeTicks)
+    plt.yticks(fullTicks)
+
+    # print("snapnum")
+    # Pad snapnum with zeroes to enable easier video making
+    if titleBool is True:
+        fig.subplots_adjust(wspace=0.0 ,hspace=0.0, top=0.90)
+    else:
+        fig.subplots_adjust(wspace=0.0 ,hspace=0.0, top=0.95)
+
+    # fig.tight_layout()
+
+    SaveSnapNumber = str(snapNumber).zfill(4)
+    savePath = savePath + f"Slice_Plot_Quad_{int(SaveSnapNumber)}.pdf" #_binary-split
+
+    print(f" Save {savePath}")
+    plt.savefig(savePath, transparent=False)
+    plt.close()
+
+    print(f" ...done!")
+
+    return
+
 
 def phases_plot(
     simDict,
@@ -368,8 +693,9 @@ def phases_plot(
     zlimDict.update({"rho_rhomean": {"xmin": 0.25, "xmax": 6.5}})
     zlimDict.update({"T": {"xmin": 3.75, "xmax": 7.0}})
     zlimDict.update({"tcool_tff": {"xmin": -2.5, "xmax": 2.0}})
-    zlimDict.update({"gz": {"xmin": -1.0, "xmax": 0.25}})
+    zlimDict.update({"gz": {"xmin": -1.5, "xmax": 0.75}})
     zlimDict.update({"Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 10.0}})
+    zlimDict.update({"vol": {"xmin": (1./8.0), "xmax": (2.0)**4 }})
 
     savePath = f"./Plots/Phases/"
     tmp = "./"
@@ -406,8 +732,8 @@ def phases_plot(
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
         #   Figure 1: Full Cells Data
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-        xdataCells = np.log10(
-            simDict["rho_rhomean"]
+        xdataCells = (np.log10(
+            simDict["rho_rhomean"]) #simDict["vol"]
         )
         ydataCells = np.log10(simDict["T"])
         massCells = simDict["mass"]
@@ -463,7 +789,7 @@ def phases_plot(
         # ,extent=[np.min(xedgeCells),np.max(xedgeCells),np.min(yedgeCells),np.max(yedgeCells)],origin='lower')
 
         currentAx.set_xlabel(
-            r"Log10 Density ($ \rho / \langle \rho \rangle $)",
+            r"Log10 Density ($ \rho / \langle \rho \rangle $)",#r"Volume (kpc$^{3}$)",#
             fontsize=fontsize,
         )
         currentAx.set_ylabel(
@@ -471,7 +797,7 @@ def phases_plot(
 
         currentAx.set_ylim(
             zlimDict["T"]["xmin"], zlimDict["T"]["xmax"])
-        currentAx.set_xlim(
+        currentAx.set_xlim(#0.25,17.5)
             zlimDict["rho_rhomean"]["xmin"], zlimDict["rho_rhomean"]["xmax"])
         currentAx.tick_params(
             axis="both", which="both", labelsize=fontsize)
@@ -526,7 +852,193 @@ def phases_plot(
 
     return
 
+def phases_plot_volume(
+    simDict,
+    ylabel,
+    xlimDict,
+    logParameters,
+    weightKeys=["mass",
+                ],
+    fontsize=13,
+    fontsizeTitle=14,
+    titleBool=True,
+    DPI=200,
+    xsize=8.0,
+    ysize=8.0,
+    colourmapMain="plasma",
+    Nbins=250,
+):
 
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
+    try:
+        tmp = xlimDict["mass"]
+    except:
+        xlimDict.update({"mass": {"xmin": 4.0, "xmax": 9.0}})
+
+    zlimDict = copy.deepcopy(xlimDict)
+
+    zlimDict.update({"rho_rhomean": {"xmin": 0.25, "xmax": 6.5}})
+    zlimDict.update({"T": {"xmin": 3.75, "xmax": 7.0}})
+    zlimDict.update({"tcool_tff": {"xmin": -2.5, "xmax": 2.0}})
+    zlimDict.update({"gz": {"xmin": -1.5, "xmax": 0.75}})
+    zlimDict.update({"Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 10.0}})
+    zlimDict.update({"vol": {"xmin": (1./8.0), "xmax": (2.0)**4 }})
+
+    savePath = f"./Plots/Phases/"
+    tmp = "./"
+
+    for savePathChunk in savePath.split("/")[1:-1]:
+        tmp += savePathChunk + "/"
+        try:
+            os.mkdir(tmp)
+        except:
+            pass
+        else:
+            pass
+    # ------------------------------------------------------------------------------#
+    #               PLOTTING
+    #
+    # ------------------------------------------------------------------------------#
+    for weightKey in weightKeys:
+        print("\n" + f"Starting weightKey {weightKey}")
+
+        zmin = zlimDict[weightKey]["xmin"]
+        zmax = zlimDict[weightKey]["xmax"]
+
+        fig, ax = plt.subplots(
+            nrows=1,
+            ncols=1,
+            figsize=(xsize, ysize),
+            dpi=DPI,
+            sharey=True,
+            sharex=True,
+        )
+
+        currentAx = ax
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+        #   Figure 1: Full Cells Data
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+        xdataCells = (
+            np.log10(simDict["vol"])#np.log10(simDict["rho_rhomean"])
+        )
+        ydataCells = np.log10(simDict["T"])
+        massCells = simDict["mass"]
+        try:
+            weightDataCells = (
+                simDict[weightKey] * massCells
+            )
+            skipBool = False
+        except:
+            print(
+                f"Variable {weightKey} not found. Skipping plot..."
+            )
+            skipBool = True
+            continue
+
+        if weightKey == "mass":
+            finalHistCells, xedgeCells, yedgeCells = np.histogram2d(
+                xdataCells, ydataCells, bins=Nbins, weights=massCells
+            )
+        else:
+            mhistCells, _, _ = np.histogram2d(
+                xdataCells, ydataCells, bins=Nbins, weights=massCells
+            )
+            histCells, xedgeCells, yedgeCells = np.histogram2d(
+                xdataCells, ydataCells, bins=Nbins, weights=weightDataCells
+            )
+
+            finalHistCells = histCells / mhistCells
+
+        finalHistCells[finalHistCells == 0.0] = np.nan
+        try:
+            if weightKey in logParameters:
+                finalHistCells = np.log10(finalHistCells)
+        except:
+            print(f"Variable {weightKey} not found. Skipping plot...")
+            skipBool = True
+            continue
+        finalHistCells = finalHistCells.T
+
+        xcells, ycells = np.meshgrid(xedgeCells, yedgeCells)
+
+        img1 = currentAx.pcolormesh(
+            xcells,
+            ycells,
+            finalHistCells,
+            cmap=colourmapMain,
+            vmin=zmin,
+            vmax=zmax,
+            rasterized=True,
+        )
+        #
+        # img1 = currentAx.imshow(finalHistCells,cmap=colourmapMain,vmin=xmin,vmax=xmax \
+        # ,extent=[np.min(xedgeCells),np.max(xedgeCells),np.min(yedgeCells),np.max(yedgeCells)],origin='lower')
+
+        currentAx.set_xlabel(
+            r"Log10 Volume (kpc$^{3}$)",# r"Log10 Density ($ \rho / \langle \rho \rangle $)",#
+            fontsize=fontsize,
+        )
+        currentAx.set_ylabel(
+            "Log10 Temperatures (K)", fontsize=fontsize)
+
+        currentAx.set_ylim(
+            zlimDict["T"]["xmin"], zlimDict["T"]["xmax"])
+        currentAx.set_xlim(np.nanmax(xedgeCells),np.nanmin(xedgeCells))
+            # zlimDict["rho_rhomean"]["xmin"], zlimDict["rho_rhomean"]["xmax"])
+        currentAx.tick_params(
+            axis="both", which="both", labelsize=fontsize)
+
+        currentAx.set_aspect("auto")
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+        #   Figure: Finishing up
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+        if skipBool == True:
+            try:
+                tmp = finalHistCells
+            except:
+                print(
+                    f"Variable {weightKey} not found. Skipping plot..."
+                )
+                continue
+            else:
+                pass
+
+            #left, bottom, width, height
+            # x0,    y0,  delta x, delta y
+        cax1 = fig.add_axes([0.925, 0.10, 0.05, 0.80])
+
+        fig.colorbar(img1, cax=cax1, ax=ax, orientation="vertical", pad=0.05).set_label(
+            label=ylabel[weightKey], size=fontsize
+        )
+        cax1.yaxis.set_ticks_position("left")
+        cax1.yaxis.set_label_position("left")
+        cax1.yaxis.label.set_color("black")
+        cax1.tick_params(axis="y", colors="black", labelsize=fontsize)
+
+        if titleBool is True:
+            fig.suptitle(
+                f"Temperature Density Diagram, weighted by {weightKey}",
+                fontsize=fontsizeTitle,
+            )
+
+        if titleBool is True:
+            plt.subplots_adjust(top=0.875, right=0.8, hspace=0.3, wspace=0.3)
+        else:
+            plt.subplots_adjust(right=0.8, hspace=0.3, wspace=0.3)
+
+        SaveSnapNumber = str(snapNumber).zfill(4)
+
+        opslaan = (
+            savePath
+            + f"Phases-Plot-{weightKey}_{int(SaveSnapNumber)}_volume.pdf"
+        )
+        plt.savefig(opslaan, dpi=DPI, transparent=False)
+        print(opslaan)
+
+    return
 
 if __name__ == "__main__":
     # load in the subfind group files
@@ -556,7 +1068,7 @@ if __name__ == "__main__":
         f"[@{int(snapNumber)}]: SnapShot loaded at RedShift z={snapGas.redshift:0.05e}"
     )
 
-    snapGas.calc_sf_indizes(snap_subfind, halolist=[0])
+    # snapGas.calc_sf_indizes(snap_subfind, halolist=[0])
     # snapGas.calc_sf_indizes(snap_subfind, halolist=[0])
 
 
@@ -590,15 +1102,6 @@ if __name__ == "__main__":
 
     Rvir = (snap_subfind.data["frc2"] * 1e3)[int(0)]
 
-    whereOutsideVirial = snapGas.data["R"] > Rvir
-
-    snapGas = remove_selection(
-        snapGas,
-        removalConditionMask = whereOutsideVirial,
-        errorString = "Remove Outside Virial from Gas",
-        DEBUG = DEBUG,
-        )
-
     rmax = 175.0
     boxmax = rmax
     box = [boxmax, boxmax, boxmax]
@@ -614,7 +1117,7 @@ if __name__ == "__main__":
         oc.omegabaryon0,
         snapNumber,
         logParameters = logParameters,
-        paramsOfInterest=["T","rho_rhomean"],
+        paramsOfInterest=["T","rho_rhomean","n_H","gz","tcool","theat"],
         mappingBool=True,
         box=box,
         numthreads=numthreads,
@@ -643,25 +1146,20 @@ if __name__ == "__main__":
     redshift = snapGas.redshift  # z
     aConst = 1.0 / (1.0 + redshift)  # [/]
 
-    # Get lookback time in Gyrs
-    # [0] to remove from numpy array for purposes of plot title
-    lookback = snapGas.cosmology_get_lookback_time_from_a(np.array([aConst]))[
-        0
-    ]  # [Gyrs]
-
-    snapGas.data["Redshift"] = np.array([redshift])
-    snapGas.data["Lookback"] = np.array([lookback])
-    snapGas.data["Snap"] = np.array([snapNumber])
-    snapGas.data["Rvir"] = np.array([Rvir])
+    # # Get lookback time in Gyrs
+    # # [0] to remove from numpy array for purposes of plot title
+    # lookback = snapGas.cosmology_get_lookback_time_from_a(np.array([aConst]))[
+    #     0
+    # ]  # [Gyrs]
+    #
+    # snapGas.data["Redshift"] = np.array([redshift])
+    # snapGas.data["Lookback"] = np.array([lookback])
+    # snapGas.data["Snap"] = np.array([snapNumber])
+    # snapGas.data["Rvir"] = np.array([Rvir])
 
     print(
         f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
     )
-    # Make normal dictionary form of snapGas
-    out = {}
-    for key, value in snapGas.data.items():
-        if value is not None:
-            out.update({key: copy.deepcopy(value)})
 
     print(
         f"[@{int(snapNumber)}]: Finishing process..."
@@ -673,8 +1171,34 @@ if __name__ == "__main__":
 
     plot_slices(snapGas,
         snapNumber,
-        boxsize=Rvir*0.95
+        boxsize=Rvir*2.0*1.40
     )
+
+    print(
+        f"[@{int(snapNumber)}]: Slice plot Quad"
+    )
+
+    plot_slices_quad(snapGas,
+        snapNumber,
+        boxsize=Rvir*2.0*1.40
+    )
+
+
+    whereOutsideVirial = snapGas.data["R"] > Rvir*1.5
+
+    snapGas = remove_selection(
+        snapGas,
+        removalConditionMask = whereOutsideVirial,
+        errorString = "Remove Outside Virial from Gas",
+        DEBUG = DEBUG,
+        )
+
+    # Make normal dictionary form of snapGas
+    out = {}
+    for key, value in snapGas.data.items():
+        if value is not None:
+            out.update({key: copy.deepcopy(value)})
+
 
     print(
         f"[@{int(snapNumber)}]: Phases plot"
@@ -684,7 +1208,20 @@ if __name__ == "__main__":
         out,
         ylabel,
         xlimDict,
-        logParameters
+        logParameters,
+        weightKeys = ["mass","n_H","vol","gz","tcool","theat"]
+    )
+
+    print(
+        f"[@{int(snapNumber)}]: Phases plot volume"
+    )
+
+    phases_plot_volume(
+        out,
+        ylabel,
+        xlimDict,
+        logParameters,
+        weightKeys = ["mass","n_H","vol","gz","tcool","theat"]
     )
 
     print(
