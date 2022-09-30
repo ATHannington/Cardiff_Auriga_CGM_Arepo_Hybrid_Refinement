@@ -20,10 +20,19 @@ import copy
 import math
 import os
 
-snapNumber = 104
-snapsAfter = 5
-loadpath = "/home/universe/c1838736/Auriga/level5_cgm/h5_2kpc/output/"
+snapStart = 100
+snapEnd = 109
+loadpath = "/home/universe/c1838736/Auriga/level5_cgm/h5_standard/output/"
 numthreads = 8
+
+snapRange = [
+        xx
+        for xx in range(
+            int(snapStart),
+            int(snapEnd) + 1,
+            1,
+        )
+    ]
 
 ylabel = {
     "T": r"Temperature (K)",
@@ -189,7 +198,7 @@ def plot_slices(snapGas,
     # PLOTTING TIME
     # Set plot figure sizes
     xsize = 10.0
-    ysize = 10.0
+    ysize = 5.0
     # Define halfsize for histogram ranges which are +/-
     halfbox = boxsize / 2.0
 
@@ -262,7 +271,7 @@ def plot_slices(snapGas,
 
     ax1.set_ylabel(f"{AxesLabels[Axes[1]]}" + " (kpc)", fontsize=fontsize)
     # ax1.set_xlabel(f'{AxesLabels[Axes[0]]}"+" [kpc]"', fontsize = fontsize)
-    ax1.set_aspect(aspect)
+    # ax1.set_aspect(aspect)
 
     # Fudge the tick labels...
     plt.sca(ax1)
@@ -281,8 +290,8 @@ def plot_slices(snapGas,
         slice_vol["x"],
         slice_vol["y"],
         np.transpose(slice_vol["grid"]),
-        vmin = 1e-1,#5e-1,
-        vmax = 1e1,#2e1,
+        vmin = 5e-3,#5e-1,
+        vmax = 5e3,#2e1,
         norm=norm,
         cmap=cmapVol,
         rasterized=True,
@@ -312,7 +321,7 @@ def plot_slices(snapGas,
     cax2.tick_params(axis="y", colors="white", labelsize=fontsize)
     # ax2.set_ylabel(f'{AxesLabels[Axes[1]]} "+r" (kpc)"', fontsize=fontsize)
     # ax2.set_xlabel(f'{AxesLabels[Axes[0]]} "+r" (kpc)"', fontsize=fontsize)
-    ax2.set_aspect(aspect)
+    # ax2.set_aspect(aspect)
 
     # Fudge the tick labels...
     plt.sca(ax2)
@@ -663,6 +672,251 @@ def plot_slices_quad(snapGas,
 
     return
 
+def plot_projections(snapGas,
+    snapNumber,
+    fontsize=13,
+    fontsizeTitle=14,
+    titleBool=True,
+    Axes=[0, 1],
+    zAxis = [2],
+    boxsize=400.0,
+    boxlos=50.0,
+    pixreslos=0.3,
+    pixres=0.3,
+    DPI=200,
+    CMAP=None,
+    numthreads=10,
+):
+    savePath = f"./Plots/Projections/"
+    tmp = "./"
+
+    for savePathChunk in savePath.split("/")[1:-1]:
+        tmp += savePathChunk + "/"
+        try:
+            os.mkdir(tmp)
+        except:
+            pass
+        else:
+            pass
+
+    if CMAP == None:
+        cmap = plt.get_cmap("inferno")
+    else:
+        cmap = CMAP
+
+    # Axes Labels to allow for adaptive axis selection
+    AxesLabels = ["x", "y", "z"]
+
+    # Centre image on centre of simulation (typically [0.,0.,0.] for centre of HaloID in set_centre)
+    imgcent = [0.0, 0.0, 0.0]
+
+    # --------------------------#
+    ## Slices and Projections ##
+    # --------------------------#
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
+    nprojections = 3
+    # print(np.unique(snapGas.type))
+    print("\n" + f"Projection 1 of {nprojections}")
+
+    proj_T = snapGas.get_Aslice(
+        "Tdens",
+        box=[boxsize, boxsize],
+        center=imgcent,
+        nx=int(boxsize / pixres),
+        ny=int(boxsize / pixres),
+        nz=int(boxlos / pixreslos),
+        boxz=boxlos,
+        axes=Axes,
+        proj=True,
+        numthreads=numthreads,
+    )
+
+    print("\n" + f"Projection 2 of {nprojections}")
+
+    proj_dens = snapGas.get_Aslice(
+        "rho_rhomean",
+        box=[boxsize, boxsize],
+        center=imgcent,
+        nx=int(boxsize / pixres),
+        ny=int(boxsize / pixres),
+        nz=int(boxlos / pixreslos),
+        boxz=boxlos,
+        axes=Axes,
+        proj=True,
+        numthreads=numthreads,
+    )
+
+    print("\n" + f" Projection 3 of {nprojections}")
+
+    proj_vol = snapGas.get_Aslice(
+        "vol",
+        box=[boxsize, boxsize],
+        center=imgcent,
+        nx=int(boxsize / pixres),
+        ny=int(boxsize / pixres),
+        nz=int(boxlos / pixreslos),
+        boxz=boxlos,
+        axes=Axes,
+        proj=True,
+        numthreads=numthreads,
+    )
+
+    # ------------------------------------------------------------------------------#
+    # PLOTTING TIME
+    # Set plot figure sizes
+    xsize = 10.0
+    ysize = 5.0
+    # Define halfsize for histogram ranges which are +/-
+    halfbox = boxsize / 2.0
+
+    if titleBool is True:
+        # Redshift
+        redshift = snapGas.redshift  # z
+        aConst = 1.0 / (1.0 + redshift)  # [/]
+
+        # [0] to remove from numpy array for purposes of plot title
+        tlookback = snapGas.cosmology_get_lookback_time_from_a(np.array([aConst]))[
+            0
+        ]  # [Gyrs]
+    # ==============================================================================#
+    #
+    #           Quad Plot for standard video
+    #
+    # ==============================================================================#
+    print(f" Quad Plot...")
+
+    fullTicks = [xx for xx in np.linspace(-1.0 * halfbox, halfbox, 9)]
+    fudgeTicks = fullTicks[1:]
+
+    aspect = "equal"
+
+    # DPI Controlled by user as lower res needed for videos #
+    fig, axes = plt.subplots(
+        nrows=1, ncols=2, figsize=(xsize, ysize), dpi=DPI, sharex=True, sharey=True
+    )
+
+    if titleBool is True:
+        # Add overall figure plot
+        TITLE = (
+            r"Redshift $(z) =$"
+            + f"{redshift:0.03f} "
+            + " "
+            + r"$t_{Lookback}=$"
+            + f"{tlookback :0.03f} Gyr"
+        )
+        fig.suptitle(TITLE, fontsize=fontsizeTitle)
+
+    # cmap = plt.get_cmap(CMAP)
+    cmap.set_bad(color="grey")
+
+    # -----------#
+    # Plot Temperature #
+    # -----------#
+    # print("pcm1")
+    ax1 = axes[0]
+
+    pcm1 = ax1.pcolormesh(
+        proj_T["x"],
+        proj_T["y"],
+        np.transpose(proj_T["grid"] / proj_dens["grid"]),
+        vmin=1e4,
+        vmax=10 ** (6.5),
+        norm=matplotlib.colors.LogNorm(),
+        cmap=cmap,
+        rasterized=True,
+    )
+
+    ax1.set_title(f"Temperature Projection", fontsize=fontsize)
+    cax1 = inset_axes(ax1, width="5%", height="95%", loc="right")
+    fig.colorbar(pcm1, cax=cax1, orientation="vertical").set_label(
+        label="T (K)", size=fontsize, weight="bold"
+    )
+    cax1.yaxis.set_ticks_position("left")
+    cax1.yaxis.set_label_position("left")
+    cax1.yaxis.label.set_color("white")
+    cax1.tick_params(axis="y", colors="white", labelsize=fontsize)
+
+    ax1.set_ylabel(f"{AxesLabels[Axes[1]]}" + " (kpc)", fontsize=fontsize)
+    # ax1.set_xlabel(f'{AxesLabels[Axes[0]]}"+" [kpc]"', fontsize = fontsize)
+    # ax1.set_aspect(aspect)
+
+    # Fudge the tick labels...
+    plt.sca(ax1)
+    plt.xticks(fullTicks)
+    plt.yticks(fudgeTicks)
+
+    # -----------#
+    # Plot n_H Projection #
+    # -----------#
+    # print("pcm2")
+    ax2 = axes[1]
+
+    cmapVol = cm.get_cmap("seismic")
+    norm = matplotlib.colors.LogNorm(clip=True)
+    pcm2 = ax2.pcolormesh(
+        proj_vol["x"],
+        proj_vol["y"],
+        np.transpose(proj_vol["grid"]) / int(boxlos / pixreslos),
+        vmin = 5e-3,#5e-1,
+        vmax = 5e3,#2e1,
+        norm=norm,
+        cmap=cmapVol,
+        rasterized=True,
+    )
+
+    # cmapVol = cm.get_cmap("seismic")
+    # bounds = [0.5, 2.0, 4.0, 16.0]
+    # norm = matplotlib.colors.BoundaryNorm(bounds, cmapVol.N, extend="both")
+    # pcm2 = ax2.pcolormesh(
+    #     proj_vol["x"],
+    #     proj_vol["y"],
+    #     np.transpose(proj_vol["grid"]),
+    #     norm=norm,
+    #     cmap=cmapVol,
+    #     rasterized=True,
+    # )
+
+    ax2.set_title(r"Volume Projection", fontsize=fontsize)
+
+    cax2 = inset_axes(ax2, width="5%", height="95%", loc="right")
+    fig.colorbar(pcm2, cax=cax2, orientation="vertical").set_label(
+        label=r"V (kpc$^{3}$)", size=fontsize, weight="bold"
+    )
+    cax2.yaxis.set_ticks_position("left")
+    cax2.yaxis.set_label_position("left")
+    cax2.yaxis.label.set_color("white")
+    cax2.tick_params(axis="y", colors="white", labelsize=fontsize)
+    # ax2.set_ylabel(f'{AxesLabels[Axes[1]]} "+r" (kpc)"', fontsize=fontsize)
+    # ax2.set_xlabel(f'{AxesLabels[Axes[0]]} "+r" (kpc)"', fontsize=fontsize)
+    # ax2.set_aspect(aspect)
+
+    # Fudge the tick labels...
+    plt.sca(ax2)
+    plt.xticks(fullTicks)
+    plt.yticks(fullTicks)
+
+
+    # print("snapnum")
+    # Pad snapnum with zeroes to enable easier video making
+    if titleBool is True:
+        fig.subplots_adjust(wspace=0.0, hspace=0.0, top=0.90)
+    else:
+        fig.subplots_adjust(wspace=0.0, hspace=0.0, top=0.95)
+
+    # fig.tight_layout()
+
+    SaveSnapNumber = str(snapNumber).zfill(4)
+    savePath = savePath + f"Projection_Plot_{int(SaveSnapNumber)}.pdf" #_binary-split
+
+    print(f" Save {savePath}")
+    plt.savefig(savePath, transparent=False)
+    plt.close()
+
+    print(f" ...done!")
+
+    return
 
 def phases_plot(
     simDict,
@@ -1041,189 +1295,187 @@ def phases_plot_volume(
     return
 
 if __name__ == "__main__":
-    # load in the subfind group files
-    snap_subfind = load_subfind(snapNumber, dir=loadpath)
-
-    snapGas = gadget_readsnap(
-        snapNumber,
-        loadpath,
-        hdf5=True,
-        loadonlytype=[0, 1, 4],
-        lazy_load=False,
-        # subfind=snap_subfind,
-    )
-
     rotation_matrix = None
-    snapGas.calc_sf_indizes(snap_subfind, halolist=[0])
-    if rotation_matrix is None:
-        rotation_matrix = snapGas.select_halo(snap_subfind, do_rotation=True)
-    else:
-        snapGas.select_halo(snap_subfind, do_rotation=False)
-        snapGas.rotateto(
-            rotation_matrix[0], dir2=rotation_matrix[1], dir3=rotation_matrix[2]
+    for snapNumber in snapRange:
+        print(f"[@{int(snapNumber)}]: Load subfind")
+        # load in the subfind group files
+        snap_subfind = load_subfind(snapNumber, dir=loadpath)
+
+        print(f"[@{int(snapNumber)}]: Load snapshot")
+        snapGas = gadget_readsnap(
+            snapNumber,
+            loadpath,
+            hdf5=True,
+            loadonlytype=[0, 1, 4],
+            lazy_load=False,
+            # subfind=snap_subfind,
+        )
+
+        print(f"[@{int(snapNumber)}]: Rotate and centre snapshot")
+        snapGas.calc_sf_indizes(snap_subfind, halolist=[0])
+        if rotation_matrix is None:
+            print(f"[@{int(snapNumber)}]: New rotation of snapshots")
+            rotation_matrix = snapGas.select_halo(snap_subfind, do_rotation=True)
+        else:
+            print(f"[@{int(snapNumber)}]: Existing rotation of snapshots")
+            snapGas.select_halo(snap_subfind, do_rotation=False)
+            snapGas.rotateto(
+                rotation_matrix[0], dir2=rotation_matrix[1], dir3=rotation_matrix[2]
+            )
+
+
+        print(
+            f"[@{int(snapNumber)}]: SnapShot loaded at RedShift z={snapGas.redshift:0.05e}"
         )
 
 
-    print(
-        f"[@{int(snapNumber)}]: SnapShot loaded at RedShift z={snapGas.redshift:0.05e}"
-    )
+        # --------------------------#
+        ##    Units Conversion    ##
+        # --------------------------#
 
-    # snapGas.calc_sf_indizes(snap_subfind, halolist=[0])
-    # snapGas.calc_sf_indizes(snap_subfind, halolist=[0])
+        # Convert Units
+        ## Make this a seperate function at some point??
+        snapGas.pos *= 1e3  # [kpc]
+        snapGas.vol *= 1e9  # [kpc^3]
+        snapGas.mass *= 1e10  # [Msol]
+        snapGas.hrgm *= 1e10  # [Msol]
 
+        snapGas.data["R"] = np.linalg.norm(snapGas.data["pos"], axis=1)
 
-    # snapGas.select_halo(snap_subfind, do_rotation=False)
-    # --------------------------#
-    ##    Units Conversion    ##
-    # --------------------------#
-
-    # Convert Units
-    ## Make this a seperate function at some point??
-    snapGas.pos *= 1e3  # [kpc]
-    snapGas.vol *= 1e9  # [kpc^3]
-    snapGas.mass *= 1e10  # [Msol]
-    snapGas.hrgm *= 1e10  # [Msol]
-
-    snapGas.data["R"] = np.linalg.norm(snapGas.data["pos"], axis=1)
-
-    print(
-        f"[@{int(snapNumber)}]: Select stars..."
-    )
-
-    whereWind = snapGas.data["age"] < 0.0
-
-    snapGas = remove_selection(
-        snapGas,
-        removalConditionMask = whereWind,
-        errorString = "Remove Wind from Gas",
-        DEBUG = DEBUG,
+        print(
+            f"[@{int(snapNumber)}]: Select stars..."
         )
 
+        whereWind = snapGas.data["age"] < 0.0
 
-    Rvir = (snap_subfind.data["frc2"] * 1e3)[int(0)]
-
-    rmax = 175.0
-    boxmax = rmax
-    box = [boxmax, boxmax, boxmax]
-
-    # Calculate New Parameters and Load into memory others we want to track
-    snapGas = calculate_tracked_parameters(
-        snapGas,
-        oc.elements,
-        oc.elements_Z,
-        oc.elements_mass,
-        oc.elements_solar,
-        oc.Zsolar,
-        oc.omegabaryon0,
-        snapNumber,
-        logParameters = logParameters,
-        paramsOfInterest=["T","rho_rhomean","n_H","gz","tcool","theat"],
-        mappingBool=True,
-        box=box,
-        numthreads=numthreads,
-        verbose = False,
-    )
+        snapGas = remove_selection(
+            snapGas,
+            removalConditionMask = whereWind,
+            errorString = "Remove Wind from Gas",
+            DEBUG = DEBUG,
+            )
 
 
-    whereDM = snapGas.data["type"] == 1
+        Rvir = (snap_subfind.data["frc2"] * 1e3)[int(0)]
 
-    snapGas = remove_selection(
-        snapGas,
-        removalConditionMask = whereDM,
-        errorString = "Remove DM from Gas",
-        DEBUG = DEBUG,
+        rmax = 175.0
+        boxmax = rmax
+        box = [boxmax, boxmax, boxmax]
+
+        # Calculate New Parameters and Load into memory others we want to track
+        snapGas = calculate_tracked_parameters(
+            snapGas,
+            oc.elements,
+            oc.elements_Z,
+            oc.elements_mass,
+            oc.elements_solar,
+            oc.Zsolar,
+            oc.omegabaryon0,
+            snapNumber,
+            logParameters = logParameters,
+            paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","theat"],
+            mappingBool=True,
+            box=box,
+            numthreads=numthreads,
+            verbose = False,
         )
 
-    whereStars = snapGas.data["type"] == 4
-    snapGas = remove_selection(
-        snapGas,
-        removalConditionMask = whereStars,
-        errorString = "Remove Stars from Gas",
-        DEBUG = DEBUG
+        print(
+            f"[@{int(snapNumber)}]: Remove dark matter..."
         )
 
-    # Redshift
-    redshift = snapGas.redshift  # z
-    aConst = 1.0 / (1.0 + redshift)  # [/]
+        whereDM = snapGas.data["type"] == 1
 
-    # # Get lookback time in Gyrs
-    # # [0] to remove from numpy array for purposes of plot title
-    # lookback = snapGas.cosmology_get_lookback_time_from_a(np.array([aConst]))[
-    #     0
-    # ]  # [Gyrs]
-    #
-    # snapGas.data["Redshift"] = np.array([redshift])
-    # snapGas.data["Lookback"] = np.array([lookback])
-    # snapGas.data["Snap"] = np.array([snapNumber])
-    # snapGas.data["Rvir"] = np.array([Rvir])
+        snapGas = remove_selection(
+            snapGas,
+            removalConditionMask = whereDM,
+            errorString = "Remove DM from Gas",
+            DEBUG = DEBUG,
+            )
 
-    print(
-        f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
-    )
-
-    print(
-        f"[@{int(snapNumber)}]: Finishing process..."
-    )
-
-    print(
-        f"[@{int(snapNumber)}]: Slice plot"
-    )
-
-    plot_slices(snapGas,
-        snapNumber,
-        boxsize=Rvir*2.0*1.40
-    )
-
-    print(
-        f"[@{int(snapNumber)}]: Slice plot Quad"
-    )
-
-    plot_slices_quad(snapGas,
-        snapNumber,
-        boxsize=Rvir*2.0*1.40
-    )
+        whereStars = snapGas.data["type"] == 4
+        snapGas = remove_selection(
+            snapGas,
+            removalConditionMask = whereStars,
+            errorString = "Remove Stars from Gas",
+            DEBUG = DEBUG
+            )
 
 
-    whereOutsideVirial = snapGas.data["R"] > Rvir*1.5
-
-    snapGas = remove_selection(
-        snapGas,
-        removalConditionMask = whereOutsideVirial,
-        errorString = "Remove Outside Virial from Gas",
-        DEBUG = DEBUG,
+        print(
+            f"[@{int(snapNumber)}]: Slice plot"
         )
 
-    # Make normal dictionary form of snapGas
-    out = {}
-    for key, value in snapGas.data.items():
-        if value is not None:
-            out.update({key: copy.deepcopy(value)})
+        plot_slices(snapGas,
+            snapNumber,
+            boxsize=Rvir*2.0*1.40
+        )
+
+        print(
+            f"[@{int(snapNumber)}]: Slice plot Quad"
+        )
+
+        plot_slices_quad(snapGas,
+            snapNumber,
+            boxsize=Rvir*2.0*1.40
+        )
+
+        print(
+            f"[@{int(snapNumber)}]: Projection plot"
+        )
+
+        plot_projections(snapGas,
+            snapNumber,
+            boxsize=Rvir*2.0*1.40
+        )
+
+        print(
+            f"[@{int(snapNumber)}]: Remove beyond Virial Radius..."
+        )
+
+        whereOutsideVirial = snapGas.data["R"] > Rvir*1.5
+
+        snaptmp = remove_selection(
+            snapGas,
+            removalConditionMask = whereOutsideVirial,
+            errorString = "Remove Outside Virial from Gas",
+            DEBUG = DEBUG,
+            )
+
+        print(
+            f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
+        )
+        # Make normal dictionary form of snapGas
+        out = {}
+        for key, value in snaptmp.data.items():
+            if value is not None:
+                out.update({key: copy.deepcopy(value)})
 
 
-    print(
-        f"[@{int(snapNumber)}]: Phases plot"
-    )
+        print(
+            f"[@{int(snapNumber)}]: Phases plot"
+        )
 
-    phases_plot(
-        out,
-        ylabel,
-        xlimDict,
-        logParameters,
-        weightKeys = ["mass","n_H","vol","gz","tcool","theat"]
-    )
+        phases_plot(
+            out,
+            ylabel,
+            xlimDict,
+            logParameters,
+            weightKeys = ["mass","n_H","vol","gz","tcool","theat"]
+        )
 
-    print(
-        f"[@{int(snapNumber)}]: Phases plot volume"
-    )
+        print(
+            f"[@{int(snapNumber)}]: Phases plot volume"
+        )
 
-    phases_plot_volume(
-        out,
-        ylabel,
-        xlimDict,
-        logParameters,
-        weightKeys = ["mass","n_H","vol","gz","tcool","theat"]
-    )
+        phases_plot_volume(
+            out,
+            ylabel,
+            xlimDict,
+            logParameters,
+            weightKeys = ["mass","n_H","vol","gz","tcool","theat"]
+        )
 
-    print(
-        f"[@{int(snapNumber)}]: Done"
-    )
+        print(
+            f"[@{int(snapNumber)}]: Done"
+        )
