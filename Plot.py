@@ -22,7 +22,7 @@ import os
 
 snapStart = 100
 snapEnd = 109
-loadpath = "/home/universe/c1838736/Auriga/level5_cgm/h5_standard/output/"
+loadpath = "/home/universe/c1838736/Auriga/level5_cgm/h5_hybrid-dev/output/"
 numthreads = 8
 
 snapRange = [
@@ -74,9 +74,9 @@ ylabel = {
 
 xlimDict = {
     "R": {"xmin": 0.0, "xmax": 175.0},
-    # "mass": {"xmin": 5.0, "xmax": 9.0},
+    "mass": {"xmin": 4.0, "xmax": 9.0},
     "L": {"xmin": 3.0, "xmax": 4.5},
-    "T": {"xmin": 3.75, "xmax": 6.5},
+    "T": {"xmin": 3.75, "xmax": 7.0},
     "n_H": {"xmin": -5.5, "xmax": -0.5},
     "B": {"xmin": -2.5, "xmax": 1.0},
     "vrad": {"xmin": -150.0, "xmax": 150.0},
@@ -87,7 +87,7 @@ xlimDict = {
     "P_magnetic": {"xmin": -2.0, "xmax": 4.5},
     "P_kinetic": {"xmin": 0.0, "xmax": 6.0},
     "P_tot": {"xmin": -1.0, "xmax": 7.0},
-    "Pthermal_Pmagnetic": {"xmin": -1.5, "xmax": 3.0},
+    "Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 10.0},
     "tcool": {"xmin": -3.5, "xmax": 2.0},
     "theat": {"xmin": -4.0, "xmax": 4.0},
     "tff": {"xmin": -1.5, "xmax": 0.75},
@@ -95,9 +95,11 @@ xlimDict = {
     "rho_rhomean": {"xmin": 1.5, "xmax": 6.0},
     "dens": {"xmin": -30.0, "xmax": -22.0},
     "ndens": {"xmin": -6.0, "xmax": 2.0},
+    "rho_rhomean": {"xmin": 0.25, "xmax": 6.5},
+    "vol": {},#{"xmin": 0.5**4, "xmax": 4.0**4}
 }
 
-logParameters = ["dens","ndens","rho_rhomean","csound","T","n_H","B","gz","L","P_thermal","P_magnetic","P_kinetic","P_tot","Pthermal_Pmagnetic", "P_CR", "PCR_Pthermal","gah","Grad_T","Grad_n_H","Grad_bfld","Grad_P_CR","tcool","theat","tcross","tff","tcool_tff","mass","gima"]
+logParameters = ["dens","ndens","rho_rhomean","csound","T","n_H","B","gz","L","P_thermal","P_magnetic","P_kinetic","P_tot","Pthermal_Pmagnetic", "P_CR", "PCR_Pthermal","gah","Grad_T","Grad_n_H","Grad_bfld","Grad_P_CR","tcool","theat","tcross","tff","tcool_tff","mass","gima","vol"]
 
 
 for entry in logParameters:
@@ -918,13 +920,16 @@ def plot_projections(snapGas,
 
     return
 
-def phases_plot(
+
+def hist_plot_xyz(
     simDict,
     ylabel,
     xlimDict,
     logParameters,
-    weightKeys=["mass",
-                ],
+    yParams = ["T"],
+    xParams = ["rho_rhomean","R"],
+    weightKeys = ["mass","vol"],
+    axisLimsBool = True,
     fontsize=13,
     fontsizeTitle=14,
     titleBool=True,
@@ -944,12 +949,6 @@ def phases_plot(
 
     zlimDict = copy.deepcopy(xlimDict)
 
-    zlimDict.update({"rho_rhomean": {"xmin": 0.25, "xmax": 6.5}})
-    zlimDict.update({"T": {"xmin": 3.75, "xmax": 7.0}})
-    zlimDict.update({"tcool_tff": {"xmin": -2.5, "xmax": 2.0}})
-    zlimDict.update({"gz": {"xmin": -1.5, "xmax": 0.75}})
-    zlimDict.update({"Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 10.0}})
-    zlimDict.update({"vol": {"xmin": (1./8.0), "xmax": (2.0)**4 }})
 
     savePath = f"./Plots/Phases/"
     tmp = "./"
@@ -966,337 +965,268 @@ def phases_plot(
     #               PLOTTING
     #
     # ------------------------------------------------------------------------------#
-    for weightKey in weightKeys:
-        print("\n" + f"Starting weightKey {weightKey}")
+    for yParam in yParams:
+        print("\n"+"-----")
+        print(f"Starting yParam {yParam}")
+        for xParam in xParams:
+            print("\n"+f"Starting xParam {xParam}")
+            for weightKey in weightKeys:
+                print("\n"+f"Starting weightKey {weightKey}")
 
-        zmin = zlimDict[weightKey]["xmin"]
-        zmax = zlimDict[weightKey]["xmax"]
+                if weightKey == xParam:
+                    print("\n" + f"WeightKey same as xParam! Skipping...")
+                    skipBool = True
+                    continue
 
-        fig, ax = plt.subplots(
-            nrows=1,
-            ncols=1,
-            figsize=(xsize, ysize),
-            dpi=DPI,
-            sharey=True,
-            sharex=True,
-        )
+                if weightKey == yParam:
+                    print("\n" + f"WeightKey same as yParam! Skipping...")
+                    skipBool = True
+                    continue
 
-        currentAx = ax
+                if xParam == yParam:
+                    print("\n" + f"yParam same as xParam! Skipping...")
+                    skipBool = True
+                    continue
 
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-        #   Figure 1: Full Cells Data
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-        xdataCells = (np.log10(
-            simDict["rho_rhomean"]) #simDict["vol"]
-        )
-        ydataCells = np.log10(simDict["T"])
-        massCells = simDict["mass"]
-        try:
-            weightDataCells = (
-                simDict[weightKey] * massCells
-            )
-            skipBool = False
-        except:
-            print(
-                f"Variable {weightKey} not found. Skipping plot..."
-            )
-            skipBool = True
-            continue
+                if np.all(np.isin(np.array(["tcool","theat"]),np.array([xParam,yParam,weightKey]))) == True:
+                    print("\n" + f"tcool and theat aren't compatible! Skipping...")
+                    skipBool = True
+                    continue
 
-        if weightKey == "mass":
-            finalHistCells, xedgeCells, yedgeCells = np.histogram2d(
-                xdataCells, ydataCells, bins=Nbins, weights=massCells
-            )
-        else:
-            mhistCells, _, _ = np.histogram2d(
-                xdataCells, ydataCells, bins=Nbins, weights=massCells
-            )
-            histCells, xedgeCells, yedgeCells = np.histogram2d(
-                xdataCells, ydataCells, bins=Nbins, weights=weightDataCells
-            )
+                if axisLimsBool:
+                    try:
+                        zmin = zlimDict[weightKey]["xmin"]
+                        zmax = zlimDict[weightKey]["xmax"]
+                        zlimBool = True
+                    except:
+                        zlimBool = False
 
-            finalHistCells = histCells / mhistCells
+                    try:
+                        tmp = zlimDict[xParam]["xmin"]
+                        tmp = zlimDict[xParam]["xmax"]
+                        xlimBool = True
+                    except:
+                        xlimBool = False
 
-        finalHistCells[finalHistCells == 0.0] = np.nan
-        try:
-            if weightKey in logParameters:
-                finalHistCells = np.log10(finalHistCells)
-        except:
-            print(f"Variable {weightKey} not found. Skipping plot...")
-            skipBool = True
-            continue
-        finalHistCells = finalHistCells.T
+                    try:
+                        tmp = zlimDict[yParam]["xmin"]
+                        tmp = zlimDict[yParam]["xmax"]
+                        ylimBool = True
+                    except:
+                        ylimBool = False
+                else:
+                    zlimBool = False
+                    xlimBool = False
+                    ylimBool = False
 
-        xcells, ycells = np.meshgrid(xedgeCells, yedgeCells)
 
-        img1 = currentAx.pcolormesh(
-            xcells,
-            ycells,
-            finalHistCells,
-            cmap=colourmapMain,
-            vmin=zmin,
-            vmax=zmax,
-            rasterized=True,
-        )
-        #
-        # img1 = currentAx.imshow(finalHistCells,cmap=colourmapMain,vmin=xmin,vmax=xmax \
-        # ,extent=[np.min(xedgeCells),np.max(xedgeCells),np.min(yedgeCells),np.max(yedgeCells)],origin='lower')
-
-        currentAx.set_xlabel(
-            r"Log10 Density ($ \rho / \langle \rho \rangle $)",#r"Volume (kpc$^{3}$)",#
-            fontsize=fontsize,
-        )
-        currentAx.set_ylabel(
-            "Log10 Temperatures (K)", fontsize=fontsize)
-
-        currentAx.set_ylim(
-            zlimDict["T"]["xmin"], zlimDict["T"]["xmax"])
-        currentAx.set_xlim(#0.25,17.5)
-            zlimDict["rho_rhomean"]["xmin"], zlimDict["rho_rhomean"]["xmax"])
-        currentAx.tick_params(
-            axis="both", which="both", labelsize=fontsize)
-
-        currentAx.set_aspect("auto")
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-        #   Figure: Finishing up
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-        if skipBool == True:
-            try:
-                tmp = finalHistCells
-            except:
-                print(
-                    f"Variable {weightKey} not found. Skipping plot..."
+                fig, ax = plt.subplots(
+                    nrows=1,
+                    ncols=1,
+                    figsize=(xsize, ysize),
+                    dpi=DPI,
+                    sharey=True,
+                    sharex=True,
                 )
-                continue
-            else:
-                pass
 
-            #left, bottom, width, height
-            # x0,    y0,  delta x, delta y
-        cax1 = fig.add_axes([0.925, 0.10, 0.05, 0.80])
+                currentAx = ax
 
-        fig.colorbar(img1, cax=cax1, ax=ax, orientation="vertical", pad=0.05).set_label(
-            label=ylabel[weightKey], size=fontsize
-        )
-        cax1.yaxis.set_ticks_position("left")
-        cax1.yaxis.set_label_position("left")
-        cax1.yaxis.label.set_color("black")
-        cax1.tick_params(axis="y", colors="black", labelsize=fontsize)
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+                #   Figure 1: Full Cells Data
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+                try:
+                    if xParam in logParameters:
+                        xx = np.log10(simDict[xParam])
+                    else:
+                        xx = simDict[xParam]
+                except:
+                    print("\n"+f"xParam of {xParam} data not found! Skipping...")
+                    skipBool = True
+                    continue
 
-        if titleBool is True:
-            fig.suptitle(
-                f"Temperature Density Diagram, weighted by {weightKey}",
-                fontsize=fontsizeTitle,
-            )
+                try:
+                    if yParam in logParameters:
+                        yy = np.log10(simDict[yParam])
+                    else:
+                        yy = simDict[yParam]
+                except:
+                    print("\n"+f"yParam of {yParam} data not found! Skipping...")
+                    skipBool = True
+                    continue
 
-        if titleBool is True:
-            plt.subplots_adjust(top=0.875, right=0.8, hspace=0.3, wspace=0.3)
-        else:
-            plt.subplots_adjust(right=0.8, hspace=0.3, wspace=0.3)
+                try:
+                    xmin, xmax =(
+                        zlimDict[xParam]["xmin"], zlimDict[xParam]["xmax"]
+                    )
+                except:
+                    xmin, xmax, = ( np.nanmin(xx), np.nanmax(xx))
 
-        SaveSnapNumber = str(snapNumber).zfill(4)
+                try:
+                    ymin, ymax =(
+                        zlimDict[yParam]["xmin"], zlimDict[yParam]["xmax"]
+                    )
+                except:
+                    ymin, ymax, = ( np.nanmin(yy), np.nanmax(yy))
 
-        opslaan = (
-            savePath
-            + f"Phases-Plot-{weightKey}_{int(SaveSnapNumber)}.pdf"
-        )
-        plt.savefig(opslaan, dpi=DPI, transparent=False)
-        print(opslaan)
+                xdataCells = xx[np.where((xx>=xmin)&(xx<=xmax)&(yy>=ymin)&(yy<=ymax)&(np.isfinite(xx)==True)&(np.isfinite(yy)==True)) [0]]
+                ydataCells = yy[np.where((xx>=xmin)&(xx<=xmax)&(yy>=ymin)&(yy<=ymax)&(np.isfinite(xx)==True)&(np.isfinite(yy)==True))[0]]
+
+                massCells = ( simDict["mass"][
+                    np.where((xx>=xmin)&(xx<=xmax)
+                    &(yy>=ymin)&(yy<=ymax)&
+                    (np.isfinite(xx)==True)&(np.isfinite(yy)==True))
+                    [0]]
+                )
+                try:
+                    weightDataCells = (
+                        simDict[weightKey][
+                        np.where((xx>=xmin)&(xx<=xmax)
+                        &(yy>=ymin)&(yy<=ymax)&(np.isfinite(xx)==True)&(np.isfinite(yy)==True))
+                        [0]] * massCells
+                    )
+                    skipBool = False
+                except:
+                    print(
+                        f"Variable {weightKey} not found. Skipping plot..."
+                    )
+                    skipBool = True
+                    continue
+
+                if weightKey == "mass":
+                    finalHistCells, xedgeCells, yedgeCells = np.histogram2d(
+                        xdataCells, ydataCells, bins=Nbins, weights=massCells
+                    )
+                else:
+                    mhistCells, _, _ = np.histogram2d(
+                        xdataCells, ydataCells, bins=Nbins, weights=massCells
+                    )
+                    histCells, xedgeCells, yedgeCells = np.histogram2d(
+                        xdataCells, ydataCells, bins=Nbins, weights=weightDataCells
+                    )
+
+                    finalHistCells = histCells / mhistCells
+
+                finalHistCells[finalHistCells == 0.0] = np.nan
+                try:
+                    if weightKey in logParameters:
+                        finalHistCells = np.log10(finalHistCells)
+                except:
+                    print(f"Variable {weightKey} not found. Skipping plot...")
+                    skipBool = True
+                    continue
+                finalHistCells = finalHistCells.T
+
+                xcells, ycells = np.meshgrid(xedgeCells, yedgeCells)
+
+                if zlimBool is True:
+                    img1 = currentAx.pcolormesh(
+                        xcells,
+                        ycells,
+                        finalHistCells,
+                        cmap=colourmapMain,
+                        vmin=zmin,
+                        vmax=zmax,
+                        rasterized=True,
+                    )
+                else:
+                    img1 = currentAx.pcolormesh(
+                        xcells,
+                        ycells,
+                        finalHistCells,
+                        cmap=colourmapMain,
+                        rasterized=True,
+                    )
+                #
+                # img1 = currentAx.imshow(finalHistCells,cmap=colourmapMain,vmin=xmin,vmax=xmax \
+                # ,extent=[np.min(xedgeCells),np.max(xedgeCells),np.min(yedgeCells),np.max(yedgeCells)],origin='lower')
+
+                currentAx.set_xlabel(
+                    ylabel[xParam],
+                    fontsize=fontsize,
+                )
+                currentAx.set_ylabel(
+                    ylabel[yParam],
+                    fontsize=fontsize
+                )
+
+                if ylimBool is True:
+                    currentAx.set_ylim(
+                        zlimDict[yParam]["xmin"], zlimDict[yParam]["xmax"])
+                else:
+                    currentAx.set_ylim(np.nanmin(yedgeCells),np.nanmax(yedgeCells))
+
+                if xlimBool is True:
+                    if xParam == "vol":
+                        currentAx.set_xlim(zlimDict[xParam]["xmax"],zlimDict[xParam]["xmin"])
+                    else:
+                        currentAx.set_xlim(zlimDict[xParam]["xmin"],zlimDict[xParam]["xmax"])
+                else:
+                    if xParam == "vol":
+                        currentAx.set_xlim(np.nanmax(xedgeCells),np.nanmin(xedgeCells))
+                    else:
+                        currentAx.set_xlim(np.nanmin(xedgeCells),np.nanmax(xedgeCells))
+                    # zlimDict["rho_rhomean"]["xmin"], zlimDict["rho_rhomean"]["xmax"])
+                currentAx.tick_params(
+                    axis="both", which="both", labelsize=fontsize)
+
+                currentAx.set_aspect("auto")
+
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+                #   Figure: Finishing up
+                # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
+                if skipBool == True:
+                    try:
+                        tmp = finalHistCells
+                    except:
+                        print(
+                            f"Variable {weightKey} not found. Skipping plot..."
+                        )
+                        continue
+                    else:
+                        pass
+
+                    #left, bottom, width, height
+                    # x0,    y0,  delta x, delta y
+                cax1 = fig.add_axes([0.925, 0.10, 0.05, 0.80])
+
+                fig.colorbar(img1, cax=cax1, ax=ax, orientation="vertical", pad=0.05).set_label(
+                    label=ylabel[weightKey], size=fontsize
+                )
+                cax1.yaxis.set_ticks_position("left")
+                cax1.yaxis.set_label_position("left")
+                cax1.yaxis.label.set_color("black")
+                cax1.tick_params(axis="y", colors="black", labelsize=fontsize)
+
+                if titleBool is True:
+                    fig.suptitle(
+                        f"{yParam} vs. {xParam} Diagram, weighted by {weightKey}",
+                        fontsize=fontsizeTitle,
+                    )
+
+                if titleBool is True:
+                    plt.subplots_adjust(top=0.875, right=0.8, hspace=0.3, wspace=0.3)
+                else:
+                    plt.subplots_adjust(right=0.8, hspace=0.3, wspace=0.3)
+
+                SaveSnapNumber = str(snapNumber).zfill(4)
+
+                opslaan = (
+                    savePath
+                    + f"Phases-Plot__{yParam}-vs-{xParam}_weighted-by-{weightKey}_{int(SaveSnapNumber)}.pdf"
+                )
+                plt.savefig(opslaan, dpi=DPI, transparent=False)
+                print(opslaan)
 
     return
 
-def phases_plot_volume(
-    simDict,
-    ylabel,
-    xlimDict,
-    logParameters,
-    weightKeys=["mass",
-                ],
-    fontsize=13,
-    fontsizeTitle=14,
-    titleBool=True,
-    DPI=200,
-    xsize=8.0,
-    ysize=8.0,
-    colourmapMain="plasma",
-    Nbins=250,
-):
 
-    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-    try:
-        tmp = xlimDict["mass"]
-    except:
-        xlimDict.update({"mass": {"xmin": 4.0, "xmax": 9.0}})
-
-    zlimDict = copy.deepcopy(xlimDict)
-
-    zlimDict.update({"rho_rhomean": {"xmin": 0.25, "xmax": 6.5}})
-    zlimDict.update({"T": {"xmin": 3.75, "xmax": 7.0}})
-    zlimDict.update({"tcool_tff": {"xmin": -2.5, "xmax": 2.0}})
-    zlimDict.update({"gz": {"xmin": -1.5, "xmax": 0.75}})
-    zlimDict.update({"Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 10.0}})
-    zlimDict.update({"vol": {"xmin": (1./8.0), "xmax": (2.0)**4 }})
-
-    savePath = f"./Plots/Phases/"
-    tmp = "./"
-
-    for savePathChunk in savePath.split("/")[1:-1]:
-        tmp += savePathChunk + "/"
-        try:
-            os.mkdir(tmp)
-        except:
-            pass
-        else:
-            pass
-    # ------------------------------------------------------------------------------#
-    #               PLOTTING
-    #
-    # ------------------------------------------------------------------------------#
-    for weightKey in weightKeys:
-        print("\n" + f"Starting weightKey {weightKey}")
-
-        zmin = zlimDict[weightKey]["xmin"]
-        zmax = zlimDict[weightKey]["xmax"]
-
-        fig, ax = plt.subplots(
-            nrows=1,
-            ncols=1,
-            figsize=(xsize, ysize),
-            dpi=DPI,
-            sharey=True,
-            sharex=True,
-        )
-
-        currentAx = ax
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-        #   Figure 1: Full Cells Data
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-        xdataCells = (
-            np.log10(simDict["vol"])#np.log10(simDict["rho_rhomean"])
-        )
-        ydataCells = np.log10(simDict["T"])
-        massCells = simDict["mass"]
-        try:
-            weightDataCells = (
-                simDict[weightKey] * massCells
-            )
-            skipBool = False
-        except:
-            print(
-                f"Variable {weightKey} not found. Skipping plot..."
-            )
-            skipBool = True
-            continue
-
-        if weightKey == "mass":
-            finalHistCells, xedgeCells, yedgeCells = np.histogram2d(
-                xdataCells, ydataCells, bins=Nbins, weights=massCells
-            )
-        else:
-            mhistCells, _, _ = np.histogram2d(
-                xdataCells, ydataCells, bins=Nbins, weights=massCells
-            )
-            histCells, xedgeCells, yedgeCells = np.histogram2d(
-                xdataCells, ydataCells, bins=Nbins, weights=weightDataCells
-            )
-
-            finalHistCells = histCells / mhistCells
-
-        finalHistCells[finalHistCells == 0.0] = np.nan
-        try:
-            if weightKey in logParameters:
-                finalHistCells = np.log10(finalHistCells)
-        except:
-            print(f"Variable {weightKey} not found. Skipping plot...")
-            skipBool = True
-            continue
-        finalHistCells = finalHistCells.T
-
-        xcells, ycells = np.meshgrid(xedgeCells, yedgeCells)
-
-        img1 = currentAx.pcolormesh(
-            xcells,
-            ycells,
-            finalHistCells,
-            cmap=colourmapMain,
-            vmin=zmin,
-            vmax=zmax,
-            rasterized=True,
-        )
-        #
-        # img1 = currentAx.imshow(finalHistCells,cmap=colourmapMain,vmin=xmin,vmax=xmax \
-        # ,extent=[np.min(xedgeCells),np.max(xedgeCells),np.min(yedgeCells),np.max(yedgeCells)],origin='lower')
-
-        currentAx.set_xlabel(
-            r"Log10 Volume (kpc$^{3}$)",# r"Log10 Density ($ \rho / \langle \rho \rangle $)",#
-            fontsize=fontsize,
-        )
-        currentAx.set_ylabel(
-            "Log10 Temperatures (K)", fontsize=fontsize)
-
-        currentAx.set_ylim(
-            zlimDict["T"]["xmin"], zlimDict["T"]["xmax"])
-        currentAx.set_xlim(np.nanmax(xedgeCells),np.nanmin(xedgeCells))
-            # zlimDict["rho_rhomean"]["xmin"], zlimDict["rho_rhomean"]["xmax"])
-        currentAx.tick_params(
-            axis="both", which="both", labelsize=fontsize)
-
-        currentAx.set_aspect("auto")
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-        #   Figure: Finishing up
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
-        if skipBool == True:
-            try:
-                tmp = finalHistCells
-            except:
-                print(
-                    f"Variable {weightKey} not found. Skipping plot..."
-                )
-                continue
-            else:
-                pass
-
-            #left, bottom, width, height
-            # x0,    y0,  delta x, delta y
-        cax1 = fig.add_axes([0.925, 0.10, 0.05, 0.80])
-
-        fig.colorbar(img1, cax=cax1, ax=ax, orientation="vertical", pad=0.05).set_label(
-            label=ylabel[weightKey], size=fontsize
-        )
-        cax1.yaxis.set_ticks_position("left")
-        cax1.yaxis.set_label_position("left")
-        cax1.yaxis.label.set_color("black")
-        cax1.tick_params(axis="y", colors="black", labelsize=fontsize)
-
-        if titleBool is True:
-            fig.suptitle(
-                f"Temperature Density Diagram, weighted by {weightKey}",
-                fontsize=fontsizeTitle,
-            )
-
-        if titleBool is True:
-            plt.subplots_adjust(top=0.875, right=0.8, hspace=0.3, wspace=0.3)
-        else:
-            plt.subplots_adjust(right=0.8, hspace=0.3, wspace=0.3)
-
-        SaveSnapNumber = str(snapNumber).zfill(4)
-
-        opslaan = (
-            savePath
-            + f"Phases-Plot-{weightKey}_{int(SaveSnapNumber)}_volume.pdf"
-        )
-        plt.savefig(opslaan, dpi=DPI, transparent=False)
-        print(opslaan)
-
-    return
 
 if __name__ == "__main__":
+    print(loadpath)
     rotation_matrix = None
     for snapNumber in snapRange:
+        # snapNumber = 100
         print(f"[@{int(snapNumber)}]: Load subfind")
         # load in the subfind group files
         snap_subfind = load_subfind(snapNumber, dir=loadpath)
@@ -1372,7 +1302,7 @@ if __name__ == "__main__":
             oc.Zsolar,
             oc.omegabaryon0,
             snapNumber,
-            logParameters = logParameters,
+            # logParameters = logParameters,
             paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","theat"],
             mappingBool=True,
             box=box,
@@ -1393,6 +1323,10 @@ if __name__ == "__main__":
             DEBUG = DEBUG,
             )
 
+
+        print(
+            f"[@{int(snapNumber)}]: Remove stars..."
+        )
         whereStars = snapGas.data["type"] == 4
         snapGas = remove_selection(
             snapGas,
@@ -1401,39 +1335,41 @@ if __name__ == "__main__":
             DEBUG = DEBUG
             )
 
-
-        print(
-            f"[@{int(snapNumber)}]: Slice plot"
-        )
-
-        plot_slices(snapGas,
-            snapNumber,
-            boxsize=Rvir*2.0*1.40
-        )
-
-        print(
-            f"[@{int(snapNumber)}]: Slice plot Quad"
-        )
-
-        plot_slices_quad(snapGas,
-            snapNumber,
-            boxsize=Rvir*2.0*1.40
-        )
-
-        print(
-            f"[@{int(snapNumber)}]: Projection plot"
-        )
-
-        plot_projections(snapGas,
-            snapNumber,
-            boxsize=Rvir*2.0*1.40
-        )
+        #
+        # print(
+        #     f"[@{int(snapNumber)}]: Slice plot"
+        # )
+        #
+        # plot_slices(snapGas,
+        #     snapNumber,
+        #     boxsize=Rvir*2.0*1.40
+        # )
+        #
+        # print(
+        #     f"[@{int(snapNumber)}]: Slice plot Quad"
+        # )
+        #
+        # plot_slices_quad(snapGas,
+        #     snapNumber,
+        #     boxsize=Rvir*2.0*1.40
+        # )
+        #
+        # print(
+        #     f"[@{int(snapNumber)}]: Projection plot"
+        # )
+        #
+        # plot_projections(snapGas,
+        #     snapNumber,
+        #     boxsize=Rvir*2.0*1.40
+        # )
 
         print(
             f"[@{int(snapNumber)}]: Remove beyond Virial Radius..."
         )
 
-        whereOutsideVirial = snapGas.data["R"] > Rvir*1.5
+        whereOutsideVirial = snapGas.data["R"] > Rvir
+
+        xlimDict["R"]["xmax"] = Rvir
 
         snaptmp = remove_selection(
             snapGas,
@@ -1453,29 +1389,20 @@ if __name__ == "__main__":
 
 
         print(
-            f"[@{int(snapNumber)}]: Phases plot"
+            f"[@{int(snapNumber)}]: Hist_plot_xyz plot"
         )
 
-        phases_plot(
+        hist_plot_xyz(
             out,
             ylabel,
             xlimDict,
             logParameters,
-            weightKeys = ["mass","n_H","vol","gz","tcool","theat"]
-        )
-
-        print(
-            f"[@{int(snapNumber)}]: Phases plot volume"
-        )
-
-        phases_plot_volume(
-            out,
-            ylabel,
-            xlimDict,
-            logParameters,
+            yParams = ["T"],
+            xParams = ["rho_rhomean","R","vol","tcool","theat"],
             weightKeys = ["mass","n_H","vol","gz","tcool","theat"]
         )
 
         print(
             f"[@{int(snapNumber)}]: Done"
         )
+    print(loadpath)
