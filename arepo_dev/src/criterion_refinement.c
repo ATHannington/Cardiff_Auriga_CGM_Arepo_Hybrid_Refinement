@@ -401,49 +401,86 @@ int refine_criterion_default(int i)
                 return 1;
               }
 #endif
+
 #ifdef REFINEMENT_CGM
  {
   #ifdef REFINEMENT_HYBRID
   {
    if(SphP[i].HighResMassCGM > HIGHRESMASSFAC * P[i].Mass)
    {
-    #ifdef GRACKLE
-          double temp_in_K = get_temp_individual_cell_grackle(i);
-    #else
-          double meanweight = 4.0 / (1. + 3. * HYDROGEN_MASSFRAC) * PROTONMASS;
-      #ifdef COOLING
-             meanweight = 4.0 / (1. + 3. * HYDROGEN_MASSFRAC + 4. * HYDROGEN_MASSFRAC * SphP[i].Ne) * PROTONMASS;
-      #endif
-    #endif
+     #ifdef GRACKLE
+           double temp_in_K = get_temp_individual_cell_grackle(i);
+     #else
+           double meanweight = 4.0 / (1. + 3. * HYDROGEN_MASSFRAC) * PROTONMASS;
+       #ifdef COOLING
+              meanweight = 4.0 / (1. + 3. * HYDROGEN_MASSFRAC + 4. * HYDROGEN_MASSFRAC * SphP[i].Ne) * PROTONMASS;
+       #endif
+     #endif
 
-    #ifdef VARIABLE_GAMMA
-          double temp_in_K =
-              (SphP[i].GammaE - 1.0) * SphP[i].Utherm / BOLTZMANN * All.UnitEnergy_in_cgs / All.UnitMass_in_g * meanweight;
-    #else
-          double temp_in_K = GAMMA_MINUS1 * SphP[i].Utherm / BOLTZMANN * All.UnitEnergy_in_cgs / All.UnitMass_in_g * meanweight;
-    #endif
+     #ifdef VARIABLE_GAMMA
+           double temp_in_K =
+               (SphP[i].GammaE - 1.0) * SphP[i].Utherm / BOLTZMANN * All.UnitEnergy_in_cgs / All.UnitMass_in_g * meanweight;
+     #else
+           double temp_in_K = GAMMA_MINUS1 * SphP[i].Utherm / BOLTZMANN * All.UnitEnergy_in_cgs / All.UnitMass_in_g * meanweight;
+     #endif
 
+     double variableTargetGasVolume = All.TargetGasVolume;
 
-    if(temp_in_K <= All.TargetForHybridRefinement)
-    {
-      if(SphP[i].Volume > 2.0 * All.TargetHybridGasVolume * All.cf_a3inv)
-      {
-        mpi_printf("Calculated temperature in criterion_refinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
-        mpi_printf("Cell Volume in criterion_refinement.c %e versus (less than temeperature) greater than target %e\n",SphP[i].Volume , (2.0 * All.TargetHybridGasVolume * All.cf_a3inv));
-        mpi_printf("Cell refined - met temp and vol fancy refine!\n");
-        return 1;
-      }
-    }
-    else
-    {
-      if(SphP[i].Volume > 2.0 * All.TargetGasVolume * All.cf_a3inv)
-      {
-        mpi_printf("Calculated temperature in criterion_refinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
-        mpi_printf("Cell Volume in criterion_refinement.c %e versus (greater than temeperature) greater than target %e\n",SphP[i].Volume , (2.0 * All.TargetGasVolume * All.cf_a3inv));
-        mpi_printf("Cell refined - met vol CGM refine!\n");
-        return 1;
-      }
-    }
+     if (temp_in_K >= All.TargetForHybridRefinementHigh)
+     {
+       // variableTargetGasVolume = All.TargetGasVolume;
+       // mpi_printf("\n");
+       // mpi_printf("REFINEMENT_HYBRID Refinement: CGM Gas volume! \n");
+       // mpi_printf("REFINEMENT_HYBRID Refinement: temp_in_K = %g K \n", temp_in_K);
+       // mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+     }
+     else if (temp_in_K <= All.TargetForHybridRefinementLow)
+     {
+       // variableTargetGasVolume = All.TargetHybridGasVolume;
+       // mpi_printf("\n");
+       // mpi_printf("REFINEMENT_HYBRID Refinement: Hybrid Gas volume! \n");
+       // mpi_printf("REFINEMENT_HYBRID Refinement: temp_in_K = %g K \n", temp_in_K);
+       // mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+     }
+     else
+     {
+
+       double logTargetDiff = log10(All.TargetForHybridRefinementHigh) - log10(All.TargetForHybridRefinementLow);
+
+       // equals 1 when at TargetForHybridRefinementLow
+       // equals 0 when at TargetForHybridRefinementHigh
+       double volFactor = (log10(All.TargetForHybridRefinementHigh) - log10(temp_in_K)) / (logTargetDiff);
+
+       if (volFactor <= 0.0)
+       {
+         variableTargetGasVolume = All.TargetGasVolume;
+       }
+       else if (volFactor >= 1.0)
+       {
+         variableTargetGasVolume = All.TargetHybridGasVolume;
+       }
+       else
+       {
+        // scale between TargetHybridGasVolume and TargetGasVolume
+        // by 0 when at TargetForHybridRefinementLow (volFactor = 1)
+        // and by 1 when at TargetForHybridRefinementHigh (volFactor = 0)
+
+        double targetFactor = (1.0 + (All.HybridVolumeDecreaseFactor - 1.0)*(1.0 - volFactor));
+
+        variableTargetGasVolume = All.TargetHybridGasVolume*targetFactor;
+
+        // mpi_printf("\n");
+        // mpi_printf("REFINEMENT_HYBRID Refinement: variable volume! \n");
+        // mpi_printf("REFINEMENT_HYBRID Refinement: temp_in_K = %g K \n", temp_in_K);
+        // mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+        // mpi_printf("REFINEMENT_HYBRID Refinement: volFactor = %g\n", volFactor);
+        // mpi_printf("REFINEMENT_HYBRID Refinement: targetFactor = %g\n", targetFactor);
+       }
+     }
+     if(SphP[i].Volume > 2.0 * variableTargetGasVolume * All.cf_a3inv)
+     {
+       return 1;
+     }
    }
   }
   #else
@@ -457,10 +494,6 @@ int refine_criterion_default(int i)
       }
   return 0; /* default is not to refine */
 }
-
-
-
-
 
 #ifdef BH_BASED_CGM_ZOOM
 /*! \brief Define the distance dependent target gas mass (interpolant) function.
@@ -654,7 +687,7 @@ int jeans_refinement_criteria(int i)
 
 int refine_criterion_mctr(int i)
 {
-  if(P[i].Type == 0)
+  if(P[i].Type == PTYPE_GAS)
     {
       double dx    = P[i].Pos[0] - boxHalf_X;
       double dy    = P[i].Pos[1] - boxHalf_Y;
@@ -1045,7 +1078,7 @@ void dm_particle_create_list(void)
   int i, j, nsrc, nimport, ngrp;
   for(i = 0, nsrc = 0; i < NumPart; i++)
     {
-      if(P[i].Type == 1)
+      if(P[i].Type == PTYPE_HALO)
         {
           DMPartList[nsrc].ID = P[i].ID;
 
@@ -1115,7 +1148,7 @@ void dm_particle_update_list(void)
   int i, j, nsrc, nimport, ngrp;
   for(i = 0, nsrc = 0; i < NumPart; i++)
     {
-      if(P[i].Type == 1)
+      if(P[i].Type == PTYPE_HALO)
         {
           DMPartList[nsrc].ID = P[i].ID;
 

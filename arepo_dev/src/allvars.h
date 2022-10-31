@@ -89,6 +89,23 @@
 #define VISCOSITY
 #endif
 
+#ifdef HIGHER_ORDER_FLUX_INTEGRATION
+#define MAX_NUMBER_TRIANGLES_PER_FACE 80
+#if (!defined(TWODIMS) && !defined(ONEDIMS) && !defined(VORONOI_MESH_KEEP_DT_AND_DTC))
+#error "HIGHER_ORDER_FLUX_INTEGRATION in 3D requires VORONOI_MESH_KEEP_DT_AND_DTC to construct triangles"
+#endif
+#ifdef ONEDIMS
+#error "HIGHER_ORDER_FLUX_INTEGRATION only works in 2d and 3d"
+#endif
+#if !defined(TWODIMS) && !defined(ONEDIMS) && HIGHER_ORDER_FLUX_INTEGRATION == 1
+#warning "in 3D HIGHER_ORDER_FLUX_INTEGRATION == 1 does not automatically improve accuracy but significantly makes the code slower"
+#endif
+#endif
+
+#ifndef SKIP_FLUX_OVER_FACE_BELOW_THRESHOLD
+#define SKIP_FLUX_OVER_FACE_BELOW_THRESHOLD 1.0e-5
+#endif
+
 /* restrictions on config option combinations */
 
 #if NSOFTTYPES + NSOFTTYPES_HYDRO >= 254
@@ -209,6 +226,15 @@
 #endif
 #ifdef MRT_NO_UV
 #error "BIERMANN_BATTERY and DURRIVE_BATTERY are incompatible with MRT_NO_UV, as they require an UV field"
+#endif
+#endif
+
+#ifdef SHEARING_BOX
+#ifdef MHD_POWELL
+#error "SHEARING_BOX is not compatible with Powell scheme, please use the Dedner scheme"
+#endif
+#if !defined(PMGRID) && defined(SELFGRAVITY)
+#error "SHEARING_BOX only works with TreePM or pure PM, but not Tree with Ewald summation"
 #endif
 #endif
 
@@ -419,6 +445,8 @@ extern struct bh_particle
 #define MPI_Sendrecv MPI_Sizelimited_Sendrecv
 #endif
 
+#define ARRAY_LEN(x) ((sizeof(x)) / (sizeof(x)[0]))
+
 #define TO_STR(x) #x
 #define MACRO_VALUE_TO_STR(x) TO_STR(x)
 
@@ -516,8 +544,8 @@ extern struct bh_particle
 #define myrealloc(p, n) realloc(p, n)
 #define myrealloc_movable(p, n) realloc(p, n)
 
-#define myfree(p) free(p)
-#define myfree_movable(p) free(p)
+#define myfree_without_null(p) free(p)
+#define myfree_movable_without_null(p) free(p)
 
 #define mynew(name, T, n) (T *)(malloc((n) * sizeof(T)))
 #define mynew_clear(name, T, n) (T *)(calloc(1, (n) * sizeof(T)))
@@ -537,8 +565,8 @@ extern struct bh_particle
 #define myrealloc(p, n) myrealloc_fullinfo(p, n, __func__, __FILE__, __LINE__)
 #define myrealloc_movable(p, n) myrealloc_movable_fullinfo(p, n, __func__, __FILE__, __LINE__)
 
-#define myfree(p) myfree_fullinfo(p, __func__, __FILE__, __LINE__)
-#define myfree_movable(p) myfree_movable_fullinfo(p, __func__, __FILE__, __LINE__)
+#define myfree_without_null(p) myfree_fullinfo(p, __func__, __FILE__, __LINE__)
+#define myfree_movable_without_null(p) myfree_movable_fullinfo(p, __func__, __FILE__, __LINE__)
 
 #define mynew(name, T, n) (T *)(mymalloc_fullinfo(name, (n) * sizeof(T), __func__, __FILE__, __LINE__, 0, NULL))
 #define mynew_clear(name, T, n) (T *)(mymalloc_fullinfo(name, (n) * sizeof(T), __func__, __FILE__, __LINE__, 1, NULL))
@@ -550,6 +578,21 @@ extern struct bh_particle
 #define myrenew_movable(addr, T, n) (T *)(myrealloc_movable_fullinfo(addr, (n) * sizeof(T), __func__, __FILE__, __LINE__))
 
 #endif
+
+#define myfree(p)             \
+  do                          \
+    {                         \
+      myfree_without_null(p); \
+      p = NULL;               \
+    }                         \
+  while(0)
+#define myfree_movable(p)             \
+  do                                  \
+    {                                 \
+      myfree_movable_without_null(p); \
+      p = NULL;                       \
+    }                                 \
+  while(0)
 
 #ifndef GRAVCOSTLEVELS
 #ifdef TGSET
@@ -713,7 +756,6 @@ extern hwloc_cpuset_t cpuset_thread[NUM_THREADS];
 #define COUNT_REFINE_HYBRID 0
 #endif
 
-
 #ifdef METALS
 #define COUNT_METALS 1
 #else
@@ -779,11 +821,9 @@ extern hwloc_cpuset_t cpuset_thread[NUM_THREADS];
 #endif
 
 #define MAXSCALARS                                                                                                         \
-  (COUNT_EOS + COUNT_MHD_TES + COUNT_REFINE + COUNT_METALS + \
-   COUNT_STELLAR_EVOLUTION + COUNT_PASSIVE_SCALARS + COUNT_RPS + \
-   COUNT_SGCHEM + COUNT_CR + COUNT_SGS_T + COUNT_GFM_RPROCESS + \
-   COUNT_REFINE_CGM + COUNT_REFINE_HYBRID + COUNT_MRT_IONS + \
-   COUNT_GRACKLE + COUNT_TURB_APPROX_MCS)
+  (COUNT_EOS + COUNT_MHD_TES + COUNT_REFINE + COUNT_METALS + COUNT_STELLAR_EVOLUTION + COUNT_PASSIVE_SCALARS + COUNT_RPS + \
+   COUNT_SGCHEM + COUNT_CR + COUNT_SGS_T + COUNT_GFM_RPROCESS + COUNT_REFINE_CGM + COUNT_MRT_IONS + COUNT_GRACKLE +        \
+   COUNT_TURB_APPROX_MCS)
 #endif
 
 #if defined(MAXSCALARS) && MAXSCALARS == 0
@@ -1530,7 +1570,6 @@ extern double opal_rhomax, opal_rhomin; /**< boundaries of eos table */
 extern code_units my_grackle_units;
 #endif
 
-extern double EgyInjection;
 
 #if defined(SN_MCS) && defined(IMF_SAMPLING_MCS)
 extern int NumSNLocal;  /** Number of SN events this timestep on this processor **/
@@ -1691,7 +1730,6 @@ extern struct treepoint_data
 #endif
 
 #ifdef REFINEMENT_CGM
-// #define IONISEDMEANWEIGHT 0.5882352941176471  // fully ionized
   unsigned char marked_flag;
 #endif
 
@@ -2478,7 +2516,8 @@ extern struct global_data_all_processes
   double MinMassForCGMRefinement;
   double FracRadiusForCGMRefinement;
   #ifdef REFINEMENT_HYBRID
-    double TargetForHybridRefinement;
+    double TargetForHybridRefinementLow;
+    double TargetForHybridRefinementHigh;
     double TargetHybridGasVolume;
     double HybridVolumeDecreaseFactor;
   #endif
@@ -3086,6 +3125,7 @@ extern struct global_data_all_processes
 #endif
 #endif
 
+  double EgyInjection;
 #ifdef RELAXOBJECT
   double RelaxBaseFac;
   double RelaxFac;
@@ -3978,7 +4018,12 @@ extern struct global_data_all_processes
 #endif /*#ifdef SGS_TURBULENCE*/
 
 #ifdef SIMPLEX
-#if SX_SOURCES == 10
+#if SX_SOURCES == 9
+  double sxTestSourcePosX;
+  double sxTestSourcePosY;
+  double sxTestSourcePosZ;
+  double sxTestSourceRates[SX_NFREQ];
+#elif SX_SOURCES == 10
   char sxTestSrcFile[100];
 #endif
   int sxSeed;                      /**< seed for the random number generator */
@@ -3991,6 +4036,15 @@ extern struct global_data_all_processes
   double sxFreqBins[SX_NFREQ + 1]; /**< frequency bins used for spectrum and cross section calculations  */
   double sxTeff;                   /**< effective temperature of the stellar spectra, assuming Black Body radiation  */
   double sxNdirInv;                /**< value of 1./SX_NDIR  */
+#ifdef SWEEP
+#if defined(SWEEP_PERIODIC) || defined(SWEEP_SCATTER)
+  double SweepConvergenceThreshold;
+  int SweepMaxNumIterations;
+#endif
+#ifdef SWEEP_SCATTER
+  double SweepSigmaScatter;
+#endif
+#endif
 #if SX_CHEMISTRY == 3
   double sxSigma[SX_NSIGMA];   /**< cross-sections [cm^2]  */
   double sxEnergy[SX_NENERGY]; /**< photon energies [erg]  */
@@ -4029,6 +4083,12 @@ extern struct global_data_all_processes
   double SurfaceRadiusOuter;
   double CoreRadius;
 #endif
+
+#ifdef SHEARING_BOX
+  double OrbitalFrequency;
+  double ShearParamter;
+#endif
+
 } All;
 
 /** An enumeration of symbolic names for the snapshot/IC formats
@@ -5233,7 +5293,7 @@ extern struct star_particle_data
 #if defined(REFINEMENT_HIGH_RES_GAS) && (defined(GFM_WINDS) || defined(GFM_WINDS_LOCAL))
   MyFloat HighResMass;
 #endif
-#if defined(REFINEMENT_CGM)
+#ifdef REFINEMENT_CGM
   MyFloat HighResMassCGM;
 #endif
 
@@ -5677,17 +5737,17 @@ extern struct io_header
   int flag_entropy_instead_u;                         /**< flags that IC-file contains entropy instead of u */
   int flag_doubleprecision;                           /**< flags that snapshot contains double-precision instead of single precision */
 
-  int flag_lpt_ics;        /**< flag to signal that IC file contains 2lpt initial conditions */
-  float lpt_scalingfactor; /**< scaling factor for 2lpt initial conditions */
+  int flag_lpt_ics;         /**< flag to signal that IC file contains 2lpt initial conditions */
+  double lpt_scalingfactor; /**< scaling factor for 2lpt initial conditions */
 
   int flag_tracer_field; /**< flags presence of a tracer field */
 
   int composition_vector_length; /**< specifies the length of the composition vector (0 if not present)  */
 
 #if NTYPES == 6
-  char fill[40]; /**< fills to 256 bytes */
+  char fill[32]; /**< fills to 256 bytes */
 #elif NTYPES == 7
-  char fill[8];             /**< fills to 256 bytes */
+  char fill[0];             /**< fills to 256 bytes */
 #endif
 } header; /**< holds header for snapshot files */
 
@@ -5718,15 +5778,15 @@ extern struct io_header_ICs
   int flag_entropy_instead_u;                  /**< flags that IC-file contains entropy instead of u */
   int flag_doubleprecision;                    /**< flags that snapshot contains double-precision instead of single precision */
 
-  int flag_lpt_ics;        /**< flag to signal that IC file contains 2lpt initial conditions */
-  float lpt_scalingfactor; /**< scaling factor for 2lpt initial conditions */
+  int flag_lpt_ics;         /**< flag to signal that IC file contains 2lpt initial conditions */
+  double lpt_scalingfactor; /**< scaling factor for 2lpt initial conditions */
 
   int flag_tracer_field; /**< flags presence of a tracer field */
 
   int composition_vector_length; /**< specifies the length of the composition vector (0 if not present)  */
 
 #if NTYPES_ICS == 6
-  char fill[40]; /**< fills to 256 bytes */
+  char fill[32]; /**< fills to 256 bytes */
 #endif
 } header_ICs; /**< holds header for IC files */
 #endif
@@ -6237,7 +6297,7 @@ enum e_typelist
   TRACER_MC_ONLY    = 1 << TRACER_MC,
   ALL_TYPES         = ((1 << NTYPES) - 1) & ~(1 << TRACER_MC), /* exclude MC tracers from e.g. IO_POS */
 #else
-  ALL_TYPES = ((1 << NTYPES) - 1),
+  ALL_TYPES = (1 << NTYPES) - 1,
 #endif
   SET_IN_GET_PARTICLES_IN_BLOCK = 0
 };
@@ -6512,13 +6572,6 @@ extern struct ExtNgbNODE
   float vmax[3];
   float MaxCsnd;
 } * ExtNgb_Nodes;
-
-#ifdef STATICNFW
-extern double Rs, R200;
-extern double Dc;
-extern double RhoCrit, V200;
-extern double fac;
-#endif
 
 #if defined(CIRCUMSTELLAR) &&                                                                                 \
     (defined(CIRCUMSTELLAR_IRRADIATION) || defined(ALPHA_VISCOSITY) || defined(CIRCUMSTELLAR_REFINEMENTS)) && \

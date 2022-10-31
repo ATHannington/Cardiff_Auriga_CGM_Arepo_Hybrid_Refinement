@@ -432,14 +432,13 @@ void init_clouds(void)
       mpi_printf("REFINEMENT_CGM:  All.TargetGasVolume = %g\n", All.TargetGasVolume);
       #ifdef REFINEMENT_HYBRID
             All.TargetHybridGasVolume = All.TargetGasVolume / All.HybridVolumeDecreaseFactor;
-            mpi_printf("REFINEMENT_HYBRID: All.TargetForHybridRefinement = %g\n", All.TargetForHybridRefinement);
+            mpi_printf("REFINEMENT_HYBRID: All.TargetForHybridRefinementLow = %g\n", All.TargetForHybridRefinementLow);
+            mpi_printf("REFINEMENT_HYBRID: All.TargetForHybridRefinementHigh = %g\n", All.TargetForHybridRefinementHigh);
             mpi_printf("REFINEMENT_HYBRID: All.HybridVolumeDecreaseFactor = %g\n", All.HybridVolumeDecreaseFactor);
             mpi_printf("REFINEMENT_HYBRID: All.TargetHybridGasVolume = %g\n", All.TargetHybridGasVolume);
 
       #endif
 #endif
-
-
 
 #ifdef MODIFIED_EOS
       All.UthermAtThresh = effective_eos(All.PhysDensThresh);
@@ -622,7 +621,7 @@ void integrate_sfr(void)
   double rho0, rho, rho2, q, dz, gam, sigma = 0, sigma_u4, sigmasfr = 0, ne, P1;
   double x = 0, P, P2, x2, tsfr2, factorEVP2, drho, dq;
   double meanweight, u4, tsfr, factorEVP, egyeff, egyeff2;
-  FILE *fd;
+  FILE *fd = NULL;
 
   double eos_dens_threshold = All.PhysDensThresh;
 #ifdef MODIFIED_EOS
@@ -641,9 +640,11 @@ void integrate_sfr(void)
     }
 
   if(ThisTask == 0)
-    fd = fopen("eos.txt", "w");
-  else
-    fd = NULL;
+    {
+      char path[MAXLEN_PATH];
+      file_path_sprintf(path, "%s/eos.txt", All.OutputDir);
+      fd = fopen(path, "w");
+    }
 
   for(rho = eos_dens_threshold; rho <= 1000 * eos_dens_threshold; rho *= 1.1)
     {
@@ -657,12 +658,12 @@ void integrate_sfr(void)
     }
 
   if(ThisTask == 0)
-    fclose(fd);
-
-  if(ThisTask == 0)
-    fd = fopen("sfrrate.txt", "w");
-  else
-    fd = NULL;
+    {
+      fclose(fd);
+      char path[MAXLEN_PATH];
+      file_path_sprintf(path, "%s/sfrrate.txt", All.OutputDir);
+      fd = fopen(path, "w");
+    }
 
   for(rho0 = eos_dens_threshold; rho0 <= 10000 * eos_dens_threshold; rho0 *= 1.02)
     {

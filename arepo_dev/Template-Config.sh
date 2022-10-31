@@ -32,6 +32,8 @@ NTYPES=6                       # number of particle types
 #PREHEATING
 #NOHYDRO
 #NOHYDRO_NOTIMESTEP
+#HIGHER_ORDER_FLUX_INTEGRATION=3 # gives the order of the Gauss-Legendre rules which should be used to integrate the flux over faces (see Zier & Springel 2022 for details)
+#NO_LIMITER_DISTORTED_CELLS # disables limiter for the face velocity for distorted cells
 
 
 #--------------------------------------- MPI/Threading Hybrid
@@ -71,6 +73,7 @@ VORONOI
 #MHD_SEEDFIELD
 #MHD_SEEDPSPEC
 #MHD_THERMAL_ENERGY_SWITCH
+#MHD_AMPLIFICATION_AT_INIT=1
 
 
 #--------------------------------------- NON-IDEAL MHD
@@ -138,6 +141,7 @@ VORONOI
 #TVD_SLOPE_LIMITER_MINMOD
 #TVD_SLOPE_LIMITER_MC
 #GRADIENT_LIMITER_DUFFELL
+#GRADIENT_LIMITER_PROJECTED              # use the mid point between the center of two cells instead of the mid point of their common face for limiter
 #DISABLE_TIME_EXTRAPOLATION              # use only when you know exactly what you are doing; activating this option will make your results wrong but can tell you about the behavior of your code
 #DISABLE_SPATIAL_EXTRAPOLATION           # use only when you know exactly what you are doing; activating this option will make your results wrong but can tell you about the behavior of your code
 #FINITE_VOLUME_EXTRAPOLATION_IN_LABFRAME # do extrapolation in labframe instead of moving frame of the gas
@@ -494,6 +498,8 @@ FIX_PATHSCALE_MPI_STATUS_IGNORE_BUG
 #WALLCLOCK
 #NEW_FFT
 
+#SKIP_FLUX_OVER_FACE_BELOW_THRESHOLD=1e-5 # skip faces if they are smaller than SKIP_FLUX_OVER_FACE_BELOW_THRESHOLD times the total surface of the larger Voronoi cell
+
 
 #--------------------------------------- Compatibility options
 #NOTYPEPREFIX_FFTW
@@ -556,6 +562,10 @@ HOST_MEMORY_REPORTING          # reports the available system memory after start
 MEMORY_MANAGER_USE_MPROTECT    # mark memory for unallocated memory blocks as
                                # inaccessible using mprotect() in order to detect memory
                                # access bugs (e.g. buffer overflows)
+MEMORY_MANAGER_CHECK_LEAKS     # check whether variables were already allocated in the
+                               # same location in the code and (for movable blocks) if
+                               # a pointer is being overwritten when allocating new
+                               # memory, to detect memory leaks (using assertions)
 #VTUNE_INSTRUMENT
 #FORCETEST=0.001               # calculates for given fraction of particles direct summation forces to check accuracy of tree force
 #FORCETEST_TESTFORCELAW=1      # this enables a special test to measure the effective force law of the code, can be set to 1 or 2
@@ -586,6 +596,13 @@ MEMORY_MANAGER_USE_MPROTECT    # mark memory for unallocated memory blocks as
 #NFW_Eps=0.01
 #NFW_DARKFRACTION=0.87
 #NFW_h=0.7
+#STATICNFW_INFINITE   #Density profile not truncated at R200 (which is otherwise the default)
+
+#STATIC_DK_BACKGROUND #Additional outer component based on Diemer+Kravtsov 2014
+#DK_R200M=336.0
+#DK_OMEGAM=0.3
+#DK_BE=1.0
+#DK_SE=1.5
 
 
 #--------------------------------------- Static Isothermal Sphere Potential
@@ -1215,10 +1232,9 @@ MEMORY_MANAGER_USE_MPROTECT    # mark memory for unallocated memory blocks as
 #OUTPUT_SGS_T_PRESSURE_GRADIENT
 #OUTPUT_DENSTROPHY
 
-
-#--------------------------------------- external Galaxy potential
+#------------------------------------- external Galaxy potential
 #GALPOT
-
+#AGAMA
 
 #--------------------------------------- SGChem chemistry module
 #SGCHEM
@@ -1339,6 +1355,10 @@ MEMORY_MANAGER_USE_MPROTECT    # mark memory for unallocated memory blocks as
 #SX_OUTPUT_IMAGE_ALL
 #SX_OUTPUT_FLUX
 
+#--------------------------------------- Sweep
+#SWEEP
+#SWEEP_PERIODIC
+#SWEEP_SCATTER
 
 #--------------------------------------- MAGNETIC FIELD SEEDING
 #BIERMANN_BATTERY                      # activate Biermann (1950) battery
@@ -1351,3 +1371,12 @@ MEMORY_MANAGER_USE_MPROTECT    # mark memory for unallocated memory blocks as
 #SOLAR_RADIATIVE_TRANSFER_DIFF
 #SOLAR_RADIATIVE_TRANSFER_EDD
 #OUTPUT_QRAD
+
+
+#--------------------------------------- SHEARING BOX APPROXIMATION
+SHEARING_BOX                                   # general switch to activate shearing box, especially the boundary conditions
+SHEARING_BOX_INCLUDE_CORIOLIS                  # includes the source terms for the shearing box, always recommended
+SHEARING_BOX_SHIFT_HALF_BOX                    # shifts the box by Lx/2 in x-direction, i.e. the x-intervall is [-Lx /2, Lx /2]
+SHEARING_BOX_STRATIFIED                        # adds vertical source term of shearing potential
+SHEARING_BOX_CALCULATE_L1_ERROR_GROUND_STATE   # calculates and output in each time step the deviation of the ground state of the shearing box. Only important for code testing
+SHEARING_BOX_INITIALIZE_GROUND_STATE           # only for debugging, overwrite hydro variables with the ground state

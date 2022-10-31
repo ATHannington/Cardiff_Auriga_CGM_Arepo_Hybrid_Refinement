@@ -324,7 +324,6 @@ static int derefine_criterion_default(int i)
         TargetGasMass = All.HighDensityMaxGasDerefinementFactor * All.TargetGasMass;
     }
 #endif
-
 #ifdef REFINEMENT_CGM
   {
     #ifdef REFINEMENT_HYBRID
@@ -347,26 +346,65 @@ static int derefine_criterion_default(int i)
               double temp_in_K = GAMMA_MINUS1 * SphP[i].Utherm / BOLTZMANN * All.UnitEnergy_in_cgs / All.UnitMass_in_g * meanweight;
         #endif
 
-        if(temp_in_K <= All.TargetForHybridRefinement)
-        {
+        double variableTargetGasVolume = All.TargetGasVolume;
 
-          if(P[i].Mass < 0.5 * TargetGasMass && SphP[i].Volume < 0.5 * All.TargetHybridGasVolume * All.cf_a3inv)
-          {
-            mpi_printf("Calculated temperature in criterion_derefinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
-            mpi_printf("Cell Volume in criterion_derefinement.c %e versus (less than temeperature) less than target %e\n",SphP[i].Volume , (0.5 * All.TargetHybridGasVolume * All.cf_a3inv));
-            mpi_printf("Cell derefined - met temp and vol fancy derefine!\n");
-            return 1;
-          }
+        if (temp_in_K >= All.TargetForHybridRefinementHigh)
+        {
+          variableTargetGasVolume = All.TargetGasVolume;
+          // mpi_printf("\n");
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: CGM Gas volume! \n");
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: temp_in_K = %g K \n", temp_in_K);
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+        }
+        else if (temp_in_K <= All.TargetForHybridRefinementLow)
+        {
+          variableTargetGasVolume = All.TargetHybridGasVolume;
+          // mpi_printf("\n");
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: Hybrid Gas volume! \n");
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: temp_in_K = %g K \n", temp_in_K);
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
         }
         else
         {
-          if(P[i].Mass < 0.5 * TargetGasMass && SphP[i].Volume < 0.5 * All.TargetGasVolume * All.cf_a3inv)
+
+          double logTargetDiff = log10(All.TargetForHybridRefinementHigh) - log10(All.TargetForHybridRefinementLow);
+
+          // equals 1 when at TargetForHybridRefinementLow
+          // equals 0 when at TargetForHybridRefinementHigh
+          double volFactor = (log10(All.TargetForHybridRefinementHigh) - log10(temp_in_K)) / (logTargetDiff);
+
+          if (volFactor <= 0.0)
           {
-            mpi_printf("Calculated temperature in criterion_derefinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
-            mpi_printf("Cell Volume in criterion_derefinement.c %e versus (greater than temeperature) less than target %e\n",SphP[i].Volume , (0.5 * All.TargetGasVolume * All.cf_a3inv));
-            mpi_printf("Cell derefined - met vol CGM derefine!\n");
-            return 1;
+            variableTargetGasVolume = All.TargetGasVolume;
           }
+          else if (volFactor >= 1.0)
+          {
+            variableTargetGasVolume = All.TargetHybridGasVolume;
+          }
+          else
+          {
+           // scale between TargetHybridGasVolume and TargetGasVolume
+           // by 0 when at TargetForHybridRefinementLow (volFactor = 1)
+           // and by 1 when at TargetForHybridRefinementHigh (volFactor = 0)
+
+           double targetFactor = (1.0 + (All.HybridVolumeDecreaseFactor - 1.0)*(1.0 - volFactor));
+
+           variableTargetGasVolume = All.TargetHybridGasVolume*targetFactor;
+
+           // mpi_printf("\n");
+           // mpi_printf("REFINEMENT_HYBRID Derefinement: variable volume! \n");
+           // mpi_printf("REFINEMENT_HYBRID Derefinement: temp_in_K = %g K \n", temp_in_K);
+           // mpi_printf("REFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+           // mpi_printf("REFINEMENT_HYBRID Derefinement: volFactor = %g\n", volFactor);
+           // mpi_printf("REFINEMENT_HYBRID Derefinement: targetFactor = %g\n", targetFactor);
+          }
+        }
+
+
+
+        if(P[i].Mass < 0.5 * TargetGasMass && SphP[i].Volume < 0.5 * variableTargetGasVolume * All.cf_a3inv)
+        {
+          return 1;
         }
       }
       else

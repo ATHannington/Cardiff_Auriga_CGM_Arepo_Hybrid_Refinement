@@ -61,15 +61,10 @@ void read_parameter_file(const char *const fname)
   if(sizeof(double) != 8)
     mpi_terminate("Type `double' is not 64 bit on this platform. Stopping.");
 
-  char buf[MAXLEN_PARAM_TAG + MAXLEN_PARAM_VALUE + 200], buf1[MAXLEN_PARAM_TAG + 200], buf2[MAXLEN_PARAM_VALUE + 200],
-      buf3[MAXLEN_PARAM_TAG + MAXLEN_PARAM_VALUE + 500];
   enum PARAM_TYPE id[MAX_PARAMETERS];
   void *addr[MAX_PARAMETERS];
   char tag[MAX_PARAMETERS][MAXLEN_PARAM_TAG];
-  int param_handled[MAX_PARAMETERS];
-
-  for(int i = 0; i < MAX_PARAMETERS; i++)
-    param_handled[i] = 0;
+  char buf[MAXLEN_PARAM_TAG + MAXLEN_PARAM_VALUE + 200];
 
   /* read parameter file on process 0 */
   int nt = 0;
@@ -628,8 +623,11 @@ void read_parameter_file(const char *const fname)
       id[nt++] = PARAM_REAL;
 
       #ifdef REFINEMENT_HYBRID
-            strcpy(tag[nt], "TargetForHybridRefinement");
-            addr[nt] = &All.TargetForHybridRefinement;
+            strcpy(tag[nt], "TargetForHybridRefinementLow");
+            addr[nt] = &All.TargetForHybridRefinementLow;
+            id[nt++] = PARAM_REAL;
+            strcpy(tag[nt], "TargetForHybridRefinementHigh");
+            addr[nt] = &All.TargetForHybridRefinementHigh;
             id[nt++] = PARAM_REAL;
             strcpy(tag[nt], "HybridVolumeDecreaseFactor");
             addr[nt] = &All.HybridVolumeDecreaseFactor;
@@ -3566,6 +3564,48 @@ void read_parameter_file(const char *const fname)
       strcpy(tag[nt], "TestSrcFile");
       addr[nt] = All.sxTestSrcFile;
       id[nt++] = PARAM_STRING;
+#elif SX_SOURCES == 9
+      strcpy(tag[nt], "TestSourcePosX");
+      addr[nt] = &All.sxTestSourcePosX;
+      id[nt++] = PARAM_REAL;
+      strcpy(tag[nt], "TestSourcePosY");
+      addr[nt] = &All.sxTestSourcePosY;
+      id[nt++] = PARAM_REAL;
+      strcpy(tag[nt], "TestSourcePosZ");
+      addr[nt] = &All.sxTestSourcePosZ;
+      id[nt++] = PARAM_REAL;
+#ifdef CHEMISTRYNETWORK=1 || CHEMISTRYNETWORK=15
+      strcpy(tag[nt], "TestSourceRate056");
+      addr[nt] = &All.sxTestSourceRates[F056];
+      id[nt++] = PARAM_REAL;
+      strcpy(tag[nt], "TestSourceRate112");
+      addr[nt] = &All.sxTestSourceRates[F112];
+      id[nt++] = PARAM_REAL;
+      strcpy(tag[nt], "TestSourceRate136");
+      addr[nt] = &All.sxTestSourceRates[F136];
+      id[nt++] = PARAM_REAL;
+      strcpy(tag[nt], "TestSourceRate152");
+      addr[nt] = &All.sxTestSourceRates[F152];
+      id[nt++] = PARAM_REAL;
+      strcpy(tag[nt], "TestSourceRate246");
+      addr[nt] = &All.sxTestSourceRates[F246];
+      id[nt++] = PARAM_REAL;
+#endif
+#endif
+#ifdef SWEEP
+#if defined(SWEEP_PERIODIC) | defined(SWEEP_SCATTER)
+      strcpy(tag[nt], "SweepConvergenceThreshold");
+      addr[nt] = &All.SweepConvergenceThreshold;
+      id[nt++] = PARAM_REAL;
+      strcpy(tag[nt], "SweepMaxNumIterations");
+      addr[nt] = &All.SweepMaxNumIterations;
+      id[nt++] = PARAM_INT;
+#endif
+#ifdef SWEEP_SCATTER
+      strcpy(tag[nt], "SweepSigmaScatter");
+      addr[nt] = &All.SweepSigmaScatter;
+      id[nt++] = PARAM_REAL;
+#endif
 #endif
 
       strcpy(tag[nt], "UnitPhotons_per_s");
@@ -3603,7 +3643,7 @@ void read_parameter_file(const char *const fname)
       id[nt++] = PARAM_REAL;
 #endif
 
-/* Stellar module */
+      /* Stellar module */
 #if defined(SOLAR_RADIATIVE_TRANSFER_DIFF) || defined(SOLAR_RADIATIVE_TRANSFER_EDD)
       strcpy(tag[nt], "VolumetricHeatingRate");
       addr[nt] = &All.VolumetricHeatingRate;
@@ -3626,18 +3666,33 @@ void read_parameter_file(const char *const fname)
       id[nt++] = PARAM_REAL;
 #endif
 
-      int errorflag = 0;
-      FILE *fd      = fopen(fname, "r");
+#ifdef SHEARING_BOX
+      strcpy(tag[nt], "OrbitalFrequency");
+      addr[nt] = &All.OrbitalFrequency;
+      id[nt++] = PARAM_REAL;
+
+      strcpy(tag[nt], "ShearParamter");
+      addr[nt] = &All.ShearParamter;
+      id[nt++] = PARAM_REAL;
+#endif
+
+      int param_handled[MAX_PARAMETERS] = {0};
+      int errorflag                     = 0;
+      FILE *fd                          = fopen(fname, "r");
       if(fd)
         {
-          sprintf(buf, "%s%s", fname, "-usedvalues");
-          FILE *fdout = fopen(buf, "w");
+          /* can't write to OutputDir directly because parameters have not been
+           * read yet */
+          char path[MAXLEN_PATH];
+          file_path_sprintf(path, "%s-usedvalues", fname);
+          FILE *fdout = fopen(path, "w");
           if(!fdout)
             {
-              mpi_terminate("Error opening file '%s'", buf);
+              mpi_terminate("Error opening file '%s'", path);
             }
           else
             {
+              char buf1[MAXLEN_PARAM_TAG + 200], buf2[MAXLEN_PARAM_VALUE + 200], buf3[MAXLEN_PARAM_TAG + MAXLEN_PARAM_VALUE + 500];
               printf("Obtaining parameters from file '%s':\n\n", fname);
               while(!feof(fd))
                 {
@@ -3731,10 +3786,11 @@ void read_parameter_file(const char *const fname)
               output_dir = All.OutputDirShockFinder;
 #endif
               mkdir(output_dir, MKDIR_MODE);
-              file_path_sprintf(buf1, "%s-usedvalues", fname);
-              file_path_sprintf(buf2, "%s/parameters-usedvalues", output_dir);
-              sprintf(buf3, "cp %s %s", buf1, buf2);
-              my_system(buf3);
+              char path_output[MAXLEN_PATH];
+              file_path_sprintf(path_output, "%s/parameters-usedvalues", output_dir);
+              const int status = copy_file(path, path_output);
+              if(status != 0)
+                warn("Error copying file %s to %s: %s", path, path_output, status > 0 ? strerror(status) : "unknown error");
             }
         }
       else

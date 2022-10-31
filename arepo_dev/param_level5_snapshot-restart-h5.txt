@@ -24,7 +24,7 @@ OutputListFilename   /cosma8/data/dp221/dc-vand4/Auriga/AgeOfAquariusOutputs/Exp
 
 
 %---- File formats
-ICFormat           1
+ICFormat           3
 SnapFormat         3
 
 % MHD
@@ -160,7 +160,7 @@ SofteningTypeOfPartType6 5
 %----- Mesh regularization options
 CellShapingSpeed       0.5
 CellMaxAngleFactor     2.25
-ReferenceGasPartMass   0
+ReferenceGasPartMass   3.16836e-05
 TargetGasMassFactor    1
 RefinementCriterion    1
 DerefinementCriterion  1
