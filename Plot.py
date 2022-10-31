@@ -22,8 +22,9 @@ import os
 
 snapStart = 100
 snapEnd = 109
-loadpath = "/home/universe/c1838736/Auriga/level5_cgm/h5_hybrid-dev/output/"
-numthreads = 8
+#h5_hy_snapshot-restart-of-2kpc
+loadpath = "/home/universe/c1838736/Auriga/level5_cgm/h5_hy_snapshot-restart-of-1kpc/output/"
+numthreads = 18
 
 snapRange = [
         xx
@@ -79,7 +80,7 @@ xlimDict = {
     "T": {"xmin": 3.75, "xmax": 7.0},
     "n_H": {"xmin": -5.5, "xmax": -0.5},
     "B": {"xmin": -2.5, "xmax": 1.0},
-    "vrad": {"xmin": -150.0, "xmax": 150.0},
+    "vrad": {"xmin": -100.0, "xmax": 100.0},
     "gz": {"xmin": -1.5, "xmax": 0.75},
     "P_thermal": {"xmin": 0.5, "xmax": 3.5},
     "P_CR": {"xmin": -1.5, "xmax": 5.5},
@@ -1219,13 +1220,268 @@ def hist_plot_xyz(
 
     return
 
+def pdf_versus_plot(
+    dataDict,
+    ylabel,
+    xlimDict,
+    logParameters,
+    snapNumber,
+    weightKeys = ['mass'],
+    xParams = ["T"],
+    axisLimsBool = True,
+    titleBool=False,
+    densityBool=True,
+    DPI=150,
+    xsize=6.0,
+    ysize=6.0,
+    fontsize=13,
+    fontsizeTitle=14,
+    Nbins=250,
+):
 
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
+    try:
+        tmp = xlimDict["mass"]
+    except:
+        xlimDict.update({"mass": {"xmin": 4.0, "xmax": 9.0}})
+
+    limDict = copy.deepcopy(xlimDict)
+
+
+    savePath = f"./Plots/PDFs/"
+    tmp = "./"
+
+    for savePathChunk in savePath.split("/")[1:-1]:
+        tmp += savePathChunk + "/"
+        try:
+            os.mkdir(tmp)
+        except:
+            pass
+        else:
+            pass
+
+    for weightKey in weightKeys:
+        print("-----")
+        print("")
+        print(f"Starting {weightKey} weighted!")
+        for analysisParam in xParams:
+            print("")
+            print(f"Starting {analysisParam} plots!")
+            fig, ax = plt.subplots(
+                nrows=1,
+                ncols=1,
+                sharex=True,
+                sharey=True,
+                figsize=(xsize, ysize),
+                dpi=DPI,
+            )
+            # Create a plot for each Temperature
+            skipBool = False
+            try:
+                plotData = dataDict[analysisParam].copy()
+                weightsData = dataDict[weightKey].copy()
+                skipBool = False
+            except:
+                print(
+                    f"Variable {analysisParam} not found. Skipping plot..."
+                )
+                skipBool = True
+                continue
+
+            colour = "blue"
+
+            if analysisParam in logParameters:
+                tmpPlot = np.log10(plotData).copy()
+            else:
+                tmpPlot = plotData.copy()
+
+            if weightKey in logParameters:
+                tmpWeights = np.log10(weightsData).copy()
+            else:
+                tmpWeights = weightsData.copy()
+
+
+            if axisLimsBool is True:
+                whereData = np.where((np.isfinite(tmpPlot)==True)
+                & (np.isfinite(tmpWeights)==True)
+                & (tmpPlot>=limDict[analysisParam]["xmin"])
+                & (tmpPlot<=limDict[analysisParam]["xmax"])
+                & (tmpWeights>=limDict[weightKey]["xmin"])
+                & (tmpWeights<=limDict[weightKey]["xmax"])
+                )[0]
+            else:
+                whereData = np.where((np.isfinite(tmpPlot)==True)
+                & (np.isfinite(tmpWeights)==True)
+                )[0]
+
+
+            plotData = tmpPlot[whereData]
+            weightsData = tmpWeights[whereData]
+
+            try:
+                xmin = np.nanmin(plotData)
+                xmax = np.nanmax(plotData)
+                skipBool = False
+            except:
+                print(
+                    f"Variable {analysisParam} not found. Skipping plot...")
+                skipBool = True
+                continue
+
+            if (
+                (np.isfinite(xmin) == False)
+                or (np.isfinite(xmax) == False)
+                or (np.isfinite(np.nanmin(weightsData)) == False)
+                or (np.isfinite(np.nanmin(weightsData)) == False)
+            ):
+                # print()
+                print("Data All Inf/NaN! Skipping entry!")
+                skipBool = True
+                continue
+
+            if axisLimsBool is True:
+                try:
+                    xBins = np.linspace(
+                        start=xlimDict[analysisParam]["xmin"],
+                        stop=xlimDict[analysisParam]["xmax"],
+                        num=Nbins,
+                    )
+                except:
+                    xBins = np.linspace(
+                        start=xmin, stop=xmax, num=Nbins)
+            else:
+                xBins = np.linspace(
+                    start=xmin, stop=xmax, num=Nbins)
+
+            currentAx = ax
+
+            hist, bin_edges = np.histogram(
+                plotData,
+                bins=xBins,
+                weights=weightsData,
+            )
+
+            # massSum = massSumDict[f"{rinner}R{router}"]
+            # if densityBool is True:
+            #     hist = hist * massSum[ii]/np.nanmax(massSum)
+            # else:
+            #     pass
+
+            if np.all(np.isfinite(hist)) == False:
+                print("Hist All Inf/NaN! Skipping entry!")
+                continue
+
+            try:
+                ymin = np.nanmin(hist[np.isfinite(hist)])
+                ymax = np.nanmax(hist[np.isfinite(hist)])
+                skipBool = False
+            except:
+                print(
+                    f"Variable {analysisParam} not found. Skipping plot...")
+                skipBool = True
+                continue
+            xFromBins = np.array(
+                [
+                    (x1 + x2) / 2.0
+                    for (x1, x2) in zip(bin_edges[:-1], bin_edges[1:])
+                ]
+            )
+
+            weightsSumTotal = np.cumsum(dataDict[weightKey][whereData])[-1]
+            currentAx.plot(
+                xFromBins,
+                hist,
+                color=colour,
+                linestyle="solid",
+                label = f"Sum total of {weightKey} weight = {weightsSumTotal:.2e}"
+            )
+
+            currentAx.xaxis.set_minor_locator(AutoMinorLocator())
+            currentAx.yaxis.set_minor_locator(AutoMinorLocator())
+            currentAx.tick_params(
+                axis="both", which="both", labelsize=fontsize
+            )
+
+            currentAx.set_ylabel(
+                ylabel[weightKey], fontsize=fontsize)
+
+
+            if titleBool is True:
+                fig.suptitle(
+                    f"PDF of"
+                    + "\n"
+                    + f" {weightKey} vs {analysisParam}",
+                    fontsize=fontsizeTitle,
+                )
+
+            # Only give 1 x-axis a label, as they sharex
+
+            ax.set_xlabel(ylabel[analysisParam], fontsize=fontsize)
+
+            if (skipBool == True):
+                print(
+                    f"Variable {analysisParam} not found. Skipping plot...")
+                continue
+
+            if axisLimsBool is True:
+                try:
+                    finalxmin = max(
+                        np.nanmin(xmin), xlimDict[analysisParam]["xmin"]
+                    )
+                    finalxmax = min(
+                        np.nanmax(xmax), xlimDict[analysisParam]["xmax"]
+                    )
+                except:
+                    finalxmin = xmin
+                    finalxmax = xmax
+            else:
+                finalxmin = xmin
+                finalxmax = xmax
+
+            if (
+                (np.isinf(finalxmax) == True)
+                or (np.isinf(finalxmin) == True)
+                or (np.isnan(finalxmax) == True)
+                or (np.isnan(finalxmin) == True)
+            ):
+                print("Data All Inf/NaN! Skipping entry!")
+                continue
+
+            try:
+                finalymin = 0.0
+                finalymax = np.nanmax(ymax)
+            except:
+                print("Data All Inf/NaN! Skipping entry!")
+                continue
+
+            custom_xlim = (finalxmin, finalxmax)
+            custom_ylim = (finalymin, finalymax)
+            plt.setp(ax, xlim=custom_xlim, ylim=custom_ylim)
+            ax.legend(loc="best", fontsize=fontsize)
+
+            # plt.tight_layout()
+            if titleBool is True:
+                plt.subplots_adjust(top=0.875, hspace=0.1, left=0.15)
+            else:
+                plt.subplots_adjust(hspace=0.1, left=0.15)
+
+            opslaan = (
+                savePath
+                + f"{weightKey}-{analysisParam}-PDF_{snapNumber}.pdf"
+            )
+            plt.savefig(opslaan, dpi=DPI, transparent=False)
+            print(opslaan)
+            plt.close()
+
+    return
 
 
 if __name__ == "__main__":
     print(loadpath)
     rotation_matrix = None
     for snapNumber in snapRange:
+        # rotation_matrix = None
         # snapNumber = 100
         print(f"[@{int(snapNumber)}]: Load subfind")
         # load in the subfind group files
@@ -1238,7 +1494,7 @@ if __name__ == "__main__":
             hdf5=True,
             loadonlytype=[0, 1, 4],
             lazy_load=False,
-            # subfind=snap_subfind,
+            subfind=snap_subfind,
         )
 
         print(f"[@{int(snapNumber)}]: Rotate and centre snapshot")
@@ -1303,7 +1559,7 @@ if __name__ == "__main__":
             oc.omegabaryon0,
             snapNumber,
             # logParameters = logParameters,
-            paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","theat"],
+            paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","theat","vrad"],
             mappingBool=True,
             box=box,
             numthreads=numthreads,
@@ -1335,41 +1591,41 @@ if __name__ == "__main__":
             DEBUG = DEBUG
             )
 
-        #
-        # print(
-        #     f"[@{int(snapNumber)}]: Slice plot"
-        # )
-        #
-        # plot_slices(snapGas,
-        #     snapNumber,
-        #     boxsize=Rvir*2.0*1.40
-        # )
-        #
-        # print(
-        #     f"[@{int(snapNumber)}]: Slice plot Quad"
-        # )
-        #
-        # plot_slices_quad(snapGas,
-        #     snapNumber,
-        #     boxsize=Rvir*2.0*1.40
-        # )
-        #
-        # print(
-        #     f"[@{int(snapNumber)}]: Projection plot"
-        # )
-        #
-        # plot_projections(snapGas,
-        #     snapNumber,
-        #     boxsize=Rvir*2.0*1.40
-        # )
+
+        print(
+            f"[@{int(snapNumber)}]: Slice plot"
+        )
+
+        plot_slices(snapGas,
+            snapNumber,
+            boxsize=Rvir*1.50*2.0#*2.0*1.50
+        )
+
+        print(
+            f"[@{int(snapNumber)}]: Slice plot Quad"
+        )
+
+        plot_slices_quad(snapGas,
+            snapNumber,
+            boxsize=Rvir*1.50*2.0#*2.0*1.50
+        )
+
+        print(
+            f"[@{int(snapNumber)}]: Projection plot"
+        )
+
+        plot_projections(snapGas,
+            snapNumber,
+            boxsize=Rvir*1.50*2.0#*2.0*1.50
+        )
 
         print(
             f"[@{int(snapNumber)}]: Remove beyond Virial Radius..."
         )
 
-        whereOutsideVirial = snapGas.data["R"] > Rvir
+        whereOutsideVirial = snapGas.data["R"] > Rvir*1.50#*1.5
 
-        xlimDict["R"]["xmax"] = Rvir
+        xlimDict["R"]["xmax"] = Rvir*1.50#*1.5
 
         snaptmp = remove_selection(
             snapGas,
@@ -1398,8 +1654,23 @@ if __name__ == "__main__":
             xlimDict,
             logParameters,
             yParams = ["T"],
-            xParams = ["rho_rhomean","R","vol","tcool","theat"],
-            weightKeys = ["mass","n_H","vol","gz","tcool","theat"]
+            xParams = ["R","rho_rhomean","n_H","gz","tcool","theat","vrad"],
+            weightKeys = ["mass","n_H","gz","tcool","theat","vrad"],
+            Nbins = 400,
+        )
+
+        print(
+            f"[@{int(snapNumber)}]: PDF plot"
+        )
+
+        pdf_versus_plot(
+            out,
+            ylabel,
+            xlimDict,
+            logParameters,
+            snapNumber,
+            weightKeys = ['mass'],
+            xParams = ["T"],
         )
 
         print(
