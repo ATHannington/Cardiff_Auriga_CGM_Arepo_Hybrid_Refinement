@@ -351,6 +351,7 @@ static int derefine_criterion_default(int i)
         if (temp_in_K >= All.TargetForHybridRefinementHigh)
         {
           variableTargetGasVolume = All.TargetGasVolume;
+
           // mpi_printf("\n");
           // mpi_printf("REFINEMENT_HYBRID Derefinement: CGM Gas volume! \n");
           // mpi_printf("REFINEMENT_HYBRID Derefinement: temp_in_K = %g K \n", temp_in_K);
@@ -359,6 +360,7 @@ static int derefine_criterion_default(int i)
         else if (temp_in_K <= All.TargetForHybridRefinementLow)
         {
           variableTargetGasVolume = All.TargetHybridGasVolume;
+
           // mpi_printf("\n");
           // mpi_printf("REFINEMENT_HYBRID Derefinement: Hybrid Gas volume! \n");
           // mpi_printf("REFINEMENT_HYBRID Derefinement: temp_in_K = %g K \n", temp_in_K);
@@ -369,25 +371,25 @@ static int derefine_criterion_default(int i)
 
           double logTargetDiff = log10(All.TargetForHybridRefinementHigh) - log10(All.TargetForHybridRefinementLow);
 
-          // equals 1 when at TargetForHybridRefinementLow
-          // equals 0 when at TargetForHybridRefinementHigh
-          double volFactor = (log10(All.TargetForHybridRefinementHigh) - log10(temp_in_K)) / (logTargetDiff);
+          // equals 0 when at TargetForHybridRefinementLow
+          // equals 1 when at TargetForHybridRefinementHigh
+          double volFactor = 1.0 - ((log10(All.TargetForHybridRefinementHigh) - log10(temp_in_K)) / (logTargetDiff));
 
-          if (volFactor <= 0.0)
+          if (volFactor >= 1.0)
           {
             variableTargetGasVolume = All.TargetGasVolume;
           }
-          else if (volFactor >= 1.0)
+          else if (volFactor <= 0.0)
           {
             variableTargetGasVolume = All.TargetHybridGasVolume;
           }
           else
           {
            // scale between TargetHybridGasVolume and TargetGasVolume
-           // by 0 when at TargetForHybridRefinementLow (volFactor = 1)
-           // and by 1 when at TargetForHybridRefinementHigh (volFactor = 0)
+           // by 0 when at TargetForHybridRefinementLow (volFactor = 0)
+           // and by 1 when at TargetForHybridRefinementHigh (volFactor = 1)
 
-           double targetFactor = (1.0 + (All.HybridVolumeDecreaseFactor - 1.0)*(1.0 - volFactor));
+           double targetFactor = (1.0 + (All.HybridVolumeDecreaseFactor - 1.0)*(volFactor));
 
            variableTargetGasVolume = All.TargetHybridGasVolume*targetFactor;
 
