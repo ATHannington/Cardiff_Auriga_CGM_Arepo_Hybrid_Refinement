@@ -20,23 +20,38 @@ import copy
 import math
 import os
 
-ageWindow = None #(Gyr) before current snapshot SFR evaluation
-snapStart = 99
-snapEnd = 109
+ageWindow = 1.5 #(Gyr) before current snapshot SFR evaluation
+windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
+Nbins = 250
+snapStart = 100
+snapEnd = 102
 DEBUG = False
 
-#h5_2kpc
-#h5_1kpc_snapshot-restart-of-2kpc
-#h5_hy_snapshot-restart-of-2kpc
-#h5_hy-v2_snapshot-restart-of-2kpc/
-
 loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
-simulation = "h5_2kpc"
-loadpath = loadPathBase+simulation+"/output/"
+loadDirectories = [
+    "h5_2kpc",
+    "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
+    "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc"
+]
 
-savePathBase = "./" + simulation + "/"
+simulations = []
+savePaths = []
+
+for dir in loadDirectories:
+    loadpath = loadPathBase+dir+"/output/"
+    simulations.append(loadpath)
+    savepath = "./" + dir + "/"
+    savePaths.append(savepath)
+
 
 numthreads = 18
+
+if ageWindow is not None:
+    SFRBins = int(math.floor(ageWindow/windowBins))
+else:
+    SFRBins = Nbins
+
 
 snapRange = [
         xx
@@ -83,8 +98,8 @@ ylabel = {
     "ndens": r"Number density (cm$^{-3}$)",
     "mass": r"Mass (M$_{\odot}$)",
     "vol": r"Volume (kpc$^{3}$)",
-    "age": "Lookback Time (Gyr)"
-
+    "age": "Lookback Time (Gyr)",
+    "cool_length" : "Cooling Length (kpc)",
 }
 
 xlimDict = {
@@ -112,10 +127,11 @@ xlimDict = {
     "ndens": {"xmin": -6.0, "xmax": 2.0},
     "rho_rhomean": {"xmin": 0.25, "xmax": 6.5},
     "vol": {},#{"xmin": 0.5**4, "xmax": 4.0**4}
-    "mass-pdf": {}#{"xmin": 0.0, "xmax": 1e13},
+    "mass-pdf": {},#{"xmin": 0.0, "xmax": 1e13},
+    "cool_length" : {},#{"xmin": -0.5, "xmax": 1.0},
 }
 
-logParameters = ["dens","ndens","rho_rhomean","csound","T","n_H","B","gz","L","P_thermal","P_magnetic","P_kinetic","P_tot","Pthermal_Pmagnetic", "P_CR", "PCR_Pthermal","gah","Grad_T","Grad_n_H","Grad_bfld","Grad_P_CR","tcool","theat","tcross","tff","tcool_tff","mass","gima","vol"]
+logParameters = ["dens","ndens","rho_rhomean","csound","T","n_H","B","gz","L","P_thermal","P_magnetic","P_kinetic","P_tot","Pthermal_Pmagnetic", "P_CR", "PCR_Pthermal","gah","Grad_T","Grad_n_H","Grad_bfld","Grad_P_CR","tcool","theat","tcross","tff","tcool_tff","mass","vol","cool_length"] #"gima"
 
 
 for entry in logParameters:
@@ -483,8 +499,19 @@ def plot_slices_quad(snap,
 
     print("\n" + f"[@{int(snapNumber)}]: Projection 4 of {nprojections}")
 
-    slice_gz = snap.get_Aslice(
-        "gz",
+    # slice_gz = snap.get_Aslice(
+    #     "gz",
+    #     box=[boxsize, boxsize],
+    #     center=imgcent,
+    #     nx=int(boxsize / pixres),
+    #     ny=int(boxsize / pixres),
+    #     axes=Axes,
+    #     proj=False,
+    #     numthreads=numthreads,
+    # )
+
+    slice_cl = snap.get_Aslice(
+        "cool_length",
         box=[boxsize, boxsize],
         center=imgcent,
         nx=int(boxsize / pixres),
@@ -493,6 +520,7 @@ def plot_slices_quad(snap,
         proj=False,
         numthreads=numthreads,
     )
+
 
     fig, axes = plt.subplots(
         nrows=2, ncols=2, figsize=(xsize, ysize), dpi=DPI, sharex=True, sharey=True
@@ -604,22 +632,29 @@ def plot_slices_quad(snap,
     ax3 = axes[1, 0]
 
     pcm3 = ax3.pcolormesh(
-        slice_gz["x"],
-        slice_gz["y"],
-        np.transpose(slice_gz["grid"]),
-        vmin=1e-2,
-        vmax=1e1,
+        slice_cl["x"],
+        slice_cl["y"],
+        np.transpose(slice_cl["grid"]),
+        # vmin=10**(-0.5),
+        # vmax=10**(1.0),
         norm=matplotlib.colors.LogNorm(),
         cmap=cmap,
         rasterized=True,
     )
 
-    ax3.set_title(f"Metallicity Slice", y=-0.2, fontsize=fontsize)
+    # ax3.set_title(f"Metallicity Slice", y=-0.2, fontsize=fontsize)
+    #
+    # cax3 = inset_axes(ax3, width="5%", height="95%", loc="right")
+    # fig.colorbar(pcm3, cax=cax3, orientation="vertical").set_label(
+    #     label=r"$Z/Z_{\odot}$", size=fontsize, weight="bold"
+    # )
+    ax3.set_title(f"Cooling Length Slice", y=-0.2, fontsize=fontsize)
 
     cax3 = inset_axes(ax3, width="5%", height="95%", loc="right")
     fig.colorbar(pcm3, cax=cax3, orientation="vertical").set_label(
-        label=r"$Z/Z_{\odot}$", size=fontsize, weight="bold"
+        label=r"$l_{cool}$ (kpc)", size=fontsize, weight="bold"
     )
+
     cax3.yaxis.set_ticks_position("left")
     cax3.yaxis.set_label_position("left")
     cax3.yaxis.label.set_color("white")
@@ -1262,6 +1297,8 @@ def pdf_versus_plot(
     cumulative = False,
     savePathBase = "./",
     saveCurve = False,
+    SFR = False,
+    byType = False,
 ):
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -1285,6 +1322,49 @@ def pdf_versus_plot(
             pass
         else:
             pass
+
+    if SFR is True:
+        weightKeys = ["gima"]
+        xParams = ["age"]
+
+    if byType is True:
+        uniqueTypes = np.unique(dataDict["type"])
+        for tp in uniqueTypes:
+            print("Starting type ",tp)
+            whereNotType = dataDict["type"] != tp
+
+            tpData = remove_selection(
+                copy.deepcopy(dataDict),
+                removalConditionMask = whereNotType,
+                errorString = "byType PDF whereNotType",
+                DEBUG = False,
+                )
+
+            pdf_versus_plot(
+                dataDict = tpData,
+                ylabel = ylabel,
+                xlimDict = xlimDict,
+                logParameters = logParameters,
+                snapNumber = snapNumber,
+                weightKeys = weightKeys,
+                xParams = xParams,
+                axisLimsBool = axisLimsBool,
+                titleBool = titleBool,
+                densityBool = densityBool,
+                DPI = DPI,
+                xsize = xsize,
+                ysize = ysize,
+                fontsize = fontsize,
+                fontsizeTitle = fontsizeTitle,
+                Nbins = Nbins,
+                ageWindow = ageWindow,
+                cumulative = cumulative,
+                savePathBase = savePathBase+f"type{int(tp)}/",
+                saveCurve = saveCurve,
+                SFR = SFR,
+                byType = False,
+            )
+        return
 
     for weightKey in weightKeys:
         print("-----")
@@ -1405,7 +1485,7 @@ def pdf_versus_plot(
                 weights=weightsData,
             )
 
-            if (SFRBool is True)|(analysisParam == "R"):
+            if (SFRBool is True):#|(analysisParam == "R"):
                 hist = np.flip(hist)
 
             if cumulative is True:
@@ -1416,10 +1496,10 @@ def pdf_versus_plot(
                 if cumulative is False:
                     hist = hist/(delta*1e9) # convert to SFR per yr
 
-            if (SFRBool is True)|(analysisParam == "R"):
+            if (SFRBool is True):#|(analysisParam == "R"):
                 xBins = np.flip(xBins)
                 bin_edges = np.flip(bin_edges)
-                
+
             if weightKey in logParameters:
                 if weightKey != "mass":
                     hist[hist == 0.0] = np.nan
@@ -1580,352 +1660,397 @@ def pdf_versus_plot(
 
 
 if __name__ == "__main__":
-    print(loadpath)
-    rotation_matrix = None
-    for snapNumber in snapRange:
-        # rotation_matrix = None
-        # snapNumber = 100
-        print(f"[@{int(snapNumber)}]: Load subfind")
-        # load in the subfind group files
-        snap_subfind = load_subfind(snapNumber, dir=loadpath)
+    for (loadpath,savePathBase) in zip(simulations,savePaths):
+        print(loadpath)
+        rotation_matrix = None
+        for snapNumber in snapRange:
+            # rotation_matrix = None
+            # snapNumber = 100
+            # loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
+            # simulation = "h5_2kpc"
+            # loadpath = loadPathBase+simulation+"/output/"
+            print(f"[@{int(snapNumber)}]: Load subfind")
+            # load in the subfind group files
+            snap_subfind = load_subfind(snapNumber, dir=loadpath)
 
-        print(f"[@{int(snapNumber)}]: Load snapshot")
-        snap = gadget_readsnap(
-            snapNumber,
-            loadpath,
-            hdf5=True,
-            loadonlytype=[0, 1, 2, 3, 4, 5],
-            lazy_load=False,
-            subfind=snap_subfind,
-        )
+            print(f"[@{int(snapNumber)}]: Load snapshot")
+            snap = gadget_readsnap(
+                snapNumber,
+                loadpath,
+                hdf5=True,
+                loadonlytype=[0, 1, 2, 3, 4, 5],
+                lazy_load=False,
+                subfind=snap_subfind,
+            )
 
-        print(f"[@{int(snapNumber)}]: Rotate and centre snapshot")
-        snap.calc_sf_indizes(snap_subfind, halolist=[0])
-        if rotation_matrix is None:
-            print(f"[@{int(snapNumber)}]: New rotation of snapshots")
-            rotation_matrix = snap.select_halo(snap_subfind, do_rotation=True)
-        else:
-            print(f"[@{int(snapNumber)}]: Existing rotation of snapshots")
-            snap.select_halo(snap_subfind, do_rotation=False)
-            snap.rotateto(
-                rotation_matrix[0], dir2=rotation_matrix[1], dir3=rotation_matrix[2]
+            print(f"[@{int(snapNumber)}]: Rotate and centre snapshot")
+            snap.calc_sf_indizes(snap_subfind, halolist=[0])
+            if rotation_matrix is None:
+                print(f"[@{int(snapNumber)}]: New rotation of snapshots")
+                rotation_matrix = snap.select_halo(snap_subfind, do_rotation=True)
+            else:
+                print(f"[@{int(snapNumber)}]: Existing rotation of snapshots")
+                snap.select_halo(snap_subfind, do_rotation=False)
+                snap.rotateto(
+                    rotation_matrix[0], dir2=rotation_matrix[1], dir3=rotation_matrix[2]
+                )
+
+
+            print(
+                f"[@{int(snapNumber)}]: SnapShot loaded at RedShift z={snap.redshift:0.05e}"
             )
 
 
-        print(
-            f"[@{int(snapNumber)}]: SnapShot loaded at RedShift z={snap.redshift:0.05e}"
-        )
+            # --------------------------#
+            ##    Units Conversion    ##
+            # --------------------------#
+
+            # Convert Units
+            ## Make this a seperate function at some point??
+            snap.pos *= 1e3  # [kpc]
+            snap.vol *= 1e9  # [kpc^3]
+            snap.mass *= 1e10  # [Msol]
+            snap.hrgm *= 1e10  # [Msol]
+            snap.gima *= 1e10  # [Msol]
+
+            snap.data["R"] = np.linalg.norm(snap.data["pos"], axis=1)
+
+            print(
+                f"[@{int(snapNumber)}]: Select stars..."
+            )
+
+            whereWind = snap.data["age"] < 0.0
+
+            snap = remove_selection(
+                snap,
+                removalConditionMask = whereWind,
+                errorString = "Remove Wind from Gas",
+                DEBUG = DEBUG,
+                )
 
 
-        # --------------------------#
-        ##    Units Conversion    ##
-        # --------------------------#
+            Rvir = (snap_subfind.data["frc2"] * 1e3)[int(0)]
 
-        # Convert Units
-        ## Make this a seperate function at some point??
-        snap.pos *= 1e3  # [kpc]
-        snap.vol *= 1e9  # [kpc^3]
-        snap.mass *= 1e10  # [Msol]
-        snap.hrgm *= 1e10  # [Msol]
-        snap.gima *= 1e10  # [Msol]
+            rmax = 175.0
+            boxmax = rmax
+            box = [boxmax, boxmax, boxmax]
 
-        snap.data["R"] = np.linalg.norm(snap.data["pos"], axis=1)
+            # Calculate New Parameters and Load into memory others we want to track
+            snap = calculate_tracked_parameters(
+                snap,
+                oc.elements,
+                oc.elements_Z,
+                oc.elements_mass,
+                oc.elements_solar,
+                oc.Zsolar,
+                oc.omegabaryon0,
+                snapNumber,
+                # logParameters = logParameters,
+                paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","cool_length"],
+                mappingBool=True,
+                box=box,
+                numthreads=numthreads,
+                verbose = False,
+            )
 
-        print(
-            f"[@{int(snapNumber)}]: Select stars..."
-        )
+            print(
+                f"[@{int(snapNumber)}]: Remove beyond 1.5 x Virial Radius..."
+            )
 
-        whereWind = snap.data["age"] < 0.0
+            whereOutsideVirial = snap.data["R"] > Rvir*1.50#*1.5
 
-        snap = remove_selection(
-            snap,
-            removalConditionMask = whereWind,
-            errorString = "Remove Wind from Gas",
-            DEBUG = DEBUG,
+            xlimDict["R"]["xmax"] = Rvir*1.50
+
+            snaptmp = remove_selection(
+                snap,
+                removalConditionMask = whereOutsideVirial,
+                errorString = "Remove Outside Virial",
+                DEBUG = DEBUG,
+                )
+
+            print(
+                f"[@{int(snapNumber)}]: Ages: get_lookback_time_from_a() ..."
+            )
+
+            ages = snap.cosmology_get_lookback_time_from_a(snap.data["age"],is_flat=True)
+
+            snap.data["age"] = ages
+
+            print(
+                f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
+            )
+            # Make normal dictionary form of snap
+            out = {}
+            for key, value in snaptmp.data.items():
+                if value is not None:
+                    out.update({key: copy.deepcopy(value)})
+
+
+            print(
+                f"[@{int(snapNumber)}]: PDF of mass vs R plot..."
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['mass'],
+                xParams = ["R"],
+                savePathBase = savePathBase,
+                saveCurve = True,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Cumulative PDF of mass vs R plot..."
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['mass'],
+                xParams = ["R"],
+                cumulative = True,
+                savePathBase = savePathBase,
+                saveCurve = True,
+
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: By Type PDF of mass vs R plot..."
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['mass'],
+                xParams = ["R"],
+                savePathBase = savePathBase,
+                saveCurve = True,
+                byType = True,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: By Type Cumulative PDF of mass vs R plot..."
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['mass'],
+                xParams = ["R"],
+                cumulative = True,
+                savePathBase = savePathBase,
+                saveCurve = True,
+                byType = True,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Remove all types other than Gas and Stars..."
+            )
+
+            whereOthers = np.isin(snap.data["type"],np.array([1,2,3,5]))
+
+            snap = remove_selection(
+                snap,
+                removalConditionMask = whereOthers,
+                errorString = "Remove all types other than Gas and Stars",
+                DEBUG = DEBUG
+                )
+
+            print(
+                f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
+            )
+            # Make normal dictionary form of snap
+            out = {}
+            for key, value in snaptmp.data.items():
+                if value is not None:
+                    out.update({key: copy.deepcopy(value)})
+
+            print(
+                f"[@{int(snapNumber)}]: SFR plot..."
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['gima'],
+                xParams = ["age"],
+                ageWindow = ageWindow,
+                Nbins = SFRBins,
+                savePathBase = savePathBase,
+                saveCurve = True,
+                SFR = True,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Cumulative SFR plot..."
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['gima'],
+                xParams = ["age"],
+                ageWindow = ageWindow,
+                Nbins = SFRBins,
+                savePathBase = savePathBase,
+                cumulative = True,
+                saveCurve = True,
+                SFR = True,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Remove stars..."
+            )
+            whereStars = snap.data["type"] == 4
+            snap = remove_selection(
+                snap,
+                removalConditionMask = whereStars,
+                errorString = "Remove Stars from Gas",
+                DEBUG = DEBUG
+                )
+
+            print(
+                f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
+            )
+            # Make normal dictionary form of snap
+            out = {}
+            for key, value in snaptmp.data.items():
+                if value is not None:
+                    out.update({key: copy.deepcopy(value)})
+
+            print(
+                f"[@{int(snapNumber)}]: PDF of gas (mass vs T or vol) plot"
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['mass'],
+                xParams = ["T","vol"],
+                savePathBase = savePathBase,
+                saveCurve = True,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Cumulative PDF of gas (mass vs T or vol) plot"
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['mass'],
+                xParams = ["T","vol"],
+                savePathBase = savePathBase,
+                cumulative = True,
+                saveCurve = True,
             )
 
 
-        Rvir = (snap_subfind.data["frc2"] * 1e3)[int(0)]
-
-        rmax = 175.0
-        boxmax = rmax
-        box = [boxmax, boxmax, boxmax]
-
-        # Calculate New Parameters and Load into memory others we want to track
-        snap = calculate_tracked_parameters(
-            snap,
-            oc.elements,
-            oc.elements_Z,
-            oc.elements_mass,
-            oc.elements_solar,
-            oc.Zsolar,
-            oc.omegabaryon0,
-            snapNumber,
-            # logParameters = logParameters,
-            paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","theat","vrad"],
-            mappingBool=True,
-            box=box,
-            numthreads=numthreads,
-            verbose = False,
-        )
-
-        print(
-            f"[@{int(snapNumber)}]: Remove beyond 5.0 x Virial Radius..."
-        )
-
-        whereOutsideVirial = snap.data["R"] > Rvir*5.00#*1.5
-
-        xlimDict["R"]["xmax"] = Rvir*5.00
-
-        snaptmp = remove_selection(
-            snap,
-            removalConditionMask = whereOutsideVirial,
-            errorString = "Remove Outside Virial",
-            DEBUG = DEBUG,
+            print(
+                f"[@{int(snapNumber)}]: Slice plot"
             )
 
-        print(
-            f"[@{int(snapNumber)}]: Ages: get_lookback_time_from_a() ..."
-        )
-
-        ages = np.array([snap.cosmology_get_lookback_time_from_a(np.array([aa]))[0] for aa in snap.data["age"]])
-
-        snap.data["age"] = ages
-
-        print(
-            f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
-        )
-        # Make normal dictionary form of snap
-        out = {}
-        for key, value in snaptmp.data.items():
-            if value is not None:
-                out.update({key: copy.deepcopy(value)})
-
-
-        print(
-            f"[@{int(snapNumber)}]: PDF of mass vs R plot..."
-        )
-
-        pdf_versus_plot(
-            out,
-            ylabel,
-            xlimDict,
-            logParameters,
-            snapNumber,
-            weightKeys = ['mass'],
-            xParams = ["R"],
-            savePathBase = savePathBase,
-            saveCurve = True,
-        )
-
-        print(
-            f"[@{int(snapNumber)}]: Cumulative PDF of mass vs R plot..."
-        )
-
-        pdf_versus_plot(
-            out,
-            ylabel,
-            xlimDict,
-            logParameters,
-            snapNumber,
-            weightKeys = ['mass'],
-            xParams = ["R"],
-            cumulative = True,
-            savePathBase = savePathBase,
-            saveCurve = True,
-
-        )
-
-        print(
-            f"[@{int(snapNumber)}]: Remove all types other than Gas and Stars..."
-        )
-
-        whereOthers = np.isin(snap.data["type"],np.array([1,2,3,5]))
-
-        snap = remove_selection(
-            snap,
-            removalConditionMask = whereOthers,
-            errorString = "Remove all types other than Gas and Stars",
-            DEBUG = DEBUG
+            plot_slices(snap,
+                snapNumber,
+                pixres=0.1*1.5,
+                boxsize=Rvir*1.50*2.0,
+                numthreads=numthreads,
+                savePathBase = savePathBase,
             )
 
-        print(
-            f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
-        )
-        # Make normal dictionary form of snap
-        out = {}
-        for key, value in snaptmp.data.items():
-            if value is not None:
-                out.update({key: copy.deepcopy(value)})
-
-        print(
-            f"[@{int(snapNumber)}]: SFR plot..."
-        )
-
-        pdf_versus_plot(
-            out,
-            ylabel,
-            xlimDict,
-            logParameters,
-            snapNumber,
-            weightKeys = ['gima'],
-            xParams = ["age"],
-            ageWindow = ageWindow,
-            savePathBase = savePathBase,
-            saveCurve = True,
-        )
-
-        print(
-            f"[@{int(snapNumber)}]: Cumulative SFR plot..."
-        )
-
-        pdf_versus_plot(
-            out,
-            ylabel,
-            xlimDict,
-            logParameters,
-            snapNumber,
-            weightKeys = ['gima'],
-            xParams = ["age"],
-            ageWindow = ageWindow,
-            savePathBase = savePathBase,
-            cumulative = True,
-            saveCurve = True,
-        )
-
-        print(
-            f"[@{int(snapNumber)}]: Remove stars..."
-        )
-        whereStars = snap.data["type"] == 4
-        snap = remove_selection(
-            snap,
-            removalConditionMask = whereStars,
-            errorString = "Remove Stars from Gas",
-            DEBUG = DEBUG
+            print(
+                f"[@{int(snapNumber)}]: Slice plot Quad"
             )
 
-        print(
-            f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
-        )
-        # Make normal dictionary form of snap
-        out = {}
-        for key, value in snaptmp.data.items():
-            if value is not None:
-                out.update({key: copy.deepcopy(value)})
+            plot_slices_quad(snap,
+                snapNumber,
+                pixres=0.1*1.5,
+                boxsize=Rvir*1.50*2.0,
+                numthreads=numthreads,
+                savePathBase = savePathBase,
+            )
 
-        print(
-            f"[@{int(snapNumber)}]: PDF of gas (mass vs T or vol) plot"
-        )
+            print(
+                f"[@{int(snapNumber)}]: Projection plot"
+            )
 
-        pdf_versus_plot(
-            out,
-            ylabel,
-            xlimDict,
-            logParameters,
-            snapNumber,
-            weightKeys = ['mass'],
-            xParams = ["T","vol"],
-            savePathBase = savePathBase,
-            saveCurve = True,
-        )
+            plot_projections(snap,
+                snapNumber,
+                boxlos=50.0,
+                pixreslos=0.3*1.5,
+                pixres=0.3*1.5,
+                boxsize=Rvir*1.50*2.0,
+                numthreads=numthreads,
+                savePathBase = savePathBase,
+            )
 
-        print(
-            f"[@{int(snapNumber)}]: Cumulative PDF of gas (mass vs T or vol) plot"
-        )
+            # print(
+            #     f"[@{int(snapNumber)}]: Remove beyond 1.2 x Virial Radius..."
+            # )
+            #
+            # whereOutsideVirial = snap.data["R"] > Rvir*1.20#*2.0
+            #
+            # xlimDict["R"]["xmax"] = Rvir*1.20#*1.5
+            #
+            # snaptmp = remove_selection(
+            #     snap,
+            #     removalConditionMask = whereOutsideVirial,
+            #     errorString = "Remove Outside Virial from Gas",
+            #     DEBUG = DEBUG,
+            #     )
 
-        pdf_versus_plot(
-            out,
-            ylabel,
-            xlimDict,
-            logParameters,
-            snapNumber,
-            weightKeys = ['mass'],
-            xParams = ["T","vol"],
-            savePathBase = savePathBase,
-            cumulative = True,
-            saveCurve = True,
-        )
-
-
-        print(
-            f"[@{int(snapNumber)}]: Slice plot"
-        )
-
-        plot_slices(snap,
-            snapNumber,
-            pixres=0.1*5.0,
-            boxsize=Rvir*5.00*2.0,
-            numthreads=numthreads,
-            savePathBase = savePathBase,
-        )
-
-        print(
-            f"[@{int(snapNumber)}]: Slice plot Quad"
-        )
-
-        plot_slices_quad(snap,
-            snapNumber,
-            pixres=0.1*5.0,
-            boxsize=Rvir*5.00*2.0,
-            numthreads=numthreads,
-            savePathBase = savePathBase,
-        )
-
-        print(
-            f"[@{int(snapNumber)}]: Projection plot"
-        )
-
-        plot_projections(snap,
-            snapNumber,
-            boxlos=50.0,
-            pixreslos=0.3*5.0,
-            pixres=0.3*5.0,
-            boxsize=Rvir*5.00*2.0,
-            numthreads=numthreads,
-            savePathBase = savePathBase,
-        )
-
-        # print(
-        #     f"[@{int(snapNumber)}]: Remove beyond 1.2 x Virial Radius..."
-        # )
-        #
-        # whereOutsideVirial = snap.data["R"] > Rvir*1.20#*2.0
-        #
-        # xlimDict["R"]["xmax"] = Rvir*1.20#*1.5
-        #
-        # snaptmp = remove_selection(
-        #     snap,
-        #     removalConditionMask = whereOutsideVirial,
-        #     errorString = "Remove Outside Virial from Gas",
-        #     DEBUG = DEBUG,
-        #     )
-        #
-        # print(
-        #     f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
-        # )
-        # # Make normal dictionary form of snap
-        # out = {}
-        # for key, value in snaptmp.data.items():
-        #     if value is not None:
-        #         out.update({key: copy.deepcopy(value)})
+            print(
+                f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
+            )
+            # Make normal dictionary form of snap
+            out = {}
+            for key, value in snaptmp.data.items():
+                if value is not None:
+                    out.update({key: copy.deepcopy(value)})
 
 
-        print(
-            f"[@{int(snapNumber)}]: Hist_plot_xyz plot"
-        )
+            print(
+                f"[@{int(snapNumber)}]: Hist_plot_xyz plot"
+            )
 
-        hist_plot_xyz(
-            out,
-            ylabel,
-            xlimDict,
-            logParameters,
-            yParams = ["T"],
-            xParams = ["R","rho_rhomean","vol"],
-            weightKeys = ["mass"],
-            savePathBase = savePathBase,
-        )
+            hist_plot_xyz(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                yParams = ["T"],
+                xParams = ["R","rho_rhomean","vol", "n_H"],
+                weightKeys = ["mass"],
+                savePathBase = savePathBase,
+            )
 
-        print(
-            f"[@{int(snapNumber)}]: Done"
-        )
-    print(loadpath)
+            print(
+                f"[@{int(snapNumber)}]: Done"
+            )
+            plt.close("all")
+        print("finished sim:", loadpath)
+    print("Finished fully! :)")
