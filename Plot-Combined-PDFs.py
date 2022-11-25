@@ -24,27 +24,56 @@ ageWindow = 1.5 #(Gyr) before current snapshot SFR evaluation
 windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
 snapStart = 100
-snapEnd = 102
+snapEnd = 109#116
 DEBUG = False
+forceLogMass = False
+numthreads = 18
 
 loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
 loadDirectories = [
-    "h5_2kpc",
-    "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
-    "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc"
+    # "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
+    # "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
+    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
+    # "h5_standard",
+    # "h5_2kpc",
+    # "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
+    "h5_standard",
+    "h5_1kpc",
+    "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc",
 ]
+
+residualsReferenceSimDict = {
+    "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc": "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
+    "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc": None,
+    "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc": "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
+    "h5_standard": None,
+    "h5_2kpc": None,
+    "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc": "h5_2kpc",
+    "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc": "h5_2kpc",
+    "h5_standard": None,
+    "h5_1kpc": None,
+    "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc": "h5_1kpc",
+}
 
 simulations = []
 savePaths = []
 
+tmp = {}
 for dir in loadDirectories:
     loadpath = loadPathBase+dir+"/output/"
     simulations.append(loadpath)
+
     savepath = "./" + dir + "/"
     savePaths.append(savepath)
+    newKey = savepath
+    if residualsReferenceSimDict[dir] is not None:
+        newReferencePath = "./" + copy.deepcopy(residualsReferenceSimDict[dir]) + "/"
+    else:
+        newReferencePath = None
+    tmp.update({newReferencePath : newReferencePath})
 
-numthreads = 18
+residualsReferenceSimDict = tmp
 
 if ageWindow is not None:
     SFRBins = int(math.floor(ageWindow/windowBins))
@@ -169,6 +198,8 @@ def combined_pdf_versus_plot(
     SFR = False,
     byType = False,
     colourmapMain = "plasma",
+    forceLogMass = False,
+    residualsReferenceSimDict = None,
 ):
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -212,6 +243,8 @@ def combined_pdf_versus_plot(
                 SFR = SFR,
                 byType = False,
                 colourmapMain = colourmapMain,
+                forceLogMass = forceLogMass,
+                residualsReferenceSimDict = residualsReferenceSimDict,
             )
         return
 
@@ -269,6 +302,47 @@ def combined_pdf_versus_plot(
                 except:
                     print(f"Load path of {opslaan+'_data.h5'} not found! Skipping...")
                     continue
+                #
+                # referenceSimPath = residualsReferenceSimDict[savePathBase]
+                # print("savePathBase= ",savePathBase)
+                #
+                # savePath = savePathBase + "Plots/PDFs/"
+                # tmp = "./"
+                #
+                # for savePathChunk in savePath.split("/")[1:-1]:
+                #     tmp += savePathChunk + "/"
+                #     try:
+                #         os.mkdir(tmp)
+                #     except:
+                #         pass
+                #     else:
+                #         pass
+                #
+                #
+                # SFRBool = False
+                # if (weightKey == "gima")&(analysisParam=="age"):
+                #     SFRBool = True
+                #
+                # if cumulative is True:
+                #     tmp2 = savePath +"Cumulative-"
+                # else:
+                #     tmp2 = savePath
+                #
+                # if SFRBool is True:
+                #     opslaan = tmp2 + f"SFR_{snapNumber}"
+                # else:
+                #     opslaan = tmp2 + f"{weightKey}-{analysisParam}-PDF_{snapNumber}"
+                #
+                # print(opslaan)
+                #
+                # # out = {"data":{"x" : xFromBins, "y" : hist}}
+                # try:
+                #     dataDict = hdf5_load(opslaan+"_data.h5")
+                # except:
+                #     print(f"Load path of {opslaan+'_data.h5'} not found! Skipping...")
+                #     continue
+
+
 
                 cmap = matplotlib.cm.get_cmap(colourmapMain)
                 if colourmapMain == "tab10":
@@ -277,12 +351,12 @@ def combined_pdf_versus_plot(
                     colour = cmap(float(ii) / float(Nsims))
 
                 splitbase = savePathBase.split("/")
-                print(splitbase)
+                # print(splitbase)
                 if "" in splitbase:
                     splitbase.remove("")
                 if "." in splitbase:
                     splitbase.remove(".")
-                print(splitbase)
+                # print(splitbase)
 
                 if len(splitbase)>2:
                     label = f'{splitbase[0]}: {"_".join(((splitbase[-2]).split("_"))[:2])} ({splitbase[-1]})'
@@ -290,7 +364,7 @@ def combined_pdf_versus_plot(
                     label = f'{splitbase[0]}: {"_".join(((splitbase[-1]).split("_"))[:2])}'
                 else:
                     label = f'Original: {"_".join(((splitbase[-1]).split("_"))[:2])}'
-                print("label= ",label)
+                # print("label= ",label)
                 ax.plot(
                     dataDict["data"]["x"],
                     dataDict["data"]["y"],
@@ -309,7 +383,10 @@ def combined_pdf_versus_plot(
             if cumulative is True:
                 ylabel_prefix = "Cumulative "
             if weightKey == "mass":
-                ax.set_ylabel(ylabel_prefix+r"Mass (M$_{\odot}$)", fontsize=fontsize)
+                if forceLogMass is False:
+                    ax.set_ylabel(ylabel_prefix+r"Mass (M$_{\odot}$)", fontsize=fontsize)
+                else:
+                    ax.set_ylabel(r"$Log_{10}$ "+ylabel_prefix+"Mass (M$_{\odot}$)", fontsize=fontsize)
             else:
                 ax.set_ylabel(
                 ylabel_prefix+ylabel[weightKey], fontsize=fontsize)
@@ -365,7 +442,8 @@ if __name__ == "__main__":
             logParameters,
             snapNumber,
             weightKeys = ['mass'],
-            xParams = ["R"]
+            xParams = ["R"],
+            forceLogMass = forceLogMass,
         )
 
         print(
@@ -381,6 +459,8 @@ if __name__ == "__main__":
             weightKeys = ['mass'],
             xParams = ["R"],
             cumulative = True,
+            forceLogMass = forceLogMass,
+
         )
 
         print(
@@ -396,6 +476,7 @@ if __name__ == "__main__":
             weightKeys = ['mass'],
             xParams = ["R"],
             byType = True,
+            forceLogMass = forceLogMass,
         )
 
         print(
@@ -412,6 +493,7 @@ if __name__ == "__main__":
             xParams = ["R"],
             cumulative = True,
             byType = True,
+            forceLogMass = forceLogMass,
         )
 
         print(
@@ -427,6 +509,7 @@ if __name__ == "__main__":
             weightKeys = ['gima'],
             xParams = ["age"],
             SFR = True,
+            forceLogMass = forceLogMass,
         )
 
         print(
@@ -443,6 +526,7 @@ if __name__ == "__main__":
             xParams = ["age"],
             cumulative = True,
             SFR = True,
+            forceLogMass = forceLogMass,
         )
 
         print(
@@ -458,9 +542,13 @@ if __name__ == "__main__":
             snapNumber,
             weightKeys = ['mass'],
             xParams = ["T","vol"],
+            forceLogMass = forceLogMass,
         )
+
+
         print(
             f"[@{int(snapNumber)}]: Cumulative PDF of gas (mass vs T or vol) plot"
+
         )
         combined_pdf_versus_plot(
             savePaths,
@@ -471,7 +559,9 @@ if __name__ == "__main__":
             weightKeys = ['mass'],
             xParams = ["T","vol"],
             cumulative = True,
+            forceLogMass = forceLogMass,
         )
+
     print("***")
     print("...done!")
     print("***")

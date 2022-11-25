@@ -24,16 +24,24 @@ ageWindow = 1.5 #(Gyr) before current snapshot SFR evaluation
 windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
 snapStart = 100
-snapEnd = 102
+snapEnd = 116 #109 Max = 192 for high-time res
 DEBUG = False
+forceLogMass = False
 
 loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
 loadDirectories = [
-    "h5_2kpc",
-    "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
-    "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc"
-]
+    "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
+    "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
+    "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
+    "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
+    "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc",
+    # # "h5_standard",
+    # # "h5_2kpc",
+    # "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
+    # "h5_1kpc",
+    # "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc",
+    ]
 
 simulations = []
 savePaths = []
@@ -127,8 +135,7 @@ xlimDict = {
     "ndens": {"xmin": -6.0, "xmax": 2.0},
     "rho_rhomean": {"xmin": 0.25, "xmax": 6.5},
     "vol": {},#{"xmin": 0.5**4, "xmax": 4.0**4}
-    "mass-pdf": {},#{"xmin": 0.0, "xmax": 1e13},
-    "cool_length" : {},#{"xmin": -0.5, "xmax": 1.0},
+    "cool_length" : {},#{"xmin": -1.0 "xmax": 3.0},
 }
 
 logParameters = ["dens","ndens","rho_rhomean","csound","T","n_H","B","gz","L","P_thermal","P_magnetic","P_kinetic","P_tot","Pthermal_Pmagnetic", "P_CR", "PCR_Pthermal","gah","Grad_T","Grad_n_H","Grad_bfld","Grad_P_CR","tcool","theat","tcross","tff","tcool_tff","mass","vol","cool_length"] #"gima"
@@ -635,8 +642,8 @@ def plot_slices_quad(snap,
         slice_cl["x"],
         slice_cl["y"],
         np.transpose(slice_cl["grid"]),
-        # vmin=10**(-0.5),
-        # vmax=10**(1.0),
+        vmin=1e-1,
+        vmax=1e3,
         norm=matplotlib.colors.LogNorm(),
         cmap=cmap,
         rasterized=True,
@@ -1299,6 +1306,7 @@ def pdf_versus_plot(
     saveCurve = False,
     SFR = False,
     byType = False,
+    forceLogMass = False,
 ):
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -1362,6 +1370,7 @@ def pdf_versus_plot(
                 savePathBase = savePathBase+f"type{int(tp)}/",
                 saveCurve = saveCurve,
                 SFR = SFR,
+                forceLogMass = forceLogMass,
                 byType = False,
             )
         return
@@ -1501,7 +1510,7 @@ def pdf_versus_plot(
                 bin_edges = np.flip(bin_edges)
 
             if weightKey in logParameters:
-                if weightKey != "mass":
+                if (forceLogMass is True)&(weightKey=="mass"):
                     hist[hist == 0.0] = np.nan
                     hist = np.log10(hist)
 
@@ -1546,7 +1555,10 @@ def pdf_versus_plot(
             if cumulative is True:
                 ylabel_prefix = "Cumulative "
             if weightKey == "mass":
-                currentAx.set_ylabel(ylabel_prefix+r"Mass (M$_{\odot}$)", fontsize=fontsize)
+                if (forceLogMass is True):
+                    currentAx.set_ylabel(r"$Log_{10}$ "+ylabel_prefix+"Mass (M$_{\odot}$)", fontsize=fontsize)
+                else:
+                    currentAx.set_ylabel(ylabel_prefix+r"Mass (M$_{\odot}$)", fontsize=fontsize)
             else:
                 currentAx.set_ylabel(
                 ylabel_prefix+ylabel[weightKey], fontsize=fontsize)
@@ -1593,33 +1605,13 @@ def pdf_versus_plot(
                 print("Data All Inf/NaN! Skipping entry!")
                 continue
 
-            if weightKey == "mass":
-                if (SFRBool is False):
-                    if (cumulative is True):
-                        try:
-                            finalymin = xlimDict["mass-pdf"]["xmin"]
-                            finalymax = xlimDict["mass-pdf"]["xmax"]
-                        except:
-                            try:
-                                finalymin = 0.0
-                                finalymax = np.nanmax(ymax)
-                            except:
-                                print("Data All Inf/NaN! Skipping entry!")
-                                continue
-                    else:
-                        try:
-                            finalymin = 0.0
-                            finalymax = np.nanmax(ymax)
-                        except:
-                            print("Data All Inf/NaN! Skipping entry!")
-                            continue
-                else:
-                    try:
-                        finalymin = 0.0
-                        finalymax = np.nanmax(ymax)
-                    except:
-                        print("Data All Inf/NaN! Skipping entry!")
-                        continue
+            if (weightKey == "mass")&(forceLogMass is False)&(SFRBool is False):
+                try:
+                    finalymin = 0.0
+                    finalymax = np.nanmax(ymax)
+                except:
+                    print("Data All Inf/NaN! Skipping entry!")
+                    continue
             else:
                 try:
                     finalymin = np.nanmin(ymin)
@@ -1785,6 +1777,18 @@ if __name__ == "__main__":
                 if value is not None:
                     out.update({key: copy.deepcopy(value)})
 
+            print(
+                f"[@{int(snapNumber)}]: Remove other halos from dictionary..."
+            )
+
+            whereSatellite = np.isin(out["subhalo"],np.array([-1,0,np.nan]))==False
+
+            out = remove_selection(
+                out,
+                removalConditionMask = whereSatellite,
+                errorString = "Remove Satellites",
+                DEBUG = DEBUG,
+                )
 
             print(
                 f"[@{int(snapNumber)}]: PDF of mass vs R plot..."
@@ -1800,6 +1804,7 @@ if __name__ == "__main__":
                 xParams = ["R"],
                 savePathBase = savePathBase,
                 saveCurve = True,
+                forceLogMass = forceLogMass,
             )
 
             print(
@@ -1817,6 +1822,7 @@ if __name__ == "__main__":
                 cumulative = True,
                 savePathBase = savePathBase,
                 saveCurve = True,
+                forceLogMass = forceLogMass,
 
             )
 
@@ -1835,6 +1841,7 @@ if __name__ == "__main__":
                 savePathBase = savePathBase,
                 saveCurve = True,
                 byType = True,
+                forceLogMass = forceLogMass,
             )
 
             print(
@@ -1853,6 +1860,7 @@ if __name__ == "__main__":
                 savePathBase = savePathBase,
                 saveCurve = True,
                 byType = True,
+                forceLogMass = forceLogMass,
             )
 
             print(
@@ -1876,6 +1884,19 @@ if __name__ == "__main__":
             for key, value in snaptmp.data.items():
                 if value is not None:
                     out.update({key: copy.deepcopy(value)})
+
+            print(
+                f"[@{int(snapNumber)}]: Remove other halos from dictionary..."
+            )
+
+            whereSatellite = np.isin(out["subhalo"],np.array([-1,0,np.nan]))==False
+
+            out = remove_selection(
+                out,
+                removalConditionMask = whereSatellite,
+                errorString = "Remove Satellites",
+                DEBUG = DEBUG,
+                )
 
             print(
                 f"[@{int(snapNumber)}]: SFR plot..."
@@ -1937,6 +1958,19 @@ if __name__ == "__main__":
                     out.update({key: copy.deepcopy(value)})
 
             print(
+                f"[@{int(snapNumber)}]: Remove other halos from dictionary..."
+            )
+
+            whereSatellite = np.isin(out["subhalo"],np.array([-1,0,np.nan]))==False
+
+            out = remove_selection(
+                out,
+                removalConditionMask = whereSatellite,
+                errorString = "Remove Satellites",
+                DEBUG = DEBUG,
+                )
+
+            print(
                 f"[@{int(snapNumber)}]: PDF of gas (mass vs T or vol) plot"
             )
 
@@ -1950,6 +1984,7 @@ if __name__ == "__main__":
                 xParams = ["T","vol"],
                 savePathBase = savePathBase,
                 saveCurve = True,
+                forceLogMass = forceLogMass,
             )
 
             print(
@@ -1967,6 +2002,7 @@ if __name__ == "__main__":
                 savePathBase = savePathBase,
                 cumulative = True,
                 saveCurve = True,
+                forceLogMass = forceLogMass,
             )
 
 
@@ -2008,30 +2044,43 @@ if __name__ == "__main__":
                 savePathBase = savePathBase,
             )
 
-            # print(
-            #     f"[@{int(snapNumber)}]: Remove beyond 1.2 x Virial Radius..."
-            # )
+            # # print(
+            # #     f"[@{int(snapNumber)}]: Remove beyond 1.2 x Virial Radius..."
+            # # )
+            # #
+            # # whereOutsideVirial = snap.data["R"] > Rvir*1.20#*2.0
+            # #
+            # # xlimDict["R"]["xmax"] = Rvir*1.20#*1.5
+            # #
+            # # snaptmp = remove_selection(
+            # #     snap,
+            # #     removalConditionMask = whereOutsideVirial,
+            # #     errorString = "Remove Outside Virial from Gas",
+            # #     DEBUG = DEBUG,
+            # #     )
             #
-            # whereOutsideVirial = snap.data["R"] > Rvir*1.20#*2.0
-            #
-            # xlimDict["R"]["xmax"] = Rvir*1.20#*1.5
-            #
-            # snaptmp = remove_selection(
-            #     snap,
-            #     removalConditionMask = whereOutsideVirial,
-            #     errorString = "Remove Outside Virial from Gas",
-            #     DEBUG = DEBUG,
-            #     )
-
-            print(
-                f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
-            )
-            # Make normal dictionary form of snap
-            out = {}
-            for key, value in snaptmp.data.items():
-                if value is not None:
-                    out.update({key: copy.deepcopy(value)})
-
+            # # print(
+            # #     f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
+            # # )
+            # # # Make normal dictionary form of snap
+            # # out = {}
+            # # for key, value in snaptmp.data.items():
+            # #     if value is not None:
+            # #         out.update({key: copy.deepcopy(value)})
+            # #
+            # #
+            # # print(
+            # #     f"[@{int(snapNumber)}]: Remove other halos from dictionary..."
+            # # )
+            # #
+            # # whereSatellite = np.isin(out["subhalo"],np.array([-1,0,np.nan]))==False
+            # #
+            # # out = remove_selection(
+            # #     out,
+            # #     removalConditionMask = whereSatellite,
+            # #     errorString = "Remove Satellites",
+            # #     DEBUG = DEBUG,
+            # #     )
 
             print(
                 f"[@{int(snapNumber)}]: Hist_plot_xyz plot"
@@ -2043,8 +2092,8 @@ if __name__ == "__main__":
                 xlimDict,
                 logParameters,
                 yParams = ["T"],
-                xParams = ["R","rho_rhomean","vol", "n_H"],
-                weightKeys = ["mass"],
+                xParams = ["R","rho_rhomean"],
+                weightKeys = ["mass", "n_H"],
                 savePathBase = savePathBase,
             )
 
