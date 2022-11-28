@@ -410,7 +410,7 @@ int refine_criterion_default(int i)
    {
      double nH;
 
-     nH = (HYDROGEN_MASSFRAC * SphP[i].Density * All.cf_a3inv) / (PROTONMASS / All.UnitMass_in_g * All.HubbleParam);
+     nH = (HYDROGEN_MASSFRAC * SphP[i].Density * All.UnitDensity_in_cgs * All.cf_a3inv / (All.HubbleParam * All.HubbleParam * PROTONMASS));
 
 
      double variableTargetGasVolume = All.TargetGasVolume;
@@ -419,19 +419,19 @@ int refine_criterion_default(int i)
      {
        variableTargetGasVolume = All.TargetGasVolume;
 
-       mpi_printf("\n");
-       mpi_printf("REFINEMENT_HYBRID Refinement: CGM Gas volume! \n");
-       mpi_printf("REFINEMENT_HYBRID Refinement: nH = %g cm^-3 \n", nH);
-       mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+       // mpi_printf("\n");
+       // mpi_printf("REFINEMENT_HYBRID Refinement: CGM Gas volume! \n");
+       // mpi_printf("REFINEMENT_HYBRID Refinement: nH = %g cm^-3 \n", nH);
+       // mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
      }
      else if (nH >= All.TargetForHybridRefinement)
      {
        variableTargetGasVolume = All.TargetHybridGasVolume;
 
-       mpi_printf("\n");
-       mpi_printf("REFINEMENT_HYBRID Refinement: Hybrid Gas volume! \n");
-       mpi_printf("REFINEMENT_HYBRID Refinement: nH = %g cm^-3 \n", nH);
-       mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+       // mpi_printf("\n");
+       // mpi_printf("REFINEMENT_HYBRID Refinement: Hybrid Gas volume! \n");
+       // mpi_printf("REFINEMENT_HYBRID Refinement: nH = %g cm^-3 \n", nH);
+       // mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
      }
      if(SphP[i].Volume > 2.0 * variableTargetGasVolume * All.cf_a3inv)
      {

@@ -332,7 +332,7 @@ static int derefine_criterion_default(int i)
       {
         double nH;
 
-        nH = (HYDROGEN_MASSFRAC * SphP[i].Density * All.cf_a3inv) / (PROTONMASS / All.UnitMass_in_g * All.HubbleParam);
+        nH = (HYDROGEN_MASSFRAC * SphP[i].Density * All.UnitDensity_in_cgs * All.cf_a3inv / (All.HubbleParam * All.HubbleParam * PROTONMASS));
 
 
         double variableTargetGasVolume = All.TargetGasVolume;
@@ -341,19 +341,19 @@ static int derefine_criterion_default(int i)
         {
           variableTargetGasVolume = All.TargetGasVolume;
 
-          mpi_printf("\n");
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: CGM Gas volume! \n");
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: nH = %g cm^-3 \n", nH);
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+          // mpi_printf("\n");
+          // mpi_printf("DEREFINEMENT_HYBRID Derefinement: CGM Gas volume! \n");
+          // mpi_printf("DEREFINEMENT_HYBRID Derefinement: nH = %g cm^-3 \n", nH);
+          // mpi_printf("DEREFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
         }
         else if (nH >= All.TargetForHybridRefinement)
         {
           variableTargetGasVolume = All.TargetHybridGasVolume;
 
-          mpi_printf("\n");
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: Hybrid Gas volume! \n");
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: nH = %g cm^-3 \n", nH);
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+          // mpi_printf("\n");
+          // mpi_printf("DEREFINEMENT_HYBRID Derefinement: Hybrid Gas volume! \n");
+          // mpi_printf("DEREFINEMENT_HYBRID Derefinement: nH = %g cm^-3 \n", nH);
+          // mpi_printf("DEREFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
         }
 
         if(P[i].Mass < 0.5 * TargetGasMass && SphP[i].Volume < 0.5 * variableTargetGasVolume * All.cf_a3inv)
