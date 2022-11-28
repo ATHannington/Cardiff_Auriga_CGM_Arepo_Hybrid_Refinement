@@ -330,31 +330,79 @@ static int derefine_criterion_default(int i)
       {
       if(SphP[i].HighResMassCGM > HIGHRESMASSFAC * P[i].Mass)
       {
-        double nH;
+        #ifdef GRACKLE
+              double temp_in_K = get_temp_individual_cell_grackle(i);
+        #else
+              double meanweight = 4.0 / (1. + 3. * HYDROGEN_MASSFRAC) * PROTONMASS;
+          #ifdef COOLING
+                 meanweight = 4.0 / (1. + 3. * HYDROGEN_MASSFRAC + 4. * HYDROGEN_MASSFRAC * SphP[i].Ne) * PROTONMASS;
+          #endif
+        #endif
 
-        nH = (HYDROGEN_MASSFRAC * SphP[i].Density * All.cf_a3inv) / (PROTONMASS / All.UnitMass_in_g * All.HubbleParam);
-
+        #ifdef VARIABLE_GAMMA
+              double temp_in_K =
+                  (SphP[i].GammaE - 1.0) * SphP[i].Utherm / BOLTZMANN * All.UnitEnergy_in_cgs / All.UnitMass_in_g * meanweight;
+        #else
+              double temp_in_K = GAMMA_MINUS1 * SphP[i].Utherm / BOLTZMANN * All.UnitEnergy_in_cgs / All.UnitMass_in_g * meanweight;
+        #endif
 
         double variableTargetGasVolume = All.TargetGasVolume;
 
-        if (nH < All.TargetForHybridRefinement)
+        if (temp_in_K >= All.TargetForHybridRefinementHigh)
         {
           variableTargetGasVolume = All.TargetGasVolume;
 
-          mpi_printf("\n");
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: CGM Gas volume! \n");
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: nH = %g cm^-3 \n", nH);
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+          // mpi_printf("\n");
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: CGM Gas volume! \n");
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: temp_in_K = %g K \n", temp_in_K);
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
         }
-        else if (nH >= All.TargetForHybridRefinement)
+        else if (temp_in_K <= All.TargetForHybridRefinementLow)
         {
           variableTargetGasVolume = All.TargetHybridGasVolume;
 
-          mpi_printf("\n");
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: Hybrid Gas volume! \n");
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: nH = %g cm^-3 \n", nH);
-          mpi_printf("DEREFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+          // mpi_printf("\n");
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: Hybrid Gas volume! \n");
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: temp_in_K = %g K \n", temp_in_K);
+          // mpi_printf("REFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
         }
+        else
+        {
+
+          double logTargetDiff = log10(All.TargetForHybridRefinementHigh) - log10(All.TargetForHybridRefinementLow);
+
+          // equals 0 when at TargetForHybridRefinementLow
+          // equals 1 when at TargetForHybridRefinementHigh
+          double volFactor = 1.0 - ((log10(All.TargetForHybridRefinementHigh) - log10(temp_in_K)) / (logTargetDiff));
+
+          if (volFactor >= 1.0)
+          {
+            variableTargetGasVolume = All.TargetGasVolume;
+          }
+          else if (volFactor <= 0.0)
+          {
+            variableTargetGasVolume = All.TargetHybridGasVolume;
+          }
+          else
+          {
+           // scale between TargetHybridGasVolume and TargetGasVolume
+           // by 0 when at TargetForHybridRefinementLow (volFactor = 0)
+           // and by 1 when at TargetForHybridRefinementHigh (volFactor = 1)
+
+           double targetFactor = (1.0 + (All.HybridVolumeDecreaseFactor - 1.0)*(volFactor));
+
+           variableTargetGasVolume = All.TargetHybridGasVolume*targetFactor;
+
+           // mpi_printf("\n");
+           // mpi_printf("REFINEMENT_HYBRID Derefinement: variable volume! \n");
+           // mpi_printf("REFINEMENT_HYBRID Derefinement: temp_in_K = %g K \n", temp_in_K);
+           // mpi_printf("REFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+           // mpi_printf("REFINEMENT_HYBRID Derefinement: volFactor = %g\n", volFactor);
+           // mpi_printf("REFINEMENT_HYBRID Derefinement: targetFactor = %g\n", targetFactor);
+          }
+        }
+
+
 
         if(P[i].Mass < 0.5 * TargetGasMass && SphP[i].Volume < 0.5 * variableTargetGasVolume * All.cf_a3inv)
         {

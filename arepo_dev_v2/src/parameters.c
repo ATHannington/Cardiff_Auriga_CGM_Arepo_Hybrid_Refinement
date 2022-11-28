@@ -623,8 +623,11 @@ void read_parameter_file(const char *const fname)
       id[nt++] = PARAM_REAL;
 
       #ifdef REFINEMENT_HYBRID
-            strcpy(tag[nt], "TargetForHybridRefinement");
-            addr[nt] = &All.TargetForHybridRefinement;
+            strcpy(tag[nt], "TargetForHybridRefinementLow");
+            addr[nt] = &All.TargetForHybridRefinementLow;
+            id[nt++] = PARAM_REAL;
+            strcpy(tag[nt], "TargetForHybridRefinementHigh");
+            addr[nt] = &All.TargetForHybridRefinementHigh;
             id[nt++] = PARAM_REAL;
             strcpy(tag[nt], "HybridVolumeDecreaseFactor");
             addr[nt] = &All.HybridVolumeDecreaseFactor;
