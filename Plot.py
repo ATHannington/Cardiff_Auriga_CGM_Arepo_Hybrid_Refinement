@@ -24,21 +24,24 @@ ageWindow = 1.5 #(Gyr) before current snapshot SFR evaluation
 windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
 snapStart = 100
-snapEnd = 116 #109 Max = 192 for high-time res
+snapEnd = 109 #Max = 192 for high-time res
 DEBUG = False
 forceLogMass = False
 
 loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
 loadDirectories = [
-    "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
-    "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
-    "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
-    "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
-    "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc",
+    # "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
+    # "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
+    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
+    # "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
+    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc",
+    # # "h5_hy-v2",
     # # "h5_standard",
     # # "h5_2kpc",
     # "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
+    "snapshot-restart-of-2kpc/no-self-shielding/h5_1kpc_snapshot-restart-of-2kpc",
+    "snapshot-restart-of-2kpc/no-self-shielding/h5_hy-v2_snapshot-restart-of-2kpc",
     # "h5_1kpc",
     # "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc",
     ]
