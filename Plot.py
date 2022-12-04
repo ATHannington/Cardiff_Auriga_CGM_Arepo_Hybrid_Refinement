@@ -30,20 +30,23 @@ forceLogMass = False
 
 loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
 loadDirectories = [
-    # "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
-    # "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
-    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
-    # "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
-    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc",
-    # # "h5_hy-v2",
-    # # "h5_standard",
-    # # "h5_2kpc",
-    # "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
+
+    "h5_standard",
+    "h5_2kpc",
+    "h5_1kpc",
+    "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
+    "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
+    "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
+    "snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
+    "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
+    "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
+    "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
+    "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
+    "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc",
+    "h5_hy-v2",
     "snapshot-restart-of-2kpc/no-self-shielding/h5_1kpc_snapshot-restart-of-2kpc",
     "snapshot-restart-of-2kpc/no-self-shielding/h5_hy-v2_snapshot-restart-of-2kpc",
-    # "h5_1kpc",
-    # "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc",
+    "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc",
     ]
 
 simulations = []
@@ -118,7 +121,7 @@ xlimDict = {
     "mass": {"xmin": 4.0, "xmax": 9.0},
     "L": {"xmin": 3.0, "xmax": 4.5},
     "T": {"xmin": 3.75, "xmax": 7.0},
-    "n_H": {"xmin": -5.5, "xmax": -0.5},
+    "n_H": {},#{"xmin": -5.5, "xmax": -0.5},
     "B": {"xmin": -2.5, "xmax": 1.0},
     "vrad": {"xmin": -100.0, "xmax": 100.0},
     "gz": {"xmin": -1.5, "xmax": 0.75},
@@ -127,7 +130,7 @@ xlimDict = {
     "PCR_Pthermal": {"xmin": -2.0, "xmax": 2.0},
     "P_magnetic": {"xmin": -2.0, "xmax": 4.5},
     "P_kinetic": {"xmin": 0.0, "xmax": 6.0},
-    "P_tot": {"xmin": -1.0, "xmax": 7.0},
+    "P_tot": {},#{"xmin": -1.0, "xmax": 7.0},
     "Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 10.0},
     "tcool": {"xmin": -3.5, "xmax": 2.0},
     "theat": {"xmin": -4.0, "xmax": 4.0},
@@ -646,7 +649,7 @@ def plot_slices_quad(snap,
         slice_cl["y"],
         np.transpose(slice_cl["grid"]),
         vmin=1e-1,
-        vmax=1e3,
+        vmax=1e4,
         norm=matplotlib.colors.LogNorm(),
         cmap=cmap,
         rasterized=True,
@@ -1310,6 +1313,7 @@ def pdf_versus_plot(
     SFR = False,
     byType = False,
     forceLogMass = False,
+    normalise = False,
 ):
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -1375,6 +1379,7 @@ def pdf_versus_plot(
                 SFR = SFR,
                 forceLogMass = forceLogMass,
                 byType = False,
+                normalise = normalise,
             )
         return
 
@@ -1495,30 +1500,39 @@ def pdf_versus_plot(
                 plotData,
                 bins=xBins,
                 weights=weightsData,
+                density = normalise
             )
 
-            if (SFRBool is True):#|(analysisParam == "R"):
+            # Because SFR should increase over time, and thus as age decreases
+            if (SFRBool is True):
                 hist = np.flip(hist)
 
             if cumulative is True:
                 hist = np.cumsum(hist)
+                if normalise is True:
+                    hist /= np.nanmax(hist)
+
 
             if SFRBool is True:
                 delta = np.mean(np.diff(xBins))
-                if cumulative is False:
-                    hist = hist/(delta*1e9) # convert to SFR per yr
+                hist /= (delta*1e9) # convert to SFR per yr
 
-            if (SFRBool is True):#|(analysisParam == "R"):
+            #Again, SFR needs to increase with decreasing age
+            if (SFRBool is True):
                 xBins = np.flip(xBins)
                 bin_edges = np.flip(bin_edges)
 
+            # Take the log10 if desired. Set zeros to nan for convenience of
+            # not having to drop inf's later, and mask them from plots
             if weightKey in logParameters:
-                if (forceLogMass is True)&(weightKey=="mass"):
+                if weightKey != "mass":
                     hist[hist == 0.0] = np.nan
                     hist = np.log10(hist)
+            elif (forceLogMass is True)&(weightKey=="mass"):
+                hist[hist == 0.0] = np.nan
+                hist = np.log10(hist)
 
-            weightsSumTotal = np.cumsum(weightsData)[-1]
-
+            weightsSumTotal = np.sum(weightsData)
 
             if np.all(np.isfinite(hist)==False) == True:
                 print("Hist All Inf/NaN! Skipping entry!")
@@ -1557,6 +1571,9 @@ def pdf_versus_plot(
             ylabel_prefix = ""
             if cumulative is True:
                 ylabel_prefix = "Cumulative "
+            if normalise is True:
+                ylabel_prefix = "Normalised " + ylabel_prefix
+
             if weightKey == "mass":
                 if (forceLogMass is True):
                     currentAx.set_ylabel(r"$Log_{10}$ "+ylabel_prefix+"Mass (M$_{\odot}$)", fontsize=fontsize)
@@ -1634,10 +1651,15 @@ def pdf_versus_plot(
             else:
                 plt.subplots_adjust(hspace=0.1, left=0.15)
 
-            if cumulative is True:
-                tmp2 = savePath +"Cumulative-"
+
+            if normalise is True:
+                tmp2 = savePath +"Normalised-"
             else:
                 tmp2 = savePath
+
+            if cumulative is True:
+                tmp2 = tmp2 +"Cumulative-"
+
             if SFRBool is True:
                 opslaan = tmp2 + f"SFR_{snapNumber}"
 
@@ -1741,7 +1763,7 @@ if __name__ == "__main__":
                 oc.omegabaryon0,
                 snapNumber,
                 # logParameters = logParameters,
-                paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","cool_length"],
+                paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","P_tot","cool_length"],
                 mappingBool=True,
                 box=box,
                 numthreads=numthreads,
@@ -1830,6 +1852,26 @@ if __name__ == "__main__":
             )
 
             print(
+                f"[@{int(snapNumber)}]: Normalised Cumulative PDF of mass vs R plot..."
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['mass'],
+                xParams = ["R"],
+                cumulative = True,
+                normalise = True,
+                savePathBase = savePathBase,
+                saveCurve = True,
+                forceLogMass = forceLogMass,
+
+            )
+
+            print(
                 f"[@{int(snapNumber)}]: By Type PDF of mass vs R plot..."
             )
 
@@ -1860,6 +1902,26 @@ if __name__ == "__main__":
                 weightKeys = ['mass'],
                 xParams = ["R"],
                 cumulative = True,
+                savePathBase = savePathBase,
+                saveCurve = True,
+                byType = True,
+                forceLogMass = forceLogMass,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: By Type Normalised Cumulative PDF of mass vs R plot..."
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['mass'],
+                xParams = ["R"],
+                cumulative = True,
+                normalise = True,
                 savePathBase = savePathBase,
                 saveCurve = True,
                 byType = True,
@@ -1940,6 +2002,28 @@ if __name__ == "__main__":
                 SFR = True,
             )
 
+
+            print(
+                f"[@{int(snapNumber)}]: Normalised Cumulative SFR plot..."
+            )
+
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                snapNumber,
+                weightKeys = ['gima'],
+                xParams = ["age"],
+                ageWindow = ageWindow,
+                Nbins = SFRBins,
+                savePathBase = savePathBase,
+                cumulative = True,
+                normalise = True,
+                saveCurve = True,
+                SFR = True,
+            )
+
             print(
                 f"[@{int(snapNumber)}]: Remove stars..."
             )
@@ -1984,7 +2068,7 @@ if __name__ == "__main__":
                 logParameters,
                 snapNumber,
                 weightKeys = ['mass'],
-                xParams = ["T","vol"],
+                xParams = ["T","vol","n_H","cool_length","P_tot"],
                 savePathBase = savePathBase,
                 saveCurve = True,
                 forceLogMass = forceLogMass,
@@ -2001,51 +2085,70 @@ if __name__ == "__main__":
                 logParameters,
                 snapNumber,
                 weightKeys = ['mass'],
-                xParams = ["T","vol"],
+                xParams = ["T","vol","n_H","cool_length","P_tot"],
                 savePathBase = savePathBase,
                 cumulative = True,
                 saveCurve = True,
                 forceLogMass = forceLogMass,
             )
 
-
             print(
-                f"[@{int(snapNumber)}]: Slice plot"
+                f"[@{int(snapNumber)}]: Normalised Cumulative PDF of gas (mass vs T or vol) plot"
             )
 
-            plot_slices(snap,
+            pdf_versus_plot(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
                 snapNumber,
-                pixres=0.1*1.5,
-                boxsize=Rvir*1.50*2.0,
-                numthreads=numthreads,
+                weightKeys = ['mass'],
+                xParams = ["T","vol","n_H","cool_length","P_tot"],
                 savePathBase = savePathBase,
+                cumulative = True,
+                normalise = True,
+                saveCurve = True,
+                forceLogMass = forceLogMass,
             )
 
-            print(
-                f"[@{int(snapNumber)}]: Slice plot Quad"
-            )
 
-            plot_slices_quad(snap,
-                snapNumber,
-                pixres=0.1*1.5,
-                boxsize=Rvir*1.50*2.0,
-                numthreads=numthreads,
-                savePathBase = savePathBase,
-            )
-
-            print(
-                f"[@{int(snapNumber)}]: Projection plot"
-            )
-
-            plot_projections(snap,
-                snapNumber,
-                boxlos=50.0,
-                pixreslos=0.3*1.5,
-                pixres=0.3*1.5,
-                boxsize=Rvir*1.50*2.0,
-                numthreads=numthreads,
-                savePathBase = savePathBase,
-            )
+            # print(
+            #     f"[@{int(snapNumber)}]: Slice plot"
+            # )
+            #
+            # plot_slices(snap,
+            #     snapNumber,
+            #     pixres=0.1*1.5,
+            #     boxsize=Rvir*1.50*2.0,
+            #     numthreads=numthreads,
+            #     savePathBase = savePathBase,
+            # )
+            #
+            # print(
+            #     f"[@{int(snapNumber)}]: Slice plot Quad"
+            # )
+            #
+            # plot_slices_quad(snap,
+            #     snapNumber,
+            #     pixres=0.1*1.5,
+            #     boxsize=Rvir*1.50*2.0,
+            #     numthreads=numthreads,
+            #     savePathBase = savePathBase,
+            # )
+            #
+            # print(
+            #     f"[@{int(snapNumber)}]: Projection plot"
+            # )
+            #
+            # plot_projections(snap,
+            #     snapNumber,
+            #     boxlos=50.0,
+            #     pixreslos=0.3*1.5,
+            #     pixres=0.3*1.5,
+            #     boxsize=Rvir*1.50*2.0,
+            #     numthreads=numthreads,
+            #     savePathBase = savePathBase,
+            # )
 
             # # print(
             # #     f"[@{int(snapNumber)}]: Remove beyond 1.2 x Virial Radius..."
@@ -2084,21 +2187,21 @@ if __name__ == "__main__":
             # #     errorString = "Remove Satellites",
             # #     DEBUG = DEBUG,
             # #     )
-
-            print(
-                f"[@{int(snapNumber)}]: Hist_plot_xyz plot"
-            )
-
-            hist_plot_xyz(
-                out,
-                ylabel,
-                xlimDict,
-                logParameters,
-                yParams = ["T"],
-                xParams = ["R","rho_rhomean"],
-                weightKeys = ["mass", "n_H"],
-                savePathBase = savePathBase,
-            )
+            #
+            # print(
+            #     f"[@{int(snapNumber)}]: Hist_plot_xyz plot"
+            # )
+            #
+            # hist_plot_xyz(
+            #     out,
+            #     ylabel,
+            #     xlimDict,
+            #     logParameters,
+            #     yParams = ["T"],
+            #     xParams = ["R","rho_rhomean"],
+            #     weightKeys = ["mass"],
+            #     savePathBase = savePathBase,
+            # )
 
             print(
                 f"[@{int(snapNumber)}]: Done"

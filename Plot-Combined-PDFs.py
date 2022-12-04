@@ -24,7 +24,7 @@ ageWindow = 1.5 #(Gyr) before current snapshot SFR evaluation
 windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
 snapStart = 100
-snapEnd = 116#116
+snapEnd = 109#116
 DEBUG = False
 forceLogMass = False
 numthreads = 18
@@ -36,33 +36,37 @@ loadDirectories = [
     # "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
     # "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
     # "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc",
-    # "h5_standard",
-    # "h5_2kpc",
-    # "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
+    "h5_standard",
+    "h5_2kpc",
+    "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
+    "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
+    "snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
     # "h5_standard",
     # "h5_1kpc",
     # "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc",
-    "h5_standard",
-    "h5_2kpc",
-    "snapshot-restart-of-2kpc/no-self-shielding/h5_1kpc_snapshot-restart-of-2kpc",
-    "snapshot-restart-of-2kpc/no-self-shielding/h5_hy-v2_snapshot-restart-of-2kpc",
+    # "h5_standard",
+    # "h5_2kpc",
+    # "h5_1kpc",
+    # "h5_hy-v2",
+    # "snapshot-restart-of-2kpc/no-self-shielding/h5_1kpc_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-2kpc/no-self-shielding/h5_hy-v2_snapshot-restart-of-2kpc",
 ]
 
-residualsReferenceSimDict = {
-    "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc" : "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
-    "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc" : None,
-    "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc" : "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
-    "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc" : None,
-    "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc" : "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
-    "h5_standard": None,
-    "h5_2kpc": None,
-    "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc": "h5_2kpc",
-    "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc": "h5_2kpc",
-    "h5_standard": None,
-    "h5_1kpc": None,
-    "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc": "h5_1kpc",
-}
+# residualsReferenceSimDict = {
+#     "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc" : "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
+#     "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc" : None,
+#     "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc" : "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
+#     "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc" : None,
+#     "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc" : "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
+#     "h5_standard": None,
+#     "h5_2kpc": None,
+#     "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc": "h5_2kpc",
+#     "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc": "h5_2kpc",
+#     "h5_standard": None,
+#     "h5_1kpc": None,
+#     "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc": "h5_1kpc",
+# }
 
 simulations = []
 savePaths = []
@@ -208,6 +212,8 @@ def combined_pdf_versus_plot(
     colourmapMain = "plasma",
     forceLogMass = False,
     residualsReferenceSimDict = None,
+    normalise = False,
+
 ):
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -253,6 +259,8 @@ def combined_pdf_versus_plot(
                 colourmapMain = colourmapMain,
                 forceLogMass = forceLogMass,
                 residualsReferenceSimDict = residualsReferenceSimDict,
+                normalise = normalise,
+
             )
         return
 
@@ -292,10 +300,15 @@ def combined_pdf_versus_plot(
                 if (weightKey == "gima")&(analysisParam=="age"):
                     SFRBool = True
 
-                if cumulative is True:
-                    tmp2 = savePath +"Cumulative-"
+
+
+                if normalise is True:
+                    tmp2 = savePath +"Normalised-"
                 else:
                     tmp2 = savePath
+
+                if cumulative is True:
+                    tmp2 = tmp2 +"Cumulative-"
 
                 if SFRBool is True:
                     opslaan = tmp2 + f"SFR_{snapNumber}"
@@ -390,6 +403,9 @@ def combined_pdf_versus_plot(
             ylabel_prefix = ""
             if cumulative is True:
                 ylabel_prefix = "Cumulative "
+            if normalise is True:
+                ylabel_prefix = "Normalised " + ylabel_prefix
+
             if weightKey == "mass":
                 if forceLogMass is False:
                     ax.set_ylabel(ylabel_prefix+r"Mass (M$_{\odot}$)", fontsize=fontsize)
@@ -472,6 +488,24 @@ if __name__ == "__main__":
         )
 
         print(
+            f"[@{int(snapNumber)}]: Normalised Cumulative PDF of mass vs R plot..."
+        )
+
+        combined_pdf_versus_plot(
+            savePaths,
+            ylabel,
+            xlimDict,
+            logParameters,
+            snapNumber,
+            weightKeys = ['mass'],
+            xParams = ["R"],
+            cumulative = True,
+            normalise = True,
+            forceLogMass = forceLogMass,
+
+        )
+
+        print(
             f"[@{int(snapNumber)}]: By Type PDF of mass vs R plot..."
         )
 
@@ -501,6 +535,24 @@ if __name__ == "__main__":
             xParams = ["R"],
             cumulative = True,
             byType = True,
+            forceLogMass = forceLogMass,
+        )
+
+        print(
+            f"[@{int(snapNumber)}]: By Type Normalised Cumulative PDF of mass vs R plot..."
+        )
+
+        combined_pdf_versus_plot(
+            savePaths,
+            ylabel,
+            xlimDict,
+            logParameters,
+            snapNumber,
+            weightKeys = ['mass'],
+            xParams = ["R"],
+            cumulative = True,
+            byType = True,
+            normalise = True,
             forceLogMass = forceLogMass,
         )
 
@@ -538,6 +590,24 @@ if __name__ == "__main__":
         )
 
         print(
+            f"[@{int(snapNumber)}]: Normalised Cumulative SFR plot..."
+        )
+
+        combined_pdf_versus_plot(
+            savePaths,
+            ylabel,
+            xlimDict,
+            logParameters,
+            snapNumber,
+            weightKeys = ['gima'],
+            xParams = ["age"],
+            cumulative = True,
+            normalise = True,
+            SFR = True,
+            forceLogMass = forceLogMass,
+        )
+
+        print(
             f"[@{int(snapNumber)}]: PDF of gas (mass vs T or vol) plot"
         )
 
@@ -549,7 +619,7 @@ if __name__ == "__main__":
             logParameters,
             snapNumber,
             weightKeys = ['mass'],
-            xParams = ["T","vol"],
+            xParams = ["T","vol","n_H","cool_length","P_tot"],
             forceLogMass = forceLogMass,
         )
 
@@ -565,8 +635,25 @@ if __name__ == "__main__":
             logParameters,
             snapNumber,
             weightKeys = ['mass'],
-            xParams = ["T","vol"],
+            xParams = ["T","vol","n_H","cool_length","P_tot"],
             cumulative = True,
+            forceLogMass = forceLogMass,
+        )
+
+        print(
+            f"[@{int(snapNumber)}]: Normalised Cumulative PDF of gas (mass vs T or vol) plot"
+
+        )
+        combined_pdf_versus_plot(
+            savePaths,
+            ylabel,
+            xlimDict,
+            logParameters,
+            snapNumber,
+            weightKeys = ['mass'],
+            xParams = ["T","vol","n_H","cool_length","P_tot"],
+            cumulative = True,
+            normalise = True,
             forceLogMass = forceLogMass,
         )
 
