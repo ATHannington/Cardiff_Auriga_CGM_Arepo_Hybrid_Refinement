@@ -39,7 +39,7 @@ loadDirectories = [
     "h5_standard",
     "h5_2kpc",
     "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
+    "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
     "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
     "snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
     # "h5_standard",

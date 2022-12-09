@@ -31,22 +31,23 @@ forceLogMass = False
 loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
 loadDirectories = [
 
-    "h5_standard",
-    "h5_2kpc",
-    "h5_1kpc",
-    "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
-    "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
-    "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
-    "snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
-    "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
-    "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
-    "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
-    "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
-    "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc",
-    "h5_hy-v2",
-    "snapshot-restart-of-2kpc/no-self-shielding/h5_1kpc_snapshot-restart-of-2kpc",
-    "snapshot-restart-of-2kpc/no-self-shielding/h5_hy-v2_snapshot-restart-of-2kpc",
-    "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc",
+    # "h5_standard",
+    # "h5_2kpc",
+    # "h5_1kpc",
+    # "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
+    "snapshot-restart-of-2kpc/h5_hy-v4-nH",
+    # "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
+    # "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
+    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
+    # "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
+    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc",
+    # "h5_hy-v2",
+    # "snapshot-restart-of-2kpc/no-self-shielding/h5_1kpc_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-2kpc/no-self-shielding/h5_hy-v2_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc",
     ]
 
 simulations = []
@@ -132,7 +133,7 @@ xlimDict = {
     "P_kinetic": {"xmin": 0.0, "xmax": 6.0},
     "P_tot": {},#{"xmin": -1.0, "xmax": 7.0},
     "Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 10.0},
-    "tcool": {"xmin": -3.5, "xmax": 2.0},
+    "tcool": {},#{"xmin": -3.5, "xmax": 2.0},
     "theat": {"xmin": -4.0, "xmax": 4.0},
     "tff": {"xmin": -1.5, "xmax": 0.75},
     "tcool_tff": {"xmin": -2.5, "xmax": 2.0},
@@ -142,6 +143,7 @@ xlimDict = {
     "rho_rhomean": {"xmin": 0.25, "xmax": 6.5},
     "vol": {},#{"xmin": 0.5**4, "xmax": 4.0**4}
     "cool_length" : {},#{"xmin": -1.0 "xmax": 3.0},
+    "csound" : {},#
 }
 
 logParameters = ["dens","ndens","rho_rhomean","csound","T","n_H","B","gz","L","P_thermal","P_magnetic","P_kinetic","P_tot","Pthermal_Pmagnetic", "P_CR", "PCR_Pthermal","gah","Grad_T","Grad_n_H","Grad_bfld","Grad_P_CR","tcool","theat","tcross","tff","tcool_tff","mass","vol","cool_length"] #"gima"
@@ -1763,7 +1765,7 @@ if __name__ == "__main__":
                 oc.omegabaryon0,
                 snapNumber,
                 # logParameters = logParameters,
-                paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","P_tot","cool_length"],
+                paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","P_tot","cool_length","csound"],
                 mappingBool=True,
                 box=box,
                 numthreads=numthreads,
@@ -2112,43 +2114,43 @@ if __name__ == "__main__":
             )
 
 
-            # print(
-            #     f"[@{int(snapNumber)}]: Slice plot"
-            # )
-            #
-            # plot_slices(snap,
-            #     snapNumber,
-            #     pixres=0.1*1.5,
-            #     boxsize=Rvir*1.50*2.0,
-            #     numthreads=numthreads,
-            #     savePathBase = savePathBase,
-            # )
-            #
-            # print(
-            #     f"[@{int(snapNumber)}]: Slice plot Quad"
-            # )
-            #
-            # plot_slices_quad(snap,
-            #     snapNumber,
-            #     pixres=0.1*1.5,
-            #     boxsize=Rvir*1.50*2.0,
-            #     numthreads=numthreads,
-            #     savePathBase = savePathBase,
-            # )
-            #
-            # print(
-            #     f"[@{int(snapNumber)}]: Projection plot"
-            # )
-            #
-            # plot_projections(snap,
-            #     snapNumber,
-            #     boxlos=50.0,
-            #     pixreslos=0.3*1.5,
-            #     pixres=0.3*1.5,
-            #     boxsize=Rvir*1.50*2.0,
-            #     numthreads=numthreads,
-            #     savePathBase = savePathBase,
-            # )
+            print(
+                f"[@{int(snapNumber)}]: Slice plot"
+            )
+
+            plot_slices(snap,
+                snapNumber,
+                pixres=0.1*1.5,
+                boxsize=Rvir*1.50*2.0,
+                numthreads=numthreads,
+                savePathBase = savePathBase,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Slice plot Quad"
+            )
+
+            plot_slices_quad(snap,
+                snapNumber,
+                pixres=0.1*1.5,
+                boxsize=Rvir*1.50*2.0,
+                numthreads=numthreads,
+                savePathBase = savePathBase,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Projection plot"
+            )
+
+            plot_projections(snap,
+                snapNumber,
+                boxlos=50.0,
+                pixreslos=0.3*1.5,
+                pixres=0.3*1.5,
+                boxsize=Rvir*1.50*2.0,
+                numthreads=numthreads,
+                savePathBase = savePathBase,
+            )
 
             # # print(
             # #     f"[@{int(snapNumber)}]: Remove beyond 1.2 x Virial Radius..."
@@ -2191,17 +2193,17 @@ if __name__ == "__main__":
             # print(
             #     f"[@{int(snapNumber)}]: Hist_plot_xyz plot"
             # )
-            #
-            # hist_plot_xyz(
-            #     out,
-            #     ylabel,
-            #     xlimDict,
-            #     logParameters,
-            #     yParams = ["T"],
-            #     xParams = ["R","rho_rhomean"],
-            #     weightKeys = ["mass"],
-            #     savePathBase = savePathBase,
-            # )
+
+            hist_plot_xyz(
+                out,
+                ylabel,
+                xlimDict,
+                logParameters,
+                yParams = ["T"],
+                xParams = ["R","rho_rhomean"],
+                weightKeys = ["mass","cool_length","csound","tcool","n_H"],
+                savePathBase = savePathBase,
+            )
 
             print(
                 f"[@{int(snapNumber)}]: Done"
