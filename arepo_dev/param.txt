@@ -4,7 +4,9 @@ MinMassForCGMRefinement     0.005
 FracRadiusForCGMRefinement   1.2
 
 %---- Hybrid Refinement
-TargetForHybridRefinement    1e-3
+TargetForHybridRefinementLow    1e-4
+TargetForHybridRefinementHigh   1e-3
+
 
 % vv Note: This should be the cube of length scale reduction from REFINEMENT_CGM
 % vv 1kpc -> 0.5kpc => HybridVolumeDecreaseFactor = 8.0 vv
