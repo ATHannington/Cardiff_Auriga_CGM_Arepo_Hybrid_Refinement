@@ -1,0 +1,262 @@
+%---- CGM refinement
+TargetVolumeRelativeToSFRThreshold  64
+MinMassForCGMRefinement     0.005
+FracRadiusForCGMRefinement   1.2
+
+%---- Hybrid Refinement
+TargetForHybridRefinementLow    1e-4
+TargetForHybridRefinementHigh   1e-3
+
+
+% vv Note: This should be the cube of length scale reduction from REFINEMENT_CGM
+% vv 1kpc -> 0.5kpc => HybridVolumeDecreaseFactor = 8.0 vv
+HybridVolumeDecreaseFactor   8.0
+
+%---- Limit (neighbour) cell size
+%MinVolume		    0.
+%MaxVolume		    1e30
+%MaxVolumeDiff	    8.
+
+%----  Relevant files
+InitCondFile         /cosma8/data/dp221/dc-vand4/Auriga/ICs/ics4/ic_file.5
+OutputDir            ./output
+SnapshotFileBase     snapshot
+OutputListFilename   /cosma8/data/dp221/dc-vand4/Auriga/AgeOfAquariusOutputs/ExpansionList_128
+
+
+%---- File formats
+ICFormat           1
+SnapFormat         3
+
+% MHD
+MHDSeedDir          4
+MHDSeedValue        1e-14
+
+%---- Cosmic Rays
+%GammaCR  1.333333
+%CREnergyInputPerSolarMassOfStarFormation 1e48
+%DesNumNgbCRInjection  32
+%MaxNumNgbDeviationCRInjection 1
+%MinimumCREnergyDensity 0.
+%CourantCRDiffusion 0.3
+%CRDiffusionCoefficient 1e28
+
+%---- CPU-time limits
+TimeLimitCPU              86000  % in seconds
+CpuTimeBetRestartFile     3400    % in seconds
+ResubmitOn        0
+ResubmitCommand   my-scriptfile
+
+
+%----- Memory alloction
+MaxMemSize    6000    1200
+%BufferSize    100     150      % in MByte
+
+
+%---- Caracteristics of run
+TimeBegin           0.0078125  % Begin of the simulation
+TimeMax	            1.0        % End of the simulation
+
+
+%---- Basic code options that set the type of simulation
+ComovingIntegrationOn    1
+PeriodicBoundariesOn     1
+CoolingOn		 1
+StarformationOn		 1
+
+
+%---- Cosmological parameters (from Planck paper XVI, table 2, Planck + lensing column)
+Omega0	              0.307
+OmegaLambda           0.693
+OmegaBaryon           0.048
+HubbleParam           0.6777
+BoxSize               67.77
+
+
+%---- Output frequency and output paramaters
+OutputListOn              1
+TimeBetSnapshot           0.0
+TimeOfFirstSnapshot       0.0
+TimeBetStatistics         0.01
+NumFilesPerSnapshot       2
+NumFilesWrittenInParallel 2
+
+
+%---- Accuracy of time integration
+TypeOfTimestepCriterion  0
+ErrTolIntAccuracy        0.012
+CourantFac               0.3
+MaxSizeTimestep          0.005
+MinSizeTimestep          0.0
+
+
+%---- Parameters for star formation model
+CritPhysDensity      0       % critical physical density for star formation (in cm^(-3))
+MaxSfrTimescale      0.00227    % in internal time units (1.5)
+CritOverDensity      57.7    % overdensity threshold value
+TempSupernova        5.73e7  % in Kelvin (1.0e8)
+TempClouds           1000.0  % in Kelvin
+FactorEVP            573.0   % (1000.0)
+TemperatureThresh    0
+
+
+%---- Treatment of empty space and temperature limits
+InitGasTemp                           244.8095
+MinGasTemp                            5.0
+MinimumDensityOnStartUp               1.0e-20
+LimitUBelowThisDensity                0.0
+LimitUBelowCertainDensityToThisValue  0.0
+MinEgySpec                            0.0
+
+
+%---- Tree algorithm, force accuracy, domain update frequency
+TypeOfOpeningCriterion                1
+ErrTolTheta                           0.4
+ErrTolForceAcc                        0.0025
+MultipleDomains                       4
+TopNodeFactor                         4
+ActivePartFracForNewDomainDecomp      0.01
+
+
+%---- Initial density estimate
+DesNumNgb              64
+MaxNumNgbDeviation     1
+
+
+%---- System of units
+UnitLength_in_cm         3.085678e24        ;  1.0 kpc
+UnitMass_in_g            1.989e43           ;  1.0e10 solar masses
+UnitVelocity_in_cm_per_s 1e5                ;  1 km/sec
+GravityConstantInternal  0
+
+
+%---- Gravitational softening lengths
+
+MinimumComovingHydroSoftening   0.0005
+AdaptiveHydroSofteningSpacing   1.2
+GasSoftFactor                   2.8
+
+SofteningComovingType0 0.005
+SofteningComovingType1 0.001
+SofteningComovingType2 0.010
+SofteningComovingType3 0.020
+SofteningComovingType4 0.040
+SofteningComovingType5 0.080
+
+SofteningMaxPhysType0  0.0025
+SofteningMaxPhysType1  0.0005
+SofteningMaxPhysType2  0.005
+SofteningMaxPhysType3  0.010
+SofteningMaxPhysType4  0.020
+SofteningMaxPhysType5  0.040
+
+SofteningTypeOfPartType0 0
+SofteningTypeOfPartType1 1
+SofteningTypeOfPartType2 2
+SofteningTypeOfPartType3 3
+SofteningTypeOfPartType4 4
+SofteningTypeOfPartType5 5
+SofteningTypeOfPartType6 5
+
+%----- Mesh regularization options
+CellShapingSpeed       0.5
+CellMaxAngleFactor     2.25
+ReferenceGasPartMass   0
+TargetGasMassFactor    1
+RefinementCriterion    1
+DerefinementCriterion  1
+TreecoolFile           arepo/data/TREECOOL_fg_dec11
+
+
+%----- Subfind
+ErrTolThetaSubfind     0.5
+DesLinkNgb             20
+
+
+%----- Wind
+WindEnergyIn1e51erg          1.6944001
+ThermalWindFactor            3.0
+VariableWindVelFactor        3.4641
+VariableWindSpecMomentum     0.0
+WindFreeTravelMaxTimeFactor  0.025
+WindFreeTravelDensFac        0.05
+TimeBetOnTheFlyFoF           1.03
+MinWindVel                   0.0
+WindDumpFactor               0.6
+
+
+%----- Enrichment
+IMF_MinMass_Msun           0.1
+IMF_MaxMass_Msun           100.0
+AGB_MassTransferOn         1
+SNIa_MassTransferOn        1
+SNII_MassTransferOn        1
+SNII_MinMass_Msun          8.0
+SNII_MaxMass_Msun          100.0
+SNIa_Rate_TAU              0.04
+SNIa_Rate_Norm             1.3e-3
+YieldTablePath             /cosma8/data/dp221/dc-vand4/Auriga/Arepo_GFM_Tables_NewAuriga/Yields/
+%DesNumNgbEnrichment          1
+%MaxNumNgbDeviationEnrichment 0.1
+
+
+%-----  Black holes
+BlackHoleAccretionFactor         100.0
+BlackHoleFeedbackFactor          0.07
+BlackHoleEddingtonFactor         1.0
+SeedBlackHoleMass                1.e-5
+MinFoFMassForNewSeed             5.0
+DesNumNgbBlackHole               48
+BlackHoleMaxAccretionRadius      1.0e5
+BlackHoleRadiativeEfficiency     0.2
+BHFrictionCoefficient            1.4
+BHFrictionAvgTime                0.003
+%DesNumNgbBlackHoleRelDeviationFactor 0.01
+
+%-----  Radio Mode
+RadioModeMachnumber                0.0075
+RadioRelativeBubbleSize            0.1
+RadioRelativeBubbleEnergy          0.05
+RadioRelativeMaxDist               0.8
+RadioModeMetallicityInSolar        1.0
+
+
+%-----  Metal cooling
+CoolingTablePath            /cosma8/data/dp221/dc-vand4/Auriga/Arepo_GFM_Tables_NewAuriga/Cooling/cooling_metal_AGN_Compton_self_shielding_Rahmati12.hdf5
+MinMetalTemp                1e4
+
+
+%----- Self-Shielding
+SelfShieldingFile           arepo/data/SelfShielding_Rahmati12
+
+
+%-----  Photometrics
+PhotometricsTablePath       /cosma8/data/dp221/dc-vand4/Auriga/Arepo_GFM_Tables_NewAuriga/Photometrics/
+
+
+%----- AGN radiation
+TreecoolFileAGN             arepo/data/TREECOOL_AGN
+SelfShieldingDensity        0.1295
+ObscurationFactor           0.3
+ObscurationSlope            0.07
+
+%----- MC Tracers
+TracerMCPerCell 1
+
+%----- Track wind and supernova material
+%TrackWindFile	      	./windaexpall.txt
+%TrackSNFile		./SNaexpall.txt
+
+%----- Movie
+%Auriga_Movie_CenterRadius 0.010 % Mpc
+%Auriga_Movie_Directory    movie/
+%Auriga_Movie_OutputListFilename movie_frames_2764.txt
+%Auriga_Movie_Galaxy_Rotation00  0.86674784
+%Auriga_Movie_Galaxy_Rotation01 -0.39544555
+%Auriga_Movie_Galaxy_Rotation02  0.30392599
+%Auriga_Movie_Galaxy_Rotation20  0.46376356
+%Auriga_Movie_Galaxy_Rotation21  0.86322449
+%Auriga_Movie_Galaxy_Rotation22 -0.19941627
+%Auriga_Movie_Galaxy_Rotation10 -0.18349808
+%Auriga_Movie_Galaxy_Rotation11  0.31379342
+%Auriga_Movie_Galaxy_Rotation12  0.93159119
