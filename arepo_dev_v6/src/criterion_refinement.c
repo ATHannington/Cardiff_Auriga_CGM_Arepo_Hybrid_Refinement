@@ -439,14 +439,11 @@ int refine_criterion_default(int i)
 
       // log10(y) = m*log10(x) + log10(c)
 
-      double refinementLevel = floor((((log10(n_cgs)  - log10(All.TargetForHybridRefinementLow))/(log10(All.TargetForHybridRefinementHigh)-log10(All.TargetForHybridRefinementLow))) * (All.HybridRefinementTransitionLevels))) / All.HybridRefinementTransitionLevels;
-
-      variableTargetGasVolume = pow(10,(targetVolumeGradient*(log10(All.TargetForHybridRefinementHigh) -log10(All.TargetForHybridRefinementLow))*refinementLevel + log10(All.TargetGasVolume)));
+      variableTargetGasVolume = pow(10,(targetVolumeGradient*(log10(n_cgs) -log10(All.TargetForHybridRefinementLow)) + log10(All.TargetGasVolume)));
 
       // mpi_printf("\n");
       // mpi_printf("REFINEMENT_HYBRID Refinement: variable volume! \n");
       // mpi_printf("REFINEMENT_HYBRID Refinement: n_cgs = %g cm^-3 \n", n_cgs);
-      // mpi_printf("REFINEMENT_HYBRID Refinement: Refinement Level = %g \n", refinementLevel);
       // mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
 
      }

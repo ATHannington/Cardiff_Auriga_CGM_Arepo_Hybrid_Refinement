@@ -361,18 +361,14 @@ static int derefine_criterion_default(int i)
 
           // log10(y) = m*log10(x) + log10(c)
 
-          double refinementLevel = floor((((log10(n_cgs)  - log10(All.TargetForHybridRefinementLow))/(log10(All.TargetForHybridRefinementHigh)-log10(All.TargetForHybridRefinementLow))) * (All.HybridRefinementTransitionLevels))) / All.HybridRefinementTransitionLevels;
-
-          variableTargetGasVolume = pow(10,(targetVolumeGradient*(log10(All.TargetForHybridRefinementHigh) -log10(All.TargetForHybridRefinementLow))*refinementLevel + log10(All.TargetGasVolume)));
-
+          variableTargetGasVolume = pow(10,(targetVolumeGradient*(log10(n_cgs) -log10(All.TargetForHybridRefinementLow)) + log10(All.TargetGasVolume)));
           // mpi_printf("\n");
           // mpi_printf("REFINEMENT_HYBRID Derefinement: variable volume! \n");
           // mpi_printf("REFINEMENT_HYBRID Derefinement: n_cgs = %g cm^-3 \n", n_cgs);
-          // mpi_printf("REFINEMENT_HYBRID Derefinement: Refinement Level = %g \n", refinementLevel);
           // mpi_printf("REFINEMENT_HYBRID Derefinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
 
-
         }
+
         if(P[i].Mass < 0.5 * TargetGasMass && SphP[i].Volume < 0.5 * variableTargetGasVolume * All.cf_a3inv)
         {
           return 1;

@@ -2518,7 +2518,6 @@ extern struct global_data_all_processes
   #ifdef REFINEMENT_HYBRID
     double TargetForHybridRefinementLow;
     double TargetForHybridRefinementHigh;
-    double HybridRefinementTransitionLevels;
     double TargetHybridGasVolume;
     double HybridVolumeDecreaseFactor;
   #endif
