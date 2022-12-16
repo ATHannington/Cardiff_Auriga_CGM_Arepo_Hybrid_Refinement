@@ -24,7 +24,7 @@ ageWindow = 1.5 #(Gyr) before current snapshot SFR evaluation
 windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
 snapStart = 100
-snapEnd = 109 #Max = 192 for high-time res
+snapEnd = 109#9 #Max = 192 for high-time res
 DEBUG = False
 forceLogMass = False
 
@@ -38,7 +38,14 @@ loadDirectories = [
     # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
-    "snapshot-restart-of-2kpc/h5_hy-v4-nH",
+    # "snapshot-restart-of-2kpc/h5_hy-v4-nH",
+    # "snapshot-restart-of-2kpc/h5_hy-v5-nH",
+    # "snapshot-restart-of-2kpc/h5_hy-v6-nH",
+    # "snapshot-restart-of-2kpc/h5_hy-v7-ndens",
+    # "snapshot-restart-of-2kpc/h5_hy-v8-ndens",
+    # "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext",
+     "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext-v2",
+    #"snapshot-restart-of-standard/h5_2kpc",
     # "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
     # "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
     # "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
@@ -1765,7 +1772,7 @@ if __name__ == "__main__":
                 oc.omegabaryon0,
                 snapNumber,
                 # logParameters = logParameters,
-                paramsOfInterest=["R","T","Tdens","rho_rhomean","n_H","gz","tcool","P_tot","cool_length","csound"],
+                paramsOfInterest=["R","T","Tdens","ndens","rho_rhomean","n_H","gz","tcool","P_tot","cool_length","csound"],
                 mappingBool=True,
                 box=box,
                 numthreads=numthreads,
@@ -2189,19 +2196,19 @@ if __name__ == "__main__":
             # #     errorString = "Remove Satellites",
             # #     DEBUG = DEBUG,
             # #     )
-            #
-            # print(
-            #     f"[@{int(snapNumber)}]: Hist_plot_xyz plot"
-            # )
+
+            print(
+                f"[@{int(snapNumber)}]: Hist_plot_xyz plot"
+            )
 
             hist_plot_xyz(
                 out,
                 ylabel,
                 xlimDict,
                 logParameters,
-                yParams = ["T"],
-                xParams = ["R","rho_rhomean"],
-                weightKeys = ["mass","cool_length","csound","tcool","n_H"],
+                yParams = ["T","ndens"],
+                xParams = ["R","rho_rhomean","vol","ndens"],
+                weightKeys = ["mass"],#"cool_length","csound","tcool","n_H"],
                 savePathBase = savePathBase,
             )
 
