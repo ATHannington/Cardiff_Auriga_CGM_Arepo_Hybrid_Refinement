@@ -20,7 +20,7 @@ import copy
 import math
 import os
 
-ageWindow = 1.5 #(Gyr) before current snapshot SFR evaluation
+ageWindow = None #(Gyr) before current snapshot SFR evaluation
 windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
 snapStart = 100
@@ -31,26 +31,28 @@ numthreads = 18
 
 loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
 loadDirectories = [
-    # "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
-    # "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
-    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
-    # "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
-    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc",
-    # "h5_standard",
-    "h5_2kpc",
-    "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
+    #"spxfv/Auriga/level4_cgm/h5_standard",
+    #"spxfv/Auriga/level4_cgm/h5_1kpc",
+    #"c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
+    #"c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
+    #"c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
+     #"h5_standard",
+     "h5_2kpc",
+     #"h5_1kpc",
+     "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
-    #"snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
+    # "snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy-v4-nH",
     # "snapshot-restart-of-2kpc/h5_hy-v5-nH",
-    "snapshot-restart-of-2kpc/h5_hy-v6-nH",
-    "snapshot-restart-of-2kpc/h5_hy-v7-ndens",
-    #"snapshot-restart-of-2kpc/h5_hy-v8-ndens",
-    #"snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext",
+    # "snapshot-restart-of-2kpc/h5_hy-v6-nH",
+    # "snapshot-restart-of-2kpc/h5_hy-v7-ndens",
+    # "snapshot-restart-of-2kpc/h5_hy-v8-ndens",
+    # "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext",
     "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext-v2",
-
-
+    "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v3",
+    #"h5_2kpc-hy-1kpc",
+    #"h5_1kpc-hy-500pc",
     # "h5_standard",
     # "h5_1kpc",
     # "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc",
@@ -514,56 +516,56 @@ if __name__ == "__main__":
 
         )
 
-        print(
-            f"[@{int(snapNumber)}]: By Type PDF of mass vs R plot..."
-        )
+        #print(
+        #    f"[@{int(snapNumber)}]: By Type PDF of mass vs R plot..."
+        #)
 
-        combined_pdf_versus_plot(
-            savePaths,
-            ylabel,
-            xlimDict,
-            logParameters,
-            snapNumber,
-            weightKeys = ['mass'],
-            xParams = ["R"],
-            byType = True,
-            forceLogMass = forceLogMass,
-        )
+        #combined_pdf_versus_plot(
+        #    savePaths,
+        #    ylabel,
+        #    xlimDict,
+        #    logParameters,
+        #    snapNumber,
+        #    weightKeys = ['mass'],
+        #    xParams = ["R"],
+        #    byType = True,
+        #    forceLogMass = forceLogMass,
+        #)
 
-        print(
-            f"[@{int(snapNumber)}]: By Type Cumulative PDF of mass vs R plot..."
-        )
+        #print(
+        #    f"[@{int(snapNumber)}]: By Type Cumulative PDF of mass vs R plot..."
+        #)
 
-        combined_pdf_versus_plot(
-            savePaths,
-            ylabel,
-            xlimDict,
-            logParameters,
-            snapNumber,
-            weightKeys = ['mass'],
-            xParams = ["R"],
-            cumulative = True,
-            byType = True,
-            forceLogMass = forceLogMass,
-        )
+        #combined_pdf_versus_plot(
+        #    savePaths,
+        #    ylabel,
+        #    xlimDict,
+        #    logParameters,
+        #    snapNumber,
+        #    weightKeys = ['mass'],
+        #    xParams = ["R"],
+        #    cumulative = True,
+        #    byType = True,
+        #    forceLogMass = forceLogMass,
+        #)
 
-        print(
-            f"[@{int(snapNumber)}]: By Type Normalised Cumulative PDF of mass vs R plot..."
-        )
+        #print(
+        #    f"[@{int(snapNumber)}]: By Type Normalised Cumulative PDF of mass vs R plot..."
+        #)
 
-        combined_pdf_versus_plot(
-            savePaths,
-            ylabel,
-            xlimDict,
-            logParameters,
-            snapNumber,
-            weightKeys = ['mass'],
-            xParams = ["R"],
-            cumulative = True,
-            byType = True,
-            normalise = True,
-            forceLogMass = forceLogMass,
-        )
+        #combined_pdf_versus_plot(
+        #    savePaths,
+        #    ylabel,
+        #    xlimDict,
+        #    logParameters,
+        #    snapNumber,
+        #    weightKeys = ['mass'],
+        #    xParams = ["R"],
+        #    cumulative = True,
+        #    byType = True,
+        #    normalise = True,
+        #    forceLogMass = forceLogMass,
+        #)
 
         print(
             f"[@{int(snapNumber)}]: SFR plot..."
@@ -628,7 +630,7 @@ if __name__ == "__main__":
             logParameters,
             snapNumber,
             weightKeys = ['mass'],
-            xParams = ["T","vol","n_H","cool_length","P_tot"],
+            xParams = ["T","vol","n_H"],
             forceLogMass = forceLogMass,
         )
 
@@ -644,7 +646,7 @@ if __name__ == "__main__":
             logParameters,
             snapNumber,
             weightKeys = ['mass'],
-            xParams = ["T","vol","n_H","cool_length","P_tot"],
+            xParams = ["T","vol","n_H"],
             cumulative = True,
             forceLogMass = forceLogMass,
         )
@@ -660,7 +662,7 @@ if __name__ == "__main__":
             logParameters,
             snapNumber,
             weightKeys = ['mass'],
-            xParams = ["T","vol","n_H","cool_length","P_tot"],
+            xParams = ["T","vol","n_H"],
             cumulative = True,
             normalise = True,
             forceLogMass = forceLogMass,

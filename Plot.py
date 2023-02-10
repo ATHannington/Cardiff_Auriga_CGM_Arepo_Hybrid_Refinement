@@ -1,3 +1,4 @@
+from struct import pack
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -20,21 +21,26 @@ import copy
 import math
 import os
 
-ageWindow = 1.5 #(Gyr) before current snapshot SFR evaluation
+ageWindow = None #(Gyr) before current snapshot SFR evaluation
 windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
 snapStart = 100
 snapEnd = 109#9 #Max = 192 for high-time res
 DEBUG = False
 forceLogMass = False
-
+DPI = 200
+pixres = 0.1
+pixreslos = 0.1
+pixresproj = 0.2
+pixreslosproj = 0.2
+numthreads = 12
 loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
 loadDirectories = [
 
-    # "h5_standard",
-    # "h5_2kpc",
-    # "h5_1kpc",
-    # "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
+     #"h5_standard",
+     #"h5_2kpc",
+     #"h5_1kpc",
+     #"snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
@@ -44,8 +50,21 @@ loadDirectories = [
     # "snapshot-restart-of-2kpc/h5_hy-v7-ndens",
     # "snapshot-restart-of-2kpc/h5_hy-v8-ndens",
     # "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext",
-     "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext-v2",
+    # "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext-v2",
+    # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4",
+    # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v2",
+    # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v3",
+    "snapshot-restart-of-2kpc/h5_hy-v5-ndens-proper-mass-res-transition",
+    #"spxfv/Auriga/level4_cgm/h5_standard",
+    #"c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
+    #"c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
+    #"c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
+    #"spxfv/Auriga/level4_cgm/h5_1kpc",
+    #"h5_1kpc-hy-500pc",
+    #"h5_2kpc-hy-1kpc",
     #"snapshot-restart-of-standard/h5_2kpc",
+    #"snapshot-restart-of-standard/h5_1kpc",
+    #"snapshot-restart-of-standard/h5_500pc",
     # "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
     # "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
     # "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
@@ -66,8 +85,6 @@ for dir in loadDirectories:
     savepath = "./" + dir + "/"
     savePaths.append(savepath)
 
-
-numthreads = 18
 
 if ageWindow is not None:
     SFRBins = int(math.floor(ageWindow/windowBins))
@@ -1017,6 +1034,7 @@ def hist_plot_xyz(
     colourmapMain="plasma",
     Nbins=250,
     savePathBase = "./",
+    DEBUG = False,
 ):
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -1114,20 +1132,47 @@ def hist_plot_xyz(
                 #   Figure 1: Full Cells Data
                 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
                 try:
+                    tmpdataDict, paramToTypeMap, _ = map_params_to_types(simDict)
+                    typesUsedData = paramToTypeMap[xParam]
+
+                    whereNotType = np.isin(simDict["type"],typesUsedData)==False
+                    if DEBUG:
+                        print(f"[@hist_plot_xyz]: typesUsedData {typesUsedData}")
+                        print(f"[@hist_plot_xyz]: pd.unique(simDict['type']) {pd.unique(simDict['type'])}")
+                    tmpdataDict = remove_selection(
+                        tmpdataDict,
+                        removalConditionMask = whereNotType,
+                        errorString = "Remove types not applicable to xParam",
+                        DEBUG = DEBUG,
+                    )
+
                     if xParam in logParameters:
-                        xx = np.log10(simDict[xParam])
+                        xx = np.log10(tmpdataDict[xParam])
                     else:
-                        xx = simDict[xParam]
+                        xx = tmpdataDict[xParam]
                 except:
                     print("\n"+f"xParam of {xParam} data not found! Skipping...")
                     skipBool = True
                     continue
 
                 try:
+                    tmpdataDict, paramToTypeMap, _ = map_params_to_types(tmpdataDict)
+                    typesUsedData = paramToTypeMap[yParam]
+
+                    whereNotType = np.isin(tmpdataDict["type"],typesUsedData)==False
+                    if DEBUG:
+                        print(f"[@hist_plot_xyz]: typesUsedData {typesUsedData}")
+                        print(f"[@hist_plot_xyz]: pd.unique(tmpdataDict['type']) {pd.unique(tmpdataDict['type'])}")
+                    tmpdataDict = remove_selection(
+                        tmpdataDict,
+                        removalConditionMask = whereNotType,
+                        errorString = "Remove types not applicable to yParam",
+                        DEBUG = DEBUG,
+                    )
                     if yParam in logParameters:
-                        yy = np.log10(simDict[yParam])
+                        yy = np.log10(tmpdataDict[yParam])
                     else:
-                        yy = simDict[yParam]
+                        yy = tmpdataDict[yParam]
                 except:
                     print("\n"+f"yParam of {yParam} data not found! Skipping...")
                     skipBool = True
@@ -1150,7 +1195,7 @@ def hist_plot_xyz(
                 xdataCells = xx[np.where((xx>=xmin)&(xx<=xmax)&(yy>=ymin)&(yy<=ymax)&(np.isfinite(xx)==True)&(np.isfinite(yy)==True)) [0]]
                 ydataCells = yy[np.where((xx>=xmin)&(xx<=xmax)&(yy>=ymin)&(yy<=ymax)&(np.isfinite(xx)==True)&(np.isfinite(yy)==True))[0]]
 
-                massCells = ( simDict["mass"][
+                massCells = ( tmpdataDict["mass"][
                     np.where((xx>=xmin)&(xx<=xmax)
                     &(yy>=ymin)&(yy<=ymax)&
                     (np.isfinite(xx)==True)&(np.isfinite(yy)==True))
@@ -1158,7 +1203,7 @@ def hist_plot_xyz(
                 )
                 try:
                     weightDataCells = (
-                        simDict[weightKey][
+                        tmpdataDict[weightKey][
                         np.where((xx>=xmin)&(xx<=xmax)
                         &(yy>=ymin)&(yy<=ymax)&(np.isfinite(xx)==True)&(np.isfinite(yy)==True))
                         [0]] * massCells
@@ -1323,6 +1368,7 @@ def pdf_versus_plot(
     byType = False,
     forceLogMass = False,
     normalise = False,
+    DEBUG = False,
 ):
 
     from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -1361,7 +1407,7 @@ def pdf_versus_plot(
                 copy.deepcopy(dataDict),
                 removalConditionMask = whereNotType,
                 errorString = "byType PDF whereNotType",
-                DEBUG = False,
+                DEBUG = DEBUG,
                 )
 
             pdf_versus_plot(
@@ -1389,6 +1435,7 @@ def pdf_versus_plot(
                 forceLogMass = forceLogMass,
                 byType = False,
                 normalise = normalise,
+                DEBUG = DEBUG,
             )
         return
 
@@ -1410,15 +1457,48 @@ def pdf_versus_plot(
             # Create a plot for each Temperature
             skipBool = False
             try:
-                plotData = dataDict[analysisParam].copy()
-                weightsData = dataDict[weightKey].copy()
+                tmpdataDict, paramToTypeMap, _ = map_params_to_types(dataDict)
+                typesUsedData = paramToTypeMap[analysisParam]
+                if DEBUG:
+                    print(f"[@pdf_versus_plot]: typesUsedData {typesUsedData}")
+                    print(f"[@pdf_versus_plot]: pd.unique(dataDict['type']) {pd.unique(dataDict['type'])}")
+                whereNotType = np.isin(dataDict["type"],typesUsedData)==False
+
+                tmpdataDict = remove_selection(
+                    tmpdataDict,
+                    removalConditionMask = whereNotType,
+                    errorString = "Remove types not applicable to analysisParam",
+                    DEBUG = DEBUG,
+                )
+
+                tmpdataDict, paramToTypeMap, _ = map_params_to_types(tmpdataDict)
+                typesUsedWeights = paramToTypeMap[weightKey]
+                
+                if DEBUG:
+                    print(f"[@pdf_versus_plot]: typesUsedWeights {typesUsedWeights}")
+                    print(f"[@pdf_versus_plot]: pd.unique(tmpdataDict['type']) {pd.unique(tmpdataDict['type'])}")
+                whereNotTypeWeights = np.isin(tmpdataDict["type"],typesUsedWeights)==False
+
+                tmpdataDict = remove_selection(
+                    tmpdataDict,
+                    removalConditionMask = whereNotTypeWeights,
+                    errorString = "Remove types not applicable to weightKey",
+                    DEBUG = DEBUG,
+                )
+                
+                plotData = tmpdataDict[analysisParam].copy()
+                weightsData = tmpdataDict[weightKey].copy()
                 skipBool = False
             except:
+                
                 print(
                     f"Variable {analysisParam} not found. Skipping plot..."
                 )
                 skipBool = True
                 continue
+
+
+
 
             colour = "blue"
 
@@ -1474,7 +1554,6 @@ def pdf_versus_plot(
                 & (whereAgeBelowLimit == True)
                 )[0]
 
-
             plotData = tmpPlot[whereData]
             weightsData = tmpWeights[whereData]
 
@@ -1498,7 +1577,7 @@ def pdf_versus_plot(
                 print("Data All Inf/NaN! Skipping entry!")
                 skipBool = True
                 continue
-
+            
             xBins = np.linspace(
                 start=xmin, stop=xmax, num=Nbins)
 
@@ -1704,9 +1783,10 @@ if __name__ == "__main__":
                 snapNumber,
                 loadpath,
                 hdf5=True,
-                loadonlytype=[0, 1, 2, 3, 4, 5],
+                loadonlytype=[0,1,4],#[0, 1, 2, 3, 4, 5],
                 lazy_load=False,
                 subfind=snap_subfind,
+                loadonlyhalo=0,
             )
 
             print(f"[@{int(snapNumber)}]: Rotate and centre snapshot")
@@ -1772,7 +1852,7 @@ if __name__ == "__main__":
                 oc.omegabaryon0,
                 snapNumber,
                 # logParameters = logParameters,
-                paramsOfInterest=["R","T","Tdens","ndens","rho_rhomean","n_H","gz","tcool","P_tot","cool_length","csound"],
+                paramsOfInterest=["R","T","Tdens","ndens","rho_rhomean","n_H","gz","cool_length"],
                 mappingBool=True,
                 box=box,
                 numthreads=numthreads,
@@ -1801,6 +1881,17 @@ if __name__ == "__main__":
             ages = snap.cosmology_get_lookback_time_from_a(snap.data["age"],is_flat=True)
 
             snap.data["age"] = ages
+
+
+            whereOthers = np.isin(snap.data["type"],np.array([1,2,3,5]))
+
+            snap = remove_selection(
+                snap,
+                removalConditionMask = whereOthers,
+                errorString = "Remove all types other than Gas and Stars",
+                DEBUG = DEBUG
+                )
+
 
             print(
                 f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
@@ -1880,62 +1971,62 @@ if __name__ == "__main__":
 
             )
 
-            print(
-                f"[@{int(snapNumber)}]: By Type PDF of mass vs R plot..."
-            )
+            #print(
+            #    f"[@{int(snapNumber)}]: By Type PDF of mass vs R plot..."
+            #)
 
-            pdf_versus_plot(
-                out,
-                ylabel,
-                xlimDict,
-                logParameters,
-                snapNumber,
-                weightKeys = ['mass'],
-                xParams = ["R"],
-                savePathBase = savePathBase,
-                saveCurve = True,
-                byType = True,
-                forceLogMass = forceLogMass,
-            )
+            #pdf_versus_plot(
+            #    out,
+            #    ylabel,
+            #    xlimDict,
+            #    logParameters,
+            #    snapNumber,
+            #    weightKeys = ['mass'],
+            #    xParams = ["R"],
+            #    savePathBase = savePathBase,
+            #    saveCurve = True,
+            #    byType = True,
+            #    forceLogMass = forceLogMass,
+            #)
 
-            print(
-                f"[@{int(snapNumber)}]: By Type Cumulative PDF of mass vs R plot..."
-            )
+            #print(
+            #    f"[@{int(snapNumber)}]: By Type Cumulative PDF of mass vs R plot..."
+            #)
 
-            pdf_versus_plot(
-                out,
-                ylabel,
-                xlimDict,
-                logParameters,
-                snapNumber,
-                weightKeys = ['mass'],
-                xParams = ["R"],
-                cumulative = True,
-                savePathBase = savePathBase,
-                saveCurve = True,
-                byType = True,
-                forceLogMass = forceLogMass,
-            )
+            #pdf_versus_plot(
+            #    out,
+            #    ylabel,
+            #    xlimDict,
+            #    logParameters,
+            #    snapNumber,
+            #    weightKeys = ['mass'],
+            #    xParams = ["R"],
+            #    cumulative = True,
+            #    savePathBase = savePathBase,
+            #    saveCurve = True,
+            #    byType = True,
+            #    forceLogMass = forceLogMass,
+            #)
 
-            print(
-                f"[@{int(snapNumber)}]: By Type Normalised Cumulative PDF of mass vs R plot..."
-            )
+            #print(
+            #    f"[@{int(snapNumber)}]: By Type Normalised Cumulative PDF of mass vs R plot..."
+            #)
 
-            pdf_versus_plot(
-                out,
-                ylabel,
-                xlimDict,
-                logParameters,
-                snapNumber,
-                weightKeys = ['mass'],
-                xParams = ["R"],
-                cumulative = True,
-                normalise = True,
-                savePathBase = savePathBase,
-                saveCurve = True,
-                byType = True,
-                forceLogMass = forceLogMass,
-            )
+            #pdf_versus_plot(
+            #    out,
+            #    ylabel,
+            #    xlimDict,
+            #    logParameters,
+            #    snapNumber,
+            #    weightKeys = ['mass'],
+            #    xParams = ["R"],
+            #    cumulative = True,
+            #    normalise = True,
+            #    savePathBase = savePathBase,
+            #    saveCurve = True,
+            #    byType = True,
+            #    forceLogMass = forceLogMass,
+            #)
 
             print(
                 f"[@{int(snapNumber)}]: Remove all types other than Gas and Stars..."
@@ -2077,7 +2168,7 @@ if __name__ == "__main__":
                 logParameters,
                 snapNumber,
                 weightKeys = ['mass'],
-                xParams = ["T","vol","n_H","cool_length","P_tot"],
+                xParams = ["T","vol","n_H"],
                 savePathBase = savePathBase,
                 saveCurve = True,
                 forceLogMass = forceLogMass,
@@ -2094,7 +2185,7 @@ if __name__ == "__main__":
                 logParameters,
                 snapNumber,
                 weightKeys = ['mass'],
-                xParams = ["T","vol","n_H","cool_length","P_tot"],
+                xParams = ["T","vol","n_H"],
                 savePathBase = savePathBase,
                 cumulative = True,
                 saveCurve = True,
@@ -2112,7 +2203,7 @@ if __name__ == "__main__":
                 logParameters,
                 snapNumber,
                 weightKeys = ['mass'],
-                xParams = ["T","vol","n_H","cool_length","P_tot"],
+                xParams = ["T","vol","n_H"],
                 savePathBase = savePathBase,
                 cumulative = True,
                 normalise = True,
@@ -2127,7 +2218,8 @@ if __name__ == "__main__":
 
             plot_slices(snap,
                 snapNumber,
-                pixres=0.1*1.5,
+                pixres=pixres,
+                DPI = DPI,
                 boxsize=Rvir*1.50*2.0,
                 numthreads=numthreads,
                 savePathBase = savePathBase,
@@ -2139,7 +2231,8 @@ if __name__ == "__main__":
 
             plot_slices_quad(snap,
                 snapNumber,
-                pixres=0.1*1.5,
+                pixres=pixres,
+                DPI = DPI,
                 boxsize=Rvir*1.50*2.0,
                 numthreads=numthreads,
                 savePathBase = savePathBase,
@@ -2152,20 +2245,21 @@ if __name__ == "__main__":
             plot_projections(snap,
                 snapNumber,
                 boxlos=50.0,
-                pixreslos=0.3*1.5,
-                pixres=0.3*1.5,
+                pixreslos=pixreslosproj,
+                pixres=pixresproj,
+                DPI = DPI,
                 boxsize=Rvir*1.50*2.0,
                 numthreads=numthreads,
                 savePathBase = savePathBase,
             )
 
             # # print(
-            # #     f"[@{int(snapNumber)}]: Remove beyond 1.2 x Virial Radius..."
+            # #     f"[@{int(snapNumber)}]: Remove beyond 1.5 x Virial Radius..."
             # # )
             # #
-            # # whereOutsideVirial = snap.data["R"] > Rvir*1.20#*2.0
+            # # whereOutsideVirial = snap.data["R"] > Rvir*1.50#*2.0
             # #
-            # # xlimDict["R"]["xmax"] = Rvir*1.20#*1.5
+            # # xlimDict["R"]["xmax"] = Rvir*1.50#*1.2
             # #
             # # snaptmp = remove_selection(
             # #     snap,
@@ -2208,7 +2302,7 @@ if __name__ == "__main__":
                 logParameters,
                 yParams = ["T","ndens"],
                 xParams = ["R","rho_rhomean","vol","ndens"],
-                weightKeys = ["mass"],#"cool_length","csound","tcool","n_H"],
+                weightKeys = ["mass"],
                 savePathBase = savePathBase,
             )
 
