@@ -24,8 +24,8 @@ import os
 ageWindow = None #(Gyr) before current snapshot SFR evaluation
 windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
-snapStart = 100
-snapEnd = 109#9 #Max = 192 for high-time res
+snapStart = 110
+snapEnd = 127#9 #Max = 192 for high-time res
 DEBUG = False
 forceLogMass = False
 DPI = 200
@@ -33,8 +33,11 @@ pixres = 0.1
 pixreslos = 0.1
 pixresproj = 0.2
 pixreslosproj = 0.2
-numthreads = 12
-loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
+numthreads = 18
+rvirFrac = 1.20
+rvirFracImages = 1.00
+
+loadPathBase = "/home/cosmos/"
 loadDirectories = [
 
      #"h5_standard",
@@ -54,12 +57,12 @@ loadDirectories = [
     # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4",
     # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v2",
     # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v3",
-    "snapshot-restart-of-2kpc/h5_hy-v5-ndens-proper-mass-res-transition",
-    #"spxfv/Auriga/level4_cgm/h5_standard",
-    #"c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
+    #"snapshot-restart-of-2kpc/h5_hy-v5-ndens-proper-mass-res-transition",
+    "spxfv/Auriga/level4_cgm/h5_standard",
+    "spxfv/Auriga/level4_cgm/h5_1kpc",
+    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
+    "c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
     #"c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
-    #"c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
-    #"spxfv/Auriga/level4_cgm/h5_1kpc",
     #"h5_1kpc-hy-500pc",
     #"h5_2kpc-hy-1kpc",
     #"snapshot-restart-of-standard/h5_2kpc",
@@ -193,6 +196,8 @@ for entry in deleteParams:
 
 def plot_slices(snap,
     snapNumber,
+    xsize = 10.0,
+    ysize = 5.0,
     fontsize=13,
     fontsizeTitle=14,
     titleBool=True,
@@ -270,9 +275,7 @@ def plot_slices(snap,
 
     # ------------------------------------------------------------------------------#
     # PLOTTING TIME
-    # Set plot figure sizes
-    xsize = 10.0
-    ysize = 5.0
+
     # Define halfsize for histogram ranges which are +/-
     halfbox = boxsize / 2.0
 
@@ -425,6 +428,8 @@ def plot_slices(snap,
 
 def plot_slices_quad(snap,
     snapNumber,
+    xsize = 10.0,
+    ysize = 10.0,
     fontsize=13,
     fontsizeTitle=14,
     titleBool=True,
@@ -464,9 +469,6 @@ def plot_slices_quad(snap,
     ## Slices and Projections ##
     # --------------------------#
     # PLOTTING TIME
-    # Set plot figure sizes
-    xsize = 10.0
-    ysize = 10.0
     # Define halfsize for histogram ranges which are +/-
     halfbox = boxsize / 2.0
 
@@ -769,6 +771,8 @@ def plot_slices_quad(snap,
 
 def plot_projections(snap,
     snapNumber,
+    xsize = 10.0,
+    ysize = 5.0,
     fontsize=13,
     fontsizeTitle=14,
     titleBool=True,
@@ -862,9 +866,6 @@ def plot_projections(snap,
 
     # ------------------------------------------------------------------------------#
     # PLOTTING TIME
-    # Set plot figure sizes
-    xsize = 10.0
-    ysize = 5.0
     # Define halfsize for histogram ranges which are +/-
     halfbox = boxsize / 2.0
 
@@ -1486,8 +1487,8 @@ def pdf_versus_plot(
                     DEBUG = DEBUG,
                 )
                 
-                plotData = tmpdataDict[analysisParam].copy()
-                weightsData = tmpdataDict[weightKey].copy()
+                plotData = tmpdataDict[analysisParam]
+                weightsData = tmpdataDict[weightKey]
                 skipBool = False
             except:
                 
@@ -1860,12 +1861,12 @@ if __name__ == "__main__":
             )
 
             print(
-                f"[@{int(snapNumber)}]: Remove beyond 1.5 x Virial Radius..."
+                f"[@{int(snapNumber)}]: Remove beyond {rvirFrac:2.2f} x Virial Radius..."
             )
 
-            whereOutsideVirial = snap.data["R"] > Rvir*1.50#*1.5
+            whereOutsideVirial = snap.data["R"] > Rvir*rvirFrac#*1.5
 
-            xlimDict["R"]["xmax"] = Rvir*1.50
+            xlimDict["R"]["xmax"] = Rvir*rvirFrac
 
             snaptmp = remove_selection(
                 snap,
@@ -2218,9 +2219,11 @@ if __name__ == "__main__":
 
             plot_slices(snap,
                 snapNumber,
+                xsize = 15.00,
+                ysize=7.50,
                 pixres=pixres,
                 DPI = DPI,
-                boxsize=Rvir*1.50*2.0,
+                boxsize=Rvir*rvirFracImages*2.0,
                 numthreads=numthreads,
                 savePathBase = savePathBase,
             )
@@ -2231,9 +2234,11 @@ if __name__ == "__main__":
 
             plot_slices_quad(snap,
                 snapNumber,
+                xsize = 15.00,
+                ysize=15.00,
                 pixres=pixres,
                 DPI = DPI,
-                boxsize=Rvir*1.50*2.0,
+                boxsize=Rvir*rvirFracImages*2.0,
                 numthreads=numthreads,
                 savePathBase = savePathBase,
             )
@@ -2244,11 +2249,13 @@ if __name__ == "__main__":
 
             plot_projections(snap,
                 snapNumber,
+                xsize = 15.00,
+                ysize=7.50,
                 boxlos=50.0,
                 pixreslos=pixreslosproj,
                 pixres=pixresproj,
                 DPI = DPI,
-                boxsize=Rvir*1.50*2.0,
+                boxsize=Rvir*rvirFracImages*2.0,
                 numthreads=numthreads,
                 savePathBase = savePathBase,
             )
@@ -2257,9 +2264,9 @@ if __name__ == "__main__":
             # #     f"[@{int(snapNumber)}]: Remove beyond 1.5 x Virial Radius..."
             # # )
             # #
-            # # whereOutsideVirial = snap.data["R"] > Rvir*1.50#*2.0
+            # # whereOutsideVirial = snap.data["R"] > Rvir*rvirFrac#*2.0
             # #
-            # # xlimDict["R"]["xmax"] = Rvir*1.50#*1.2
+            # # xlimDict["R"]["xmax"] = Rvir*rvirFrac#*1.2
             # #
             # # snaptmp = remove_selection(
             # #     snap,

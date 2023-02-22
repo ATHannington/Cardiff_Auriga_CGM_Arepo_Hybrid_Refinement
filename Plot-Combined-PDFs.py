@@ -24,22 +24,22 @@ ageWindow = None #(Gyr) before current snapshot SFR evaluation
 windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
 snapStart = 100
-snapEnd = 109#116
+snapEnd = 127 #116
 DEBUG = False
 forceLogMass = False
 numthreads = 18
 
-loadPathBase = "/home/cosmos/c1838736/Auriga/level5_cgm/"
+loadPathBase = "/home/cosmos/"
 loadDirectories = [
-    #"spxfv/Auriga/level4_cgm/h5_standard",
-    #"spxfv/Auriga/level4_cgm/h5_1kpc",
-    #"c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
-    #"c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
-    #"c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
+    "spxfv/Auriga/level4_cgm/h5_standard",
+    "spxfv/Auriga/level4_cgm/h5_1kpc",
+    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
+    "c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
+    "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
      #"h5_standard",
-     "h5_2kpc",
-     #"h5_1kpc",
-     "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
+    # "h5_2kpc",
+    # #"h5_1kpc",
+    # "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
     # "snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
@@ -49,8 +49,9 @@ loadDirectories = [
     # "snapshot-restart-of-2kpc/h5_hy-v7-ndens",
     # "snapshot-restart-of-2kpc/h5_hy-v8-ndens",
     # "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext",
-    "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext-v2",
-    "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v3",
+    #"snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext-v2",
+    #"snapshot-restart-of-2kpc/h5_hy-v5-ndens-proper-mass-res-transition",
+    #"snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v3",
     #"h5_2kpc-hy-1kpc",
     #"h5_1kpc-hy-500pc",
     # "h5_standard",

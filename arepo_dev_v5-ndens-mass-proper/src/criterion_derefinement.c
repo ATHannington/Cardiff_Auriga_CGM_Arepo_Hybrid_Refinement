@@ -336,8 +336,8 @@ static int derefine_criterion_default(int i)
 
         double transitionTargetMass = TargetGasMass / All.HybridTransitionMassDecreaseRelativeToBaseLevel;
 
-        double targetTransitionDensityCGM = (transitionTargetMass/All.TargetGasVolume) * All.cf_a3inv * All.UnitDensity_in_cgs * All.HubbleParam * All.HubbleParam / PROTONMASS; /* cm^-3 */
-        double targetTransitionDensityHybrid = (transitionTargetMass/All.TargetHybridGasVolume) * All.cf_a3inv * All.UnitDensity_in_cgs * All.HubbleParam * All.HubbleParam / PROTONMASS; /* cm^-3 */
+        double targetTransitionDensityCGM = (transitionTargetMass/All.TargetGasVolume) * All.UnitDensity_in_cgs * All.HubbleParam * All.HubbleParam / PROTONMASS; /* cm^-3 */
+        double targetTransitionDensityHybrid = (transitionTargetMass/All.TargetHybridGasVolume) * All.UnitDensity_in_cgs * All.HubbleParam * All.HubbleParam / PROTONMASS; /* cm^-3 */
 
         double variableTargetGasVolume = All.TargetGasVolume;
         double variableTargetGasMass = TargetGasMass;
