@@ -35,6 +35,8 @@ loadDirectories = [
     "spxfv/Auriga/level4_cgm/h5_1kpc",
     "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
     "c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
+    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
+    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
     "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
      #"h5_standard",
     # "h5_2kpc",

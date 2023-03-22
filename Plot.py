@@ -1,4 +1,3 @@
-from struct import pack
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -24,7 +23,7 @@ import os
 ageWindow = None #(Gyr) before current snapshot SFR evaluation
 windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
-snapStart = 110
+snapStart = 100
 snapEnd = 127#9 #Max = 192 for high-time res
 DEBUG = False
 forceLogMass = False
@@ -58,10 +57,12 @@ loadDirectories = [
     # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v2",
     # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v3",
     #"snapshot-restart-of-2kpc/h5_hy-v5-ndens-proper-mass-res-transition",
-    "spxfv/Auriga/level4_cgm/h5_standard",
-    "spxfv/Auriga/level4_cgm/h5_1kpc",
-    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
-    "c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
+    #"spxfv/Auriga/level4_cgm/h5_standard",
+    #"spxfv/Auriga/level4_cgm/h5_1kpc",
+    #"c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
+    #"c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
+    #"c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
+    #"c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
     #"c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
     #"h5_1kpc-hy-500pc",
     #"h5_2kpc-hy-1kpc",
