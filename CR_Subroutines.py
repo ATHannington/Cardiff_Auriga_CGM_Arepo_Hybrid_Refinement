@@ -322,7 +322,7 @@ def cr_analysis_radial(
         paramsOfInterest=CRPARAMS["saveParams"],
         mappingBool=True,
         box=box,
-        numthreads=CRPARAMS["numThreads"],
+        numthreads=CRPARAMS["numthreads"],
         DataSavepath = DataSavepath,
         verbose = DEBUG,
     )
@@ -337,7 +337,7 @@ def cr_analysis_radial(
         boxlos=CRPARAMS["boxlos"],
         pixres=CRPARAMS["pixres"],
         pixreslos=CRPARAMS["pixreslos"],
-        numThreads=CRPARAMS["numThreads"],
+        numthreads=CRPARAMS["numthreads"],
     )
 
     if CRPARAMS["QuadPlotBool"] is True:
@@ -353,7 +353,7 @@ def cr_analysis_radial(
             fontsize = CRPARAMS["fontsize"],
             fontsizeTitle = CRPARAMS["fontsizeTitle"],
             DPI=CRPARAMS["DPI"],
-            numThreads=CRPARAMS["numThreads"],
+            numthreads=CRPARAMS["numthreads"],
             savePathKeyword = f"{int(snapNumber)}",
         )
 
@@ -1048,7 +1048,7 @@ def cr_calculate_projections(
     boxlos=20.0,
     pixres=0.2,
     pixreslos=0.2,
-    numThreads=8,
+    numthreads=8,
 ):
 
     for param in ["Tdens", "rho_rhomean", "n_H", "B", "gz"]:
@@ -1066,7 +1066,7 @@ def cr_calculate_projections(
                 snapNumber,
                 paramsOfInterest=[param],
                 mappingBool=True,
-                numthreads=CRPARAMS["numThreads"],
+                numthreads=CRPARAMS["numthreads"],
                 verbose = True,
             )
 
@@ -1105,7 +1105,7 @@ def cr_calculate_projections(
         boxz=boxlos,
         axes=Axes,
         proj=True,
-        numthreads=numThreads,
+        numthreads=numthreads,
     )
 
     print("\n" + f"[@{int(snapNumber)}]: Projection 2 of {nprojections}")
@@ -1120,7 +1120,7 @@ def cr_calculate_projections(
         boxz=boxlos,
         axes=Axes,
         proj=True,
-        numthreads=numThreads,
+        numthreads=numthreads,
     )
 
     print("\n" + f"[@{int(snapNumber)}]: Projection 3 of {nprojections}")
@@ -1135,7 +1135,7 @@ def cr_calculate_projections(
         boxz=boxlos,
         axes=Axes,
         proj=True,
-        numthreads=numThreads,
+        numthreads=numthreads,
     )
 
     print("\n" + f"[@{int(snapNumber)}]: Projection 4 of {nprojections}")
@@ -1150,7 +1150,7 @@ def cr_calculate_projections(
         boxz=boxlos,
         axes=Axes,
         proj=True,
-        numthreads=numThreads,
+        numthreads=numthreads,
     )
 
     print("\n" + f"[@{int(snapNumber)}]: Projection 5 of {nprojections}")
@@ -1165,7 +1165,7 @@ def cr_calculate_projections(
         boxz=boxlos,
         axes=Axes,
         proj=True,
-        numthreads=numThreads,
+        numthreads=numthreads,
     )
 
     return {"T":copy.deepcopy(proj_T), "dens":copy.deepcopy(proj_dens), "n_H":copy.deepcopy(proj_nH), "gz":copy.deepcopy(proj_gz), "B":copy.deepcopy(proj_B)}
