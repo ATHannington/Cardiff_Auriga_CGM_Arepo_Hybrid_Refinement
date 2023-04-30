@@ -12,8 +12,9 @@ import const as c
 import OtherConstants as oc
 from gadget import *
 from gadget_subfind import *
-from Tracers_Subroutines import *
-from CR_Subroutines import *
+import Tracers_Subroutines as tr
+import CR_Subroutines as cr
+import Plotting_tools as apt
 import h5py
 import json
 import copy
@@ -68,39 +69,15 @@ loadDirectories = [
     # "snapshot-restart-of-2kpc/no-self-shielding/h5_hy-v2_snapshot-restart-of-2kpc",
 ]
 
-# residualsReferenceSimDict = {
-#     "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc" : "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
-#     "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc" : None,
-#     "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc" : "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
-#     "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc" : None,
-#     "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc" : "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
-#     "h5_standard": None,
-#     "h5_2kpc": None,
-#     "snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc": "h5_2kpc",
-#     "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc": "h5_2kpc",
-#     "h5_standard": None,
-#     "h5_1kpc": None,
-#     "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc": "h5_1kpc",
-# }
-
 simulations = []
 savePaths = []
 
-tmp = {}
 for dir in loadDirectories:
     loadpath = loadPathBase+dir+"/output/"
     simulations.append(loadpath)
 
     savepath = "./" + dir + "/"
     savePaths.append(savepath)
-    # newKey = savepath
-    # if residualsReferenceSimDict[dir] is not None:
-    #     newReferencePath = "./" + copy.deepcopy(residualsReferenceSimDict[dir]) + "/"
-    # else:
-    #     newReferencePath = None
-    # tmp.update({newReferencePath : newReferencePath})
-
-residualsReferenceSimDict = tmp
 
 if ageWindow is not None:
     SFRBins = int(math.floor(ageWindow/windowBins))
@@ -207,274 +184,13 @@ for entry in deleteParams:
     logParameters.remove(entry)
 
 
-def combined_pdf_versus_plot(
-    savePaths,
-    ylabel,
-    xlimDict,
-    logParameters,
-    snapNumber,
-    weightKeys = ['mass'],
-    xParams = ["T"],
-    titleBool=False,
-    DPI=150,
-    xsize=8.0,
-    ysize=8.0,
-    fontsize=13,
-    fontsizeTitle=14,
-    cumulative = False,
-    SFR = False,
-    byType = False,
-    colourmapMain = "plasma",
-    forceLogMass = False,
-    residualsReferenceSimDict = None,
-    normalise = False,
-
-):
-
-    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-
-    try:
-        tmp = xlimDict["mass"]
-    except:
-        xlimDict.update({"mass": {"xmin": 4.0, "xmax": 9.0}})
-
-    limDict = copy.deepcopy(xlimDict)
-
-    if SFR is True:
-        weightKeys = ["gima"]
-        xParams = ["age"]
-
-    if byType is True:
-        uniqueTypes = [0,1,2,3,4,5]
-        for tp in uniqueTypes:
-            print("Starting type ",tp)
-
-            tmpSavePaths = []
-            for savePath in savePaths:
-                path = savePath + f"type{int(tp)}/"
-                tmpSavePaths.append(path)
-
-            combined_pdf_versus_plot(
-                savePaths = tmpSavePaths,
-                ylabel = ylabel,
-                xlimDict = xlimDict,
-                logParameters = logParameters,
-                snapNumber = snapNumber,
-                weightKeys = weightKeys,
-                xParams = xParams,
-                titleBool = titleBool,
-                DPI = DPI,
-                xsize = xsize,
-                ysize = ysize,
-                fontsize = fontsize,
-                fontsizeTitle = fontsizeTitle,
-                cumulative = cumulative,
-                SFR = SFR,
-                byType = False,
-                colourmapMain = colourmapMain,
-                forceLogMass = forceLogMass,
-                residualsReferenceSimDict = residualsReferenceSimDict,
-                normalise = normalise,
-
-            )
-        return
-
-    for weightKey in weightKeys:
-        print("-----")
-        print("")
-        print(f"Starting {weightKey} weighted!")
-        for analysisParam in xParams:
-            print("")
-            print(f"Starting {analysisParam} plots!")
-            fig, ax = plt.subplots(
-                nrows=1,
-                ncols=1,
-                sharex=True,
-                sharey=True,
-                figsize=(xsize, ysize),
-                dpi=DPI,
-            )
-            Nsims = len(savePaths)
-            for (ii,savePathBase) in enumerate(savePaths):
-                print("savePathBase= ",savePathBase)
-
-                savePath = savePathBase + "Plots/PDFs/"
-                tmp = "./"
-
-                for savePathChunk in savePath.split("/")[1:-1]:
-                    tmp += savePathChunk + "/"
-                    try:
-                        os.mkdir(tmp)
-                    except:
-                        pass
-                    else:
-                        pass
-
-
-                SFRBool = False
-                if (weightKey == "gima")&(analysisParam=="age"):
-                    SFRBool = True
-
-
-
-                if normalise is True:
-                    tmp2 = savePath +"Normalised-"
-                else:
-                    tmp2 = savePath
-
-                if cumulative is True:
-                    tmp2 = tmp2 +"Cumulative-"
-
-                if SFRBool is True:
-                    opslaan = tmp2 + f"SFR_{snapNumber}"
-                else:
-                    opslaan = tmp2 + f"{weightKey}-{analysisParam}-PDF_{snapNumber}"
-
-                print(opslaan)
-
-                # out = {"data":{"x" : xFromBins, "y" : hist}}
-                try:
-                    dataDict = hdf5_load(opslaan+"_data.h5")
-                except:
-                    print(f"Load path of {opslaan+'_data.h5'} not found! Skipping...")
-                    continue
-                #
-                # referenceSimPath = residualsReferenceSimDict[savePathBase]
-                # print("savePathBase= ",savePathBase)
-                #
-                # savePath = savePathBase + "Plots/PDFs/"
-                # tmp = "./"
-                #
-                # for savePathChunk in savePath.split("/")[1:-1]:
-                #     tmp += savePathChunk + "/"
-                #     try:
-                #         os.mkdir(tmp)
-                #     except:
-                #         pass
-                #     else:
-                #         pass
-                #
-                #
-                # SFRBool = False
-                # if (weightKey == "gima")&(analysisParam=="age"):
-                #     SFRBool = True
-                #
-                # if cumulative is True:
-                #     tmp2 = savePath +"Cumulative-"
-                # else:
-                #     tmp2 = savePath
-                #
-                # if SFRBool is True:
-                #     opslaan = tmp2 + f"SFR_{snapNumber}"
-                # else:
-                #     opslaan = tmp2 + f"{weightKey}-{analysisParam}-PDF_{snapNumber}"
-                #
-                # print(opslaan)
-                #
-                # # out = {"data":{"x" : xFromBins, "y" : hist}}
-                # try:
-                #     dataDict = hdf5_load(opslaan+"_data.h5")
-                # except:
-                #     print(f"Load path of {opslaan+'_data.h5'} not found! Skipping...")
-                #     continue
-
-
-
-                cmap = matplotlib.cm.get_cmap(colourmapMain)
-                if colourmapMain == "tab10":
-                    colour = cmap(float(ii) / 10.0)
-                else:
-                    colour = cmap(float(ii) / float(Nsims))
-
-                splitbase = savePathBase.split("/")
-                # print(splitbase)
-                if "" in splitbase:
-                    splitbase.remove("")
-                if "." in splitbase:
-                    splitbase.remove(".")
-                # print(splitbase)
-
-                if len(splitbase)>2:
-                    label = f'{splitbase[0]}: {"_".join(((splitbase[-2]).split("_"))[:2])} ({splitbase[-1]})'
-                elif len(splitbase)>1:
-                    label = f'{splitbase[0]}: {"_".join(((splitbase[-1]).split("_"))[:2])}'
-                else:
-                    label = f'Original: {"_".join(((splitbase[-1]).split("_"))[:2])}'
-                # print("label= ",label)
-                ax.plot(
-                    dataDict["data"]["x"],
-                    dataDict["data"]["y"],
-                    color=colour,
-                    linestyle="solid",
-                    label = label
-                )
-
-                ax.xaxis.set_minor_locator(AutoMinorLocator())
-                ax.yaxis.set_minor_locator(AutoMinorLocator())
-                ax.tick_params(
-                    axis="both", which="both", labelsize=fontsize
-                )
-
-            ylabel_prefix = ""
-            if cumulative is True:
-                ylabel_prefix = "Cumulative "
-            if normalise is True:
-                ylabel_prefix = "Normalised " + ylabel_prefix
-
-            if weightKey == "mass":
-                if forceLogMass is False:
-                    ax.set_ylabel(ylabel_prefix+r"Mass (M$_{\odot}$)", fontsize=fontsize)
-                else:
-                    ax.set_ylabel(r"$Log_{10}$ "+ylabel_prefix+"Mass (M$_{\odot}$)", fontsize=fontsize)
-            else:
-                ax.set_ylabel(
-                ylabel_prefix+ylabel[weightKey], fontsize=fontsize)
-
-
-            if titleBool is True:
-                fig.suptitle(
-                    ylabel_prefix + f"PDF of"
-                    + "\n"
-                    + f" {weightKey} vs {analysisParam}",
-                    fontsize=fontsizeTitle,
-                )
-
-            # Only give 1 x-axis a label, as they sharex
-
-            ax.set_xlabel(ylabel[analysisParam], fontsize=fontsize)
-            ax.legend(loc="upper left", fontsize=fontsize)
-
-            # plt.tight_layout()
-            if titleBool is True:
-                plt.subplots_adjust(top=0.875, hspace=0.1, left=0.15)
-            else:
-                plt.subplots_adjust(hspace=0.1, left=0.15)
-
-            savePath = "./Combined-Plots/" + opslaan[2:]
-            tmp = "./"
-
-            for savePathChunk in savePath.split("/")[1:-1]:
-                tmp += savePathChunk + "/"
-                try:
-                    os.mkdir(tmp)
-                except:
-                    pass
-                else:
-                    pass
-
-            plt.savefig(savePath + "_sims-combined" + ".pdf", dpi=DPI, transparent=False)
-            print("Saved as: ",savePath + "_sims-combined" + ".pdf")
-            plt.close()
-    return
-
-
 if __name__ == "__main__":
     for snapNumber in snapRange:
         print(
             f"[@{int(snapNumber)}]: PDF of mass vs R plot..."
         )
 
-        combined_pdf_versus_plot(
+        apt.combined_pdf_versus_plot(
             savePaths,
             ylabel,
             xlimDict,
@@ -489,7 +205,7 @@ if __name__ == "__main__":
             f"[@{int(snapNumber)}]: Cumulative PDF of mass vs R plot..."
         )
 
-        combined_pdf_versus_plot(
+        apt.combined_pdf_versus_plot(
             savePaths,
             ylabel,
             xlimDict,
@@ -506,7 +222,7 @@ if __name__ == "__main__":
             f"[@{int(snapNumber)}]: Normalised Cumulative PDF of mass vs R plot..."
         )
 
-        combined_pdf_versus_plot(
+        apt.combined_pdf_versus_plot(
             savePaths,
             ylabel,
             xlimDict,
@@ -524,7 +240,7 @@ if __name__ == "__main__":
         #    f"[@{int(snapNumber)}]: By Type PDF of mass vs R plot..."
         #)
 
-        #combined_pdf_versus_plot(
+        #apt.combined_pdf_versus_plot(
         #    savePaths,
         #    ylabel,
         #    xlimDict,
@@ -540,7 +256,7 @@ if __name__ == "__main__":
         #    f"[@{int(snapNumber)}]: By Type Cumulative PDF of mass vs R plot..."
         #)
 
-        #combined_pdf_versus_plot(
+        #apt.combined_pdf_versus_plot(
         #    savePaths,
         #    ylabel,
         #    xlimDict,
@@ -557,7 +273,7 @@ if __name__ == "__main__":
         #    f"[@{int(snapNumber)}]: By Type Normalised Cumulative PDF of mass vs R plot..."
         #)
 
-        #combined_pdf_versus_plot(
+        #apt.combined_pdf_versus_plot(
         #    savePaths,
         #    ylabel,
         #    xlimDict,
@@ -575,7 +291,7 @@ if __name__ == "__main__":
             f"[@{int(snapNumber)}]: SFR plot..."
         )
 
-        combined_pdf_versus_plot(
+        apt.combined_pdf_versus_plot(
             savePaths,
             ylabel,
             xlimDict,
@@ -591,7 +307,7 @@ if __name__ == "__main__":
             f"[@{int(snapNumber)}]: Cumulative SFR plot..."
         )
 
-        combined_pdf_versus_plot(
+        apt.combined_pdf_versus_plot(
             savePaths,
             ylabel,
             xlimDict,
@@ -608,7 +324,7 @@ if __name__ == "__main__":
             f"[@{int(snapNumber)}]: Normalised Cumulative SFR plot..."
         )
 
-        combined_pdf_versus_plot(
+        apt.combined_pdf_versus_plot(
             savePaths,
             ylabel,
             xlimDict,
@@ -627,7 +343,7 @@ if __name__ == "__main__":
         )
 
 
-        combined_pdf_versus_plot(
+        apt.combined_pdf_versus_plot(
             savePaths,
             ylabel,
             xlimDict,
@@ -643,7 +359,7 @@ if __name__ == "__main__":
             f"[@{int(snapNumber)}]: Cumulative PDF of gas (mass vs T or vol) plot"
 
         )
-        combined_pdf_versus_plot(
+        apt.combined_pdf_versus_plot(
             savePaths,
             ylabel,
             xlimDict,
@@ -659,7 +375,7 @@ if __name__ == "__main__":
             f"[@{int(snapNumber)}]: Normalised Cumulative PDF of gas (mass vs T or vol) plot"
 
         )
-        combined_pdf_versus_plot(
+        apt.combined_pdf_versus_plot(
             savePaths,
             ylabel,
             xlimDict,
