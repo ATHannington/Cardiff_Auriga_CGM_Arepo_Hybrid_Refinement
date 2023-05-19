@@ -1240,7 +1240,6 @@ def _map_cart_grid_to_cells(pos_array, xx, yy, zz):
         ]
     ).flatten()
 
-
 def _multi_inner_product(x, y):
     return np.array([np.inner(xx, yy) for (xx, yy) in zip(x, y)])
 
@@ -1343,9 +1342,10 @@ def calculate_tracked_parameters(
         snapGas.data["T"] = (snapGas.u[whereGas] * 1e10) / (Tfac)  # K
         if genLogParameters:
             logParameters.append("T")
+
     if np.any(
         np.isin(
-            np.array(["n_H", "Grad_n_H", "tcool", "theat", "tcool_tff"]),
+            np.array(["n_H", "n_HI", "n_HI_col", "Grad_n_H", "tcool", "theat", "tcool_tff"]),
             np.array(paramsOfInterest),
         )
     ) | (len(paramsOfInterest) == 0):
@@ -1353,6 +1353,17 @@ def calculate_tracked_parameters(
             c.amu * gasX  # cm^-3
         if genLogParameters:
             logParameters.append("n_H")
+
+    if np.any(
+        np.isin(
+            np.array(["n_HI", "n_HI_col"]),
+            np.array(paramsOfInterest),
+        )
+    ) | (len(paramsOfInterest) == 0):
+        snapGas.data["n_HI"] = snapGas.data["n_H"][whereGas]*snapGas.data["nh"][whereGas]
+
+        if genLogParameters:
+            logParameters.append("n_HI")
 
     if np.any(
         np.isin(np.array(["rho_rhomean", "Tdens"]), np.array(paramsOfInterest))
@@ -1755,6 +1766,13 @@ def calculate_tracked_parameters(
     except Exception as e:
         print(f"[@calculate_tracked_parameters]: Warning! Param not found: Norm Grad_P_CR {str(e)}")
 
+    if np.any(np.isin(np.array(["rho"]), np.array(paramsOfInterest))) | (
+        len(paramsOfInterest) == 0
+    ):
+        snapGas.data["rho"] *= 10.0 # (1e10 M_sol /1e9 (Mpc/Kpc)**3)
+
+        if genLogParameters:
+            logParameters.append("rho")
     return snapGas
 
 
@@ -1780,6 +1798,7 @@ def calculate_gradient_of_parameter(
     DataSavepath="./",
     nParentProcesses=1,
     memLimit=0.75,
+    FORCE = False,
 ):
     """
     Calculate the (norm of the) gradient of parameters argv for
@@ -1803,7 +1822,7 @@ def calculate_gradient_of_parameter(
 
     transposeBool = False
     # if gridres is not None:
-    #     print("[DEBUG @calculate_gradient_of_parameter]: WARNING! Use of kwarg 'gridres' deprecated. ~Value given will be ignored~")
+    #     print("[verbose @calculate_gradient_of_parameter]: WARNING! Use of kwarg 'gridres' deprecated. ~Value given will be ignored~")
     # if (box is False) | (box is None):
     #     boxsize = snap.boxsize*2.
     # elif np.all(box==box[0]):
@@ -1891,9 +1910,10 @@ def calculate_gradient_of_parameter(
     if verbose:
         print(f"Grid Resolution used = {gridres}^3")
 
-    if gridres > 1500:
-        raise Exception(f"[@calculate_gradient_of_parameter]: WARNING! FAILURE! CRITICAL! Grid Resolution of {gridres}^3 attempted. This will almost certainly cause a segmentation fault. Check logic! Aborting!" +
-                        "\n"+"... if you actually wanted this resolution, comment out this statement in Tracers_Subroutines.py -> calculate_gradient_of_parameter(...)")
+    if FORCE is False:
+        if gridres > 1500:
+            raise Exception(f"[@calculate_gradient_of_parameter]: WARNING! FAILURE! CRITICAL! Grid Resolution of {gridres}^3 attempted. This will almost certainly cause a segmentation fault. Check logic! Aborting!" +
+                            "\n"+"... if you actually wanted this resolution, use kwarg FORCE=True in calculate_gradient_of_parameter() call")
 
     spacing = boxsize / float(gridres)
 
@@ -2099,7 +2119,7 @@ def calculate_gradient_of_parameter(
         raise Exception(f"[@calculate_gradient_of_parameter]: nActualBadGrid found in data > 2*nExpectedBad! Gradients may not have been calculated correctly"+"\n"+f"nActualBadGrid = {nActualBadGrid} | nExpectedBad = {nExpectedBad}"+"\n"+f"Data:"+"\n"+f"{snap.data[key]}"+ f"Grid:"+"\n"+f"{grid}")
 
     # print("***---***")
-    # print("*** DEBUG! ***")
+    # print("*** verbose! ***")
     # print(arg)
     # print(key)
     # print("shape arg", np.shape(snap.data[arg]))
@@ -2253,7 +2273,7 @@ def calculate_gradient_of_parameter(
     print(f"... compute gradient of {arg} done!")
 
     # print("***---***")
-    # print("*** DEBUG! ***")
+    # print("*** verbose! ***")
     # print(arg)
     # print(key)
     # print("shape arg", np.shape(snap.data[arg]))
@@ -3604,10 +3624,10 @@ def plot_projections(
 ):
     print(f"[@{int(snapNumber)}]: Starting Projections Video Plots!")
 
-    if CMAP == None:
+    if CMAP is None:
         cmap = plt.get_cmap("inferno")
     else:
-        cmap = CMAP
+        cmap = plt.get_cmap(CMAP)
 
     # Axes Labels to allow for adaptive axis selection
     AxesLabels = ["x", "y", "z"]
@@ -3763,6 +3783,7 @@ def plot_projections(
         fig.suptitle(TITLE, fontsize=fontsizeTitle)
 
     # cmap = plt.get_cmap(CMAP)
+    cmap = copy.copy(cmap)
     cmap.set_bad(color="grey")
 
     # -----------#
@@ -3775,9 +3796,7 @@ def plot_projections(
         proj_T["x"],
         proj_T["y"],
         np.transpose(proj_T["grid"] / proj_dens["grid"]),
-        vmin=1e4,
-        vmax=10 ** (6.5),
-        norm=matplotlib.colors.LogNorm(),
+        norm=matplotlib.colors.LogNorm(vmin=1e4, vmax=10 ** (6.5)),
         cmap=cmap,
         rasterized=True,
     )
@@ -3811,9 +3830,7 @@ def plot_projections(
         proj_nH["x"],
         proj_nH["y"],
         np.transpose(proj_nH["grid"]) / int(boxlos / pixreslos),
-        vmin=1e-6,
-        vmax=1e-1,
-        norm=matplotlib.colors.LogNorm(),
+        norm=matplotlib.colors.LogNorm(vmin=1e-6, vmax=1e-1),
         cmap=cmap,
         rasterized=True,
     )
@@ -3847,9 +3864,8 @@ def plot_projections(
         proj_gz["x"],
         proj_gz["y"],
         np.transpose(proj_gz["grid"]) / int(boxlos / pixreslos),
-        vmin=1e-2,
-        vmax=1e1,
-        norm=matplotlib.colors.LogNorm(),
+
+        norm=matplotlib.colors.LogNorm(vmin=1e-2, vmax=1e1),
         cmap=cmap,
         rasterized=True,
     )
@@ -3885,9 +3901,7 @@ def plot_projections(
         proj_B["x"],
         proj_B["y"],
         np.transpose(proj_B["grid"]) / int(boxlos / pixreslos),
-        vmin=1e-3,
-        vmax=1e1,
-        norm=matplotlib.colors.LogNorm(),
+        norm=matplotlib.colors.LogNorm(vmin=1e-3, vmax=1e1),
         cmap=cmap,
         rasterized=True,
     )
@@ -3959,10 +3973,10 @@ def tracer_plot(
     trioTitleBool=True,
     titleBool=False,
 ):
-    if CMAP == None:
+    if CMAP is None:
         cmap = plt.get_cmap("inferno")
     else:
-        cmap = CMAP
+        cmap = plt.get_cmap(CMAP)
 
     random.seed(1337)
 
@@ -4074,7 +4088,7 @@ def tracer_plot(
     HaloID = int(TRACERSPARAMS["haloID"])
 
     # ============#
-    #   # DEBUG: #
+    #   # verbose: #
     # ============#
     # snapRange= [int(TRACERSPARAMS["selectSnap"])-1,int(TRACERSPARAMS["selectSnap"]),int(TRACERSPARAMS["selectSnap"])+1]
     #
@@ -4490,6 +4504,7 @@ def tracer_plot(
                     axOuter.title.set_size(fontsize)
 
                 # cmap = plt.get_cmap(CMAP)
+                cmap = copy.copy(cmap)
                 cmap.set_bad(color="grey")
 
                 # -----------#
@@ -4518,9 +4533,7 @@ def tracer_plot(
                     proj_T["x"],
                     proj_T["y"],
                     np.transpose(proj_T["grid"] / proj_dens["grid"]),
-                    vmin=1e4,
-                    vmax=10 ** (6.5),
-                    norm=matplotlib.colors.LogNorm(),
+                    norm=matplotlib.colors.LogNorm(vmin=1e4, vmax=10 ** (6.5)),
                     cmap=cmap,
                     rasterized=True,
                 )
@@ -4529,9 +4542,7 @@ def tracer_plot(
                         proj_T["x"],
                         proj_T["y"],
                         np.transpose(proj_T["grid"] / proj_dens["grid"]),
-                        vmin=1e4,
-                        vmax=10 ** (6.5),
-                        norm=matplotlib.colors.LogNorm(),
+                        norm=matplotlib.colors.LogNorm(vmin=1e4, vmax=10**(6.5)),
                         cmap=cmap,
                         rasterized=True,
                     )
