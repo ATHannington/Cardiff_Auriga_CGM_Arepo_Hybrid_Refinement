@@ -12,41 +12,43 @@ import const as c
 import OtherConstants as oc
 from gadget import *
 from gadget_subfind import *
-from Tracers_Subroutines import *
-from CR_Subroutines import *
-from Plotting_tools import hy_plot_slices,hy_plot_slices_quad,hy_plot_projections,hist_plot_xyz,pdf_versus_plot,plot_slices
+import Tracers_Subroutines as tr
+import CR_Subroutines as cr
+import Plotting_tools as apt
 import h5py
 import json
 import copy
 import math
 import os
 
-ageWindow = None #(Gyr) before current snapshot SFR evaluation
-windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
-Nbins = 250
-snapStart = 99
-snapEnd = 99#9 #Max = 192 for high-time res
-DEBUG = True
-forceLogMass = False
-DPI = 200
-pixres = 0.1
-pixreslos = 0.1
-pixresproj = 0.2
-pixreslosproj = 0.2
-numthreads = 18
-rvirFrac = 1.20
-rvirFracImages = 1.00
+plt.rcParams.update(matplotlib.rcParamsDefault)
+
+verbose = False
+
+HYPARAMSPATH = "HYParams.json"
+HYPARAMS = json.load(open(HYPARAMSPATH, "r"))
+
+if HYPARAMS["coldenspixreslos"] is None:
+    HYPARAMS["coldenspixreslos"] = (HYPARAMS["coldenslos"]/HYPARAMS["boxlos"])*HYPARAMS["pixreslosproj"]
+
+if "mass" not in HYPARAMS["colParams"]:
+    HYPARAMS["colParams"]+=["mass"]
+
+if HYPARAMS["ageWindow"] is not None:
+    HYPARAMS["SFRBins"] = int(math.floor(HYPARAMS["ageWindow"]/HYPARAMS["windowBins"]))
+else:
+    HYPARAMS["SFRBins"]  = HYPARAMS["Nbins"] 
 
 loadPathBase = "/home/cosmos/"
 loadDirectories = [
-    #"c1838736/Auriga/level3_cgm_almost/h5_standard",
     "spxfv/Auriga/level4_cgm/h5_standard",
-    #"spxfv/Auriga/level4_cgm/h5_1kpc",
-    #"c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
-    #"c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
-    #"c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
-    #"c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
-    #"c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
+    "spxfv/auriga/level4_cgm/h5_1kpc",
+    "c1838736/auriga/level4_cgm/h5_1kpc-hy-500pc",
+    "c1838736/auriga/spxfv/auriga/level4_cgm/h5_500pc",
+    "c1838736/auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
+    "c1838736/auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
+    "c1838736/auriga/level4_cgm/h5_500pc-hy-250pc",
+    "c1838736/auriga/level3_cgm_almost/h5_standard",
     #"h5_standard",
     #"h5_2kpc",
     #"h5_1kpc",
@@ -91,17 +93,12 @@ for dir in loadDirectories:
     savePaths.append(savepath)
 
 
-if ageWindow is not None:
-    SFRBins = int(math.floor(ageWindow/windowBins))
-else:
-    SFRBins = Nbins
-
 
 snapRange = [
         xx
         for xx in range(
-            int(snapStart),
-            int(snapEnd) + 1,
+            int(HYPARAMS["snapMin"]),
+            int(HYPARAMS["snapMax"]) + 1,
             1,
         )
     ]
@@ -110,6 +107,9 @@ ylabel = {
     "T": r"Temperature (K)",
     "R": r"Radius (kpc)",
     "n_H": r"n$_H$ (cm$^{-3}$)",
+    "n_H_col": r"n$_H$ (cm$^{-2}$)",
+    "n_HI": r"n$_{HI}$ (cm$^{-3}$)",
+    "n_HI_col": r"n$_{HI}$ (cm$^{-2}$)",
     "B": r"|B| ($ \mu $G)",
     "vrad": r"Radial Velocity (km s$^{-1}$)",
     "gz": r"Metallicity Z$_{\odot}$",
@@ -138,6 +138,7 @@ ylabel = {
     "tcool_tff": r"t$_{Cool}$/t$_{FreeFall}$",
     "csound": r"Sound Speed (km s$^{-1}$)",
     "rho_rhomean": r"$\rho / \langle \rho \rangle$",
+    "rho": r"Density (M$_{\odot}$ kpc$^{-3}$)",
     "dens": r"Density (g cm$^{-3}$)",
     "ndens": r"Number density (cm$^{-3}$)",
     "mass": r"Mass (M$_{\odot}$)",
@@ -152,6 +153,9 @@ xlimDict = {
     "L": {"xmin": 3.0, "xmax": 4.5},
     "T": {"xmin": 3.75, "xmax": 7.0},
     "n_H": {},#{"xmin": -5.5, "xmax": -0.5},
+    "n_H_col": {},#{"xmin": 19.0, "xmax": 21.5},
+    "n_HI" :{},
+    "n_HI_col" : {},#{"xmin": 14.0, "xmax": 21.0},
     "B": {"xmin": -2.5, "xmax": 1.0},
     "vrad": {"xmin": -100.0, "xmax": 100.0},
     "gz": {"xmin": -1.5, "xmax": 0.75},
@@ -170,30 +174,28 @@ xlimDict = {
     "dens": {"xmin": -30.0, "xmax": -22.0},
     "ndens": {"xmin": -6.0, "xmax": 2.0},
     "rho_rhomean": {"xmin": 0.25, "xmax": 6.5},
+    "rho" :{},
     "vol": {},#{"xmin": 0.5**4, "xmax": 4.0**4}
     "cool_length" : {},#{"xmin": -1.0 "xmax": 3.0},
     "csound" : {},#
 }
 
-logParameters = ["dens","ndens","rho_rhomean","csound","T","n_H","B","gz","L","P_thermal","P_magnetic","P_kinetic","P_tot","Pthermal_Pmagnetic", "P_CR", "PCR_Pthermal","gah","Grad_T","Grad_n_H","Grad_bfld","Grad_P_CR","tcool","theat","tcross","tff","tcool_tff","mass","vol","cool_length"] #"gima"
-
-
-for entry in logParameters:
+for entry in HYPARAMS["logParameters"]:
     ylabel[entry] = r"$Log_{10}$" + ylabel[entry]
 
 #   Perform forbidden log of Grad check
 deleteParams = []
-for entry in logParameters:
+for entry in HYPARAMS["logParameters"]:
     entrySplit = entry.split("_")
     if (
         ("Grad" in entrySplit) &
-        (np.any(np.isin(np.array(logParameters), np.array(
+        (np.any(np.isin(np.array(HYPARAMS["logParameters"]), np.array(
             "_".join(entrySplit[1:])))))
     ):
         deleteParams.append(entry)
 
 for entry in deleteParams:
-    logParameters.remove(entry)
+    HYPARAMS["logParameters"].remove(entry)
 
 
 if __name__ == "__main__":
@@ -218,11 +220,11 @@ if __name__ == "__main__":
                 loadonlytype=[0,1,4],#[0, 1, 2, 3, 4, 5],
                 lazy_load=False,
                 subfind=snap_subfind,
-                loadonlyhalo=0,
+                loadonlyhalo=int(HYPARAMS["HaloID"]),
             )
 
             print(f"[@{int(snapNumber)}]: Rotate and centre snapshot")
-            snap.calc_sf_indizes(snap_subfind, halolist=[0])
+            snap.calc_sf_indizes(snap_subfind, halolist=[int(HYPARAMS["HaloID"])])
             if rotation_matrix is None:
                 print(f"[@{int(snapNumber)}]: New rotation of snapshots")
                 rotation_matrix = snap.select_halo(snap_subfind, do_rotation=True)
@@ -259,11 +261,11 @@ if __name__ == "__main__":
 
             whereWind = snap.data["age"] < 0.0
 
-            snap = remove_selection(
+            snap = cr.remove_selection(
                 snap,
                 removalConditionMask = whereWind,
                 errorString = "Remove Wind from Gas",
-                DEBUG = DEBUG,
+                verbose = verbose,
                 )
 
 
@@ -274,7 +276,7 @@ if __name__ == "__main__":
             box = [boxmax, boxmax, boxmax]
 
             # Calculate New Parameters and Load into memory others we want to track
-            snap = calculate_tracked_parameters(
+            snap = tr.calculate_tracked_parameters(
                 snap,
                 oc.elements,
                 oc.elements_Z,
@@ -283,27 +285,27 @@ if __name__ == "__main__":
                 oc.Zsolar,
                 oc.omegabaryon0,
                 snapNumber,
-                # logParameters = logParameters,
-                paramsOfInterest=["R","T","Tdens","ndens","rho_rhomean","n_H","gz","cool_length"],
+                logParameters=HYPARAMS["logParameters"],
+                paramsOfInterest=HYPARAMS["saveParams"],
                 mappingBool=True,
                 box=box,
-                numthreads=numthreads,
+                numthreads=HYPARAMS['numthreads'],
                 verbose = False,
             )
 
             print(
-                f"[@{int(snapNumber)}]: Remove beyond {rvirFrac:2.2f} x Virial Radius..."
+                f"[@{int(snapNumber)}]: Remove beyond {HYPARAMS['rvirFrac']:2.2f} x Virial Radius..."
             )
 
-            whereOutsideVirial = snap.data["R"] > Rvir*rvirFrac#*1.5
+            whereOutsideVirial = snap.data["R"] > Rvir*HYPARAMS["rvirFrac"]#*1.5
 
-            xlimDict["R"]["xmax"] = Rvir*rvirFrac
+            xlimDict["R"]["xmax"] = Rvir*HYPARAMS["rvirFrac"]
 
-            snaptmp = remove_selection(
+            snap = cr.remove_selection(
                 snap,
                 removalConditionMask = whereOutsideVirial,
                 errorString = "Remove Outside Virial",
-                DEBUG = DEBUG,
+                verbose = verbose,
                 )
 
             print(
@@ -317,11 +319,11 @@ if __name__ == "__main__":
 
             whereOthers = np.isin(snap.data["type"],np.array([1,2,3,5]))
 
-            snap = remove_selection(
+            snap = cr.remove_selection(
                 snap,
                 removalConditionMask = whereOthers,
                 errorString = "Remove all types other than Gas and Stars",
-                DEBUG = DEBUG
+                verbose = verbose
                 )
 
 
@@ -330,7 +332,7 @@ if __name__ == "__main__":
             )
             # Make normal dictionary form of snap
             out = {}
-            for key, value in snaptmp.data.items():
+            for key, value in snap.data.items():
                 if value is not None:
                     out.update({key: copy.deepcopy(value)})
 
@@ -338,48 +340,48 @@ if __name__ == "__main__":
                 f"[@{int(snapNumber)}]: Remove other halos from dictionary..."
             )
 
-            whereSatellite = np.isin(out["subhalo"],np.array([-1,0,np.nan]))==False
+            whereSatellite = np.isin(out["subhalo"],np.array([-1,int(HYPARAMS["HaloID"]),np.nan]))==False
 
-            out = remove_selection(
+            out = cr.remove_selection(
                 out,
                 removalConditionMask = whereSatellite,
                 errorString = "Remove Satellites",
-                DEBUG = DEBUG,
+                verbose = verbose,
                 )
 
             print(
                 f"[@{int(snapNumber)}]: PDF of mass vs R plot..."
             )
 
-            pdf_versus_plot(
+            apt.pdf_versus_plot(
                 out,
                 ylabel,
                 xlimDict,
-                logParameters,
+                HYPARAMS["logParameters"],
                 snapNumber,
                 weightKeys = ['mass'],
                 xParams = ["R"],
                 savePathBase = savePathBase,
                 saveCurve = True,
-                forceLogMass = forceLogMass,
+                forceLogMass = HYPARAMS["forceLogMass"],
             )
 
             print(
                 f"[@{int(snapNumber)}]: Cumulative PDF of mass vs R plot..."
             )
 
-            pdf_versus_plot(
+            apt.pdf_versus_plot(
                 out,
                 ylabel,
                 xlimDict,
-                logParameters,
+                HYPARAMS["logParameters"],
                 snapNumber,
                 weightKeys = ['mass'],
                 xParams = ["R"],
                 cumulative = True,
                 savePathBase = savePathBase,
                 saveCurve = True,
-                forceLogMass = forceLogMass,
+                forceLogMass = HYPARAMS["forceLogMass"],
 
             )
 
@@ -387,11 +389,11 @@ if __name__ == "__main__":
                 f"[@{int(snapNumber)}]: Normalised Cumulative PDF of mass vs R plot..."
             )
 
-            pdf_versus_plot(
+            apt.pdf_versus_plot(
                 out,
                 ylabel,
                 xlimDict,
-                logParameters,
+                HYPARAMS["logParameters"],
                 snapNumber,
                 weightKeys = ['mass'],
                 xParams = ["R"],
@@ -399,7 +401,7 @@ if __name__ == "__main__":
                 normalise = True,
                 savePathBase = savePathBase,
                 saveCurve = True,
-                forceLogMass = forceLogMass,
+                forceLogMass = HYPARAMS["forceLogMass"],
 
             )
 
@@ -407,29 +409,29 @@ if __name__ == "__main__":
             #    f"[@{int(snapNumber)}]: By Type PDF of mass vs R plot..."
             #)
 
-            #pdf_versus_plot(
+            #apt.pdf_versus_plot(
             #    out,
             #    ylabel,
             #    xlimDict,
-            #    logParameters,
+            #    HYPARAMS["logParameters"],
             #    snapNumber,
             #    weightKeys = ['mass'],
             #    xParams = ["R"],
             #    savePathBase = savePathBase,
             #    saveCurve = True,
             #    byType = True,
-            #    forceLogMass = forceLogMass,
+            #    forceLogMass = HYPARAMS["forceLogMass"],
             #)
 
             #print(
             #    f"[@{int(snapNumber)}]: By Type Cumulative PDF of mass vs R plot..."
             #)
 
-            #pdf_versus_plot(
+            #apt.pdf_versus_plot(
             #    out,
             #    ylabel,
             #    xlimDict,
-            #    logParameters,
+            #    HYPARAMS["logParameters"],
             #    snapNumber,
             #    weightKeys = ['mass'],
             #    xParams = ["R"],
@@ -437,18 +439,18 @@ if __name__ == "__main__":
             #    savePathBase = savePathBase,
             #    saveCurve = True,
             #    byType = True,
-            #    forceLogMass = forceLogMass,
+            #    forceLogMass = HYPARAMS["forceLogMass"],
             #)
 
             #print(
             #    f"[@{int(snapNumber)}]: By Type Normalised Cumulative PDF of mass vs R plot..."
             #)
 
-            #pdf_versus_plot(
+            #apt.pdf_versus_plot(
             #    out,
             #    ylabel,
             #    xlimDict,
-            #    logParameters,
+            #    HYPARAMS["logParameters"],
             #    snapNumber,
             #    weightKeys = ['mass'],
             #    xParams = ["R"],
@@ -457,7 +459,7 @@ if __name__ == "__main__":
             #    savePathBase = savePathBase,
             #    saveCurve = True,
             #    byType = True,
-            #    forceLogMass = forceLogMass,
+            #    forceLogMass = HYPARAMS["forceLogMass"],
             #)
 
             print(
@@ -466,11 +468,11 @@ if __name__ == "__main__":
 
             whereOthers = np.isin(snap.data["type"],np.array([1,2,3,5]))
 
-            snap = remove_selection(
+            snap = cr.remove_selection(
                 snap,
                 removalConditionMask = whereOthers,
                 errorString = "Remove all types other than Gas and Stars",
-                DEBUG = DEBUG
+                verbose = verbose
                 )
 
             print(
@@ -478,7 +480,7 @@ if __name__ == "__main__":
             )
             # Make normal dictionary form of snap
             out = {}
-            for key, value in snaptmp.data.items():
+            for key, value in snap.data.items():
                 if value is not None:
                     out.update({key: copy.deepcopy(value)})
 
@@ -486,29 +488,29 @@ if __name__ == "__main__":
                 f"[@{int(snapNumber)}]: Remove other halos from dictionary..."
             )
 
-            whereSatellite = np.isin(out["subhalo"],np.array([-1,0,np.nan]))==False
+            whereSatellite = np.isin(out["subhalo"],np.array([-1,int(HYPARAMS["HaloID"]),np.nan]))==False
 
-            out = remove_selection(
+            out = cr.remove_selection(
                 out,
                 removalConditionMask = whereSatellite,
                 errorString = "Remove Satellites",
-                DEBUG = DEBUG,
+                verbose = verbose,
                 )
 
             print(
                 f"[@{int(snapNumber)}]: SFR plot..."
             )
 
-            pdf_versus_plot(
+            apt.pdf_versus_plot(
                 out,
                 ylabel,
                 xlimDict,
-                logParameters,
+                HYPARAMS["logParameters"],
                 snapNumber,
                 weightKeys = ['gima'],
                 xParams = ["age"],
-                ageWindow = ageWindow,
-                Nbins = SFRBins,
+                ageWindow = HYPARAMS["ageWindow"],
+                Nbins = HYPARAMS["SFRBins"],
                 savePathBase = savePathBase,
                 saveCurve = True,
                 SFR = True,
@@ -518,16 +520,16 @@ if __name__ == "__main__":
                 f"[@{int(snapNumber)}]: Cumulative SFR plot..."
             )
 
-            pdf_versus_plot(
+            apt.pdf_versus_plot(
                 out,
                 ylabel,
                 xlimDict,
-                logParameters,
+                HYPARAMS["logParameters"],
                 snapNumber,
                 weightKeys = ['gima'],
                 xParams = ["age"],
-                ageWindow = ageWindow,
-                Nbins = SFRBins,
+                ageWindow = HYPARAMS["ageWindow"],
+                Nbins = HYPARAMS["SFRBins"],
                 savePathBase = savePathBase,
                 cumulative = True,
                 saveCurve = True,
@@ -539,16 +541,16 @@ if __name__ == "__main__":
                 f"[@{int(snapNumber)}]: Normalised Cumulative SFR plot..."
             )
 
-            pdf_versus_plot(
+            apt.pdf_versus_plot(
                 out,
                 ylabel,
                 xlimDict,
-                logParameters,
+                HYPARAMS["logParameters"],
                 snapNumber,
                 weightKeys = ['gima'],
                 xParams = ["age"],
-                ageWindow = ageWindow,
-                Nbins = SFRBins,
+                ageWindow = HYPARAMS["ageWindow"],
+                Nbins = HYPARAMS["SFRBins"],
                 savePathBase = savePathBase,
                 cumulative = True,
                 normalise = True,
@@ -560,11 +562,11 @@ if __name__ == "__main__":
                 f"[@{int(snapNumber)}]: Remove stars..."
             )
             whereStars = snap.data["type"] == 4
-            snap = remove_selection(
+            snap = cr.remove_selection(
                 snap,
                 removalConditionMask = whereStars,
                 errorString = "Remove Stars from Gas",
-                DEBUG = DEBUG
+                verbose = verbose
                 )
 
             print(
@@ -572,7 +574,7 @@ if __name__ == "__main__":
             )
             # Make normal dictionary form of snap
             out = {}
-            for key, value in snaptmp.data.items():
+            for key, value in snap.data.items():
                 if value is not None:
                     out.update({key: copy.deepcopy(value)})
 
@@ -580,82 +582,214 @@ if __name__ == "__main__":
                 f"[@{int(snapNumber)}]: Remove other halos from dictionary..."
             )
 
-            whereSatellite = np.isin(out["subhalo"],np.array([-1,0,np.nan]))==False
+            whereSatellite = np.isin(out["subhalo"],np.array([-1,int(HYPARAMS["HaloID"]),np.nan]))==False
 
-            out = remove_selection(
+            out = cr.remove_selection(
                 out,
                 removalConditionMask = whereSatellite,
                 errorString = "Remove Satellites",
-                DEBUG = DEBUG,
+                verbose = verbose,
                 )
+
+            colout = {}
+            for param in HYPARAMS["colParams"]:
+                paramSplitList = param.split("_")
+
+                #if paramSplitList[-1] == "col":
+
+                print(
+                    f"[@{int(snapNumber)}]: Calculate {param}..."
+                )
+                boxsize = Rvir*HYPARAMS["rvirFracImages"]*2.0
+
+                tmpdict = apt.plot_slices(snap,
+                    ylabel=ylabel,
+                    xlimDict=xlimDict,
+                    logParameters = HYPARAMS["logParameters"],
+                    snapNumber=snapNumber,
+                    sliceParam = param,
+                    Axes=HYPARAMS["Axes"],
+                    xsize = HYPARAMS["xsizeImages"],
+                    ysize = HYPARAMS["ysizeImages"],
+                    colourmapMain=HYPARAMS["colourmapMain"],
+                    boxsize=boxsize,
+                    boxlos=HYPARAMS["coldenslos"],
+                    pixreslos=HYPARAMS["coldenspixreslos"],
+                    pixres=HYPARAMS["pixresproj"],
+                    projection = True,
+                    DPI = HYPARAMS["DPI"],
+                    numthreads=HYPARAMS["numthreads"],
+                    savePathBase = savePathBase,
+                    saveFigure = False,
+                )
+
+                KpcTocm = 1e3 * c.parsec
+                convert = float(HYPARAMS["coldenspixreslos"])*KpcTocm
+                if paramSplitList[-1] == "col":
+                    nonColParam = "_".join(paramSplitList[:-1])
+                else:
+                    nonColParam = param
+                nonColShape = snap.data[nonColParam].shape
+                if snap.data[nonColParam].ndim>1:
+                    newShape=(-1,nonColShape[-1])
+                else:
+                    newShape = (-1)
+                if paramSplitList[-1] == "col":
+                    colout.update({param: (copy.deepcopy(tmpdict[param]["grid"])*convert).reshape(newShape)})
+                    #snap.data[param] = 
+                else:
+                    colout.update({param: (copy.deepcopy(tmpdict[param]["grid"])).reshape(newShape)})
+                    #snap.data[param] = 
+
+                #colout.update({param: copy.deepcopy(snap.data[param])})
+                #snap.data[param+"x"] = 
+                #snap.data[param+"y"] = 
+                #colout.update({param+"x": (copy.deepcopy(tmpdict[param]["x"])).reshape(newShape)})
+                #colout.update({param+"y": (copy.deepcopy(tmpdict[param]["y"])).reshape(newShape)})
+                if HYPARAMS["xParam"] is not "R" : 
+                    raise Exception("FAILURE! Col Density plotting not adapted for xParams other than R!"
+                                                                   +"\n"
+                                                                   +"Please add in functionality and edit/remove this message!")
+                if HYPARAMS["xParam"] not in list(colout.keys()):
+                    xx = (copy.deepcopy(tmpdict[param]["x"])).reshape(newShape)
+                    xx = np.array(
+                        [
+                            (x1 + x2) / 2.0
+                            for (x1, x2) in zip(xx[:-1], xx[1:])
+                        ]
+                    )
+                    yy = (copy.deepcopy(tmpdict[param]["y"])).reshape(newShape)
+                    yy = np.array(
+                        [
+                            (x1 + x2) / 2.0
+                            for (x1, x2) in zip(yy[:-1], yy[1:])
+                        ]
+                    )
+                    #key = xParam+"_col"
+                    values = np.linalg.norm(np.asarray(np.meshgrid(xx,yy)).reshape(-1,2), axis=1)
+                    #snap.data["R_col"] = values
+                    colout.update({HYPARAMS["xParam"]: values})
+                    colout.update({"type": np.full(shape=values.shape, fill_value=0)})
+
+
+
+            print(
+                f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary and Trim ..."
+            )
+            # Make normal dictionary form of snap
+            out = {}
+            for key, value in snap.data.items():
+                if value is not None:
+                    out.update({key: copy.deepcopy(value)})
 
             print(
                 f"[@{int(snapNumber)}]: PDF of gas (mass vs T or vol) plot"
             )
 
-            pdf_versus_plot(
+            apt.pdf_versus_plot(
                 out,
                 ylabel,
                 xlimDict,
-                logParameters,
+                HYPARAMS["logParameters"],
                 snapNumber,
                 weightKeys = ['mass'],
-                xParams = ["T","vol","n_H"],
+                xParams = HYPARAMS["pdfParams"],
                 savePathBase = savePathBase,
                 saveCurve = True,
-                forceLogMass = forceLogMass,
+                forceLogMass = HYPARAMS["forceLogMass"],
+            )
+
+            apt.pdf_versus_plot(
+                dataDict = colout,
+                ylabel = ylabel,
+                xlimDict = xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber = snapNumber,
+                weightKeys = ['mass'],
+                xParams = HYPARAMS["colParams"],
+                savePathBase = savePathBase,
+                saveCurve = True,
+                forceLogMass = HYPARAMS["forceLogMass"],
             )
 
             print(
                 f"[@{int(snapNumber)}]: Cumulative PDF of gas (mass vs T or vol) plot"
             )
 
-            pdf_versus_plot(
+            apt.pdf_versus_plot(
                 out,
                 ylabel,
                 xlimDict,
-                logParameters,
+                HYPARAMS["logParameters"],
                 snapNumber,
                 weightKeys = ['mass'],
-                xParams = ["T","vol","n_H"],
+                xParams = HYPARAMS["pdfParams"],
                 savePathBase = savePathBase,
                 cumulative = True,
                 saveCurve = True,
-                forceLogMass = forceLogMass,
+                forceLogMass = HYPARAMS["forceLogMass"],
+            )
+
+            apt.pdf_versus_plot(
+                dataDict = colout,
+                ylabel = ylabel,
+                xlimDict = xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber = snapNumber,
+                weightKeys = ['mass'],
+                xParams = HYPARAMS["colParams"],
+                savePathBase = savePathBase,
+                cumulative = True,
+                saveCurve = True,
+                forceLogMass = HYPARAMS["forceLogMass"],
             )
 
             print(
                 f"[@{int(snapNumber)}]: Normalised Cumulative PDF of gas (mass vs T or vol) plot"
             )
 
-            pdf_versus_plot(
+            apt.pdf_versus_plot(
                 out,
                 ylabel,
                 xlimDict,
-                logParameters,
+                HYPARAMS["logParameters"],
                 snapNumber,
                 weightKeys = ['mass'],
-                xParams = ["T","vol","n_H"],
+                xParams = HYPARAMS["pdfParams"],
                 savePathBase = savePathBase,
                 cumulative = True,
                 normalise = True,
                 saveCurve = True,
-                forceLogMass = forceLogMass,
+                forceLogMass = HYPARAMS["forceLogMass"],
             )
 
+            apt.pdf_versus_plot(
+                dataDict = colout,
+                ylabel = ylabel,
+                xlimDict = xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber = snapNumber,
+                weightKeys = ['mass'],
+                xParams = HYPARAMS["colParams"],
+                savePathBase = savePathBase,
+                cumulative = True,
+                normalise = True,
+                saveCurve = True,
+                forceLogMass = HYPARAMS["forceLogMass"],
+            )
 
             print(
                 f"[@{int(snapNumber)}]: Slice plot"
             )
 
-            hy_plot_slices(snap,
+            apt.hy_plot_slices(snap,
                 snapNumber,
                 xsize = 15.00,
                 ysize=7.50,
-                pixres=pixres,
-                DPI = DPI,
-                boxsize=Rvir*rvirFracImages*2.0,
-                numthreads=numthreads,
+                pixres=HYPARAMS["pixres"],
+                DPI = HYPARAMS["DPI"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                numthreads=HYPARAMS["numthreads"],
                 savePathBase = savePathBase,
             )
 
@@ -663,14 +797,14 @@ if __name__ == "__main__":
                 f"[@{int(snapNumber)}]: Slice plot Quad"
             )
 
-            hy_plot_slices_quad(snap,
+            apt.hy_plot_slices_quad(snap,
                 snapNumber,
                 xsize = 15.00,
                 ysize=15.00,
-                pixres=pixres,
-                DPI = DPI,
-                boxsize=Rvir*rvirFracImages*2.0,
-                numthreads=numthreads,
+                pixres=HYPARAMS["pixres"],
+                DPI = HYPARAMS["DPI"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                numthreads=HYPARAMS["numthreads"],
                 savePathBase = savePathBase,
             )
 
@@ -678,106 +812,349 @@ if __name__ == "__main__":
                 f"[@{int(snapNumber)}]: Projection plot"
             )
 
-            hy_plot_projections(snap,
+            apt.hy_plot_projections(snap,
                 snapNumber,
                 xsize = 15.00,
                 ysize=7.50,
-                boxlos=50.0,
-                pixreslos=pixreslosproj,
-                pixres=pixresproj,
-                DPI = DPI,
-                boxsize=Rvir*rvirFracImages*2.0,
-                numthreads=numthreads,
+                boxlos=HYPARAMS["boxlos"],
+                pixreslos=HYPARAMS["pixreslosproj"],
+                pixres=HYPARAMS["pixresproj"],
+                DPI = HYPARAMS["DPI"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                numthreads=HYPARAMS["numthreads"],
                 savePathBase = savePathBase,
             )
 
-            ##print(
-            ##    f"[@{int(snapNumber)}]: Generalised T Projection plot"
-            ##)
 
-            ##_ = plot_slices(snap,
-            ##    ylabel=ylabel,
-            ##    xlimDict=xlimDict,
-            ##    logParameters = logParameters,
-            ##    snapNumber=snapNumber,
-            ##    sliceParam = "T",
-            ##    xsize = 7.50,
-            ##    ysize = 7.50,
-            ##    boxsize=Rvir*rvirFracImages*2.0,
-            ##    boxlos=50.0,
-            ##    pixreslos=pixreslosproj,
-            ##    pixres=pixresproj,
-            ##    projection = True,
-            ##    DPI = DPI,
-            ##    numthreads=numthreads,
-            ##    savePathBase = savePathBase,
-            ##)
+            print(
+                f"[@{int(snapNumber)}]: Generalised T Projection plot"
+            )
 
-            ##print(
-            ##    f"[@{int(snapNumber)}]: Generalised T Slice plot"
-            ##)
+            _ = apt.plot_slices(snap,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber=snapNumber,
+                sliceParam = "T",
+                Axes=HYPARAMS["Axes"],
+                xsize = HYPARAMS["xsizeImages"],
+                ysize = HYPARAMS["xsizeImages"],
+                colourmapMain=HYPARAMS["colourmapMain"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                boxlos=HYPARAMS["boxlos"],
+                pixreslos=HYPARAMS["pixreslosproj"],
+                pixres=HYPARAMS["pixresproj"],
+                projection = True,
+                DPI = HYPARAMS["DPI"],
+                numthreads=HYPARAMS["numthreads"],
+                savePathBase = savePathBase,
+            )
 
-            ##_ = plot_slices(snap,
-            ##    ylabel=ylabel,
-            ##    xlimDict=xlimDict,
-            ##    logParameters = logParameters,
-            ##    snapNumber=snapNumber,
-            ##    sliceParam = "T",
-            ##    xsize = 7.50,
-            ##    ysize = 7.50,
-            ##    boxsize=Rvir*rvirFracImages*2.0,
-            ##    boxlos=50.0,
-            ##    pixreslos=pixreslos,
-            ##    pixres=pixres,
-            ##    projection = False,
-            ##    DPI = DPI,
-            ##    numthreads=numthreads,
-            ##    savePathBase = savePathBase,
-            ##)
+            print(
+                f"[@{int(snapNumber)}]: Generalised T Slice plot"
+            )
 
-            ##print(
-            ##    f"[@{int(snapNumber)}]: Generalised Projection plot"
-            ##)
+            _ = apt.plot_slices(snap,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber=snapNumber,
+                sliceParam = "T",
+                Axes=HYPARAMS["Axes"],
+                xsize = HYPARAMS["xsizeImages"],
+                ysize = HYPARAMS["xsizeImages"],
+                colourmapMain=HYPARAMS["colourmapMain"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                boxlos=HYPARAMS["boxlos"],
+                pixreslos=HYPARAMS["pixreslos"],
+                pixres=HYPARAMS["pixres"],
+                projection = False,
+                DPI = HYPARAMS["DPI"],
+                numthreads=HYPARAMS["numthreads"],
+                savePathBase = savePathBase,
+            )
 
-            ##_ = plot_slices(snap,
-            ##    ylabel=ylabel,
-            ##    xlimDict=xlimDict,
-            ##    logParameters = logParameters,
-            ##    snapNumber=snapNumber,
-            ##    sliceParam = "n_H",
-            ##    xsize = 7.50,
-            ##    ysize = 7.50,
-            ##    boxsize=Rvir*rvirFracImages*2.0,
-            ##    boxlos=50.0,
-            ##    pixreslos=pixreslosproj,
-            ##    pixres=pixresproj,
-            ##    projection = True,
-            ##    DPI = DPI,
-            ##    numthreads=numthreads,
-            ##    savePathBase = savePathBase,
-            ##)
+            print(
+                f"[@{int(snapNumber)}]: Generalised n_H Projection plot"
+            )
 
-            ##print(
-            ##    f"[@{int(snapNumber)}]: Generalised Slice plot"
-            ##)
+            _ = apt.plot_slices(snap,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber=snapNumber,
+                sliceParam = "n_H",
+                Axes=HYPARAMS["Axes"],
+                xsize = HYPARAMS["xsizeImages"],
+                ysize = HYPARAMS["xsizeImages"],
+                colourmapMain=HYPARAMS["colourmapMain"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                boxlos=HYPARAMS["boxlos"],
+                pixreslos=HYPARAMS["pixreslosproj"],
+                pixres=HYPARAMS["pixresproj"],
+                projection = True,
+                DPI = HYPARAMS["DPI"],
+                numthreads=HYPARAMS["numthreads"],
+                savePathBase = savePathBase,
+            )
 
-            ##_ = plot_slices(snap,
-            ##    ylabel=ylabel,
-            ##    xlimDict=xlimDict,
-            ##    logParameters = logParameters,
-            ##    snapNumber=snapNumber,
-            ##    sliceParam = "n_H",
-            ##    xsize = 7.50,
-            ##    ysize = 7.50,
-            ##    boxsize=Rvir*rvirFracImages*2.0,
-            ##    boxlos=50.0,
-            ##    pixreslos=pixreslos,
-            ##    pixres=pixres,
-            ##    projection = False,
-            ##    DPI = DPI,
-            ##    numthreads=numthreads,
-            ##    savePathBase = savePathBase,
-            ##)
+            print(
+                f"[@{int(snapNumber)}]: Generalised n_H Slice plot"
+            )
+
+            _ = apt.plot_slices(snap,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber=snapNumber,
+                sliceParam = "n_H",
+                Axes=HYPARAMS["Axes"],
+                xsize = HYPARAMS["xsizeImages"],
+                ysize = HYPARAMS["xsizeImages"],
+                colourmapMain=HYPARAMS["colourmapMain"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                boxlos=HYPARAMS["boxlos"],
+                pixreslos=HYPARAMS["pixreslos"],
+                pixres=HYPARAMS["pixres"],
+                projection = False,
+                DPI = HYPARAMS["DPI"],
+                numthreads=HYPARAMS["numthreads"],
+                savePathBase = savePathBase,
+            )
+    
+
+            print(
+                f"[@{int(snapNumber)}]: Generalised n_H_col Projection plot"
+            )
+
+            _ = apt.plot_slices(snap,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber=snapNumber,
+                sliceParam = "n_H_col",
+                Axes=HYPARAMS["Axes"],
+                xsize = HYPARAMS["xsizeImages"],
+                ysize = HYPARAMS["xsizeImages"],
+                colourmapMain=HYPARAMS["colourmapMain"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                boxlos=HYPARAMS["coldenslos"],
+                pixreslos=HYPARAMS["coldenspixreslos"],
+                pixres=HYPARAMS["pixresproj"],
+                projection = True,
+                DPI = HYPARAMS["DPI"],
+                numthreads=HYPARAMS["numthreads"],
+                savePathBase = savePathBase,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Generalised n_H_col Slice plot"
+            )
+
+            _ = apt.plot_slices(snap,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber=snapNumber,
+                sliceParam = "n_H_col",
+                Axes=HYPARAMS["Axes"],
+                xsize = HYPARAMS["xsizeImages"],
+                ysize = HYPARAMS["xsizeImages"],
+                colourmapMain=HYPARAMS["colourmapMain"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                boxlos=HYPARAMS["coldenslos"],
+                pixreslos=HYPARAMS["coldenspixreslos"],
+                pixres=HYPARAMS["pixres"],
+                projection = False,
+                DPI = HYPARAMS["DPI"],
+                numthreads=HYPARAMS["numthreads"],
+                savePathBase = savePathBase,
+            )
+
+
+            print(
+                f"[@{int(snapNumber)}]: Generalised n_HI Projection plot"
+            )
+
+            _ = apt.plot_slices(snap,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber=snapNumber,
+                sliceParam = "n_HI",
+                Axes=HYPARAMS["Axes"],
+                xsize = HYPARAMS["xsizeImages"],
+                ysize = HYPARAMS["xsizeImages"],
+                colourmapMain=HYPARAMS["colourmapMain"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                boxlos=HYPARAMS["boxlos"],
+                pixreslos=HYPARAMS["pixreslosproj"],
+                pixres=HYPARAMS["pixresproj"],
+                projection = True,
+                DPI = HYPARAMS["DPI"],
+                numthreads=HYPARAMS["numthreads"],
+                savePathBase = savePathBase,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Generalised n_HI Slice plot"
+            )
+
+            _ = apt.plot_slices(snap,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber=snapNumber,
+                sliceParam = "n_HI",
+                Axes=HYPARAMS["Axes"],
+                xsize = HYPARAMS["xsizeImages"],
+                ysize = HYPARAMS["xsizeImages"],
+                colourmapMain=HYPARAMS["colourmapMain"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                boxlos=HYPARAMS["boxlos"],
+                pixreslos=HYPARAMS["pixreslos"],
+                pixres=HYPARAMS["pixres"],
+                projection = False,
+                DPI = HYPARAMS["DPI"],
+                numthreads=HYPARAMS["numthreads"],
+                savePathBase = savePathBase,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Generalised n_HI_col Projection plot"
+            )
+
+            _ = apt.plot_slices(snap,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber=snapNumber,
+                sliceParam = "n_HI_col",
+                Axes=HYPARAMS["Axes"],
+                xsize = HYPARAMS["xsizeImages"],
+                ysize = HYPARAMS["xsizeImages"],
+                colourmapMain=HYPARAMS["colourmapMain"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                boxlos=HYPARAMS["coldenslos"],
+                pixreslos=HYPARAMS["coldenspixreslos"],
+                pixres=HYPARAMS["pixresproj"],
+                projection = True,
+                DPI = HYPARAMS["DPI"],
+                numthreads=HYPARAMS["numthreads"],
+                savePathBase = savePathBase,
+            )
+
+            print(
+                f"[@{int(snapNumber)}]: Generalised n_HI_col Slice plot"
+            )
+
+            _ = apt.plot_slices(snap,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                logParameters = HYPARAMS["logParameters"],
+                snapNumber=snapNumber,
+                sliceParam = "n_HI_col",
+                Axes=HYPARAMS["Axes"],
+                xsize = HYPARAMS["xsizeImages"],
+                ysize = HYPARAMS["xsizeImages"],
+                colourmapMain=HYPARAMS["colourmapMain"],
+                boxsize=Rvir*HYPARAMS["rvirFracImages"]*2.0,
+                boxlos=HYPARAMS["coldenslos"],
+                pixreslos=HYPARAMS["coldenspixreslos"],
+                pixres=HYPARAMS["pixres"],
+                projection = False,
+                DPI = HYPARAMS["DPI"],
+                numthreads=HYPARAMS["numthreads"],
+                savePathBase = savePathBase,
+            )
+
+            print(
+                "\n"+f"[@{int(snapNumber)}]: Calculate full statistics..."
+            )
+
+            statsDict = cr.cr_calculate_statistics(
+                out,
+                CRPARAMS = HYPARAMS,
+                xParam=HYPARAMS["xParam"],
+                Nbins=HYPARAMS["Nbins"],
+                xlimDict=xlimDict,
+                printpercent=5.0,
+                exclusions = None,
+            )
+
+            splitList = loadpath.split("/")
+            baseResLevel, haloLabel = splitList[-4:-2]
+            haloSplitList = haloLabel.split("_")
+            auHalo, resLabel = haloSplitList[0], "_".join(haloSplitList[1:])
+            tmp = copy.copy(statsDict)
+            statsDict = {(baseResLevel, haloLabel): tmp}
+
+            print(
+                "\n"+f"[@{int(snapNumber)}]: Calculate column density statistics..."
+            )
+
+            COLHYPARAMS = copy.deepcopy(HYPARAMS)
+            COLHYPARAMS['saveParams']+=COLHYPARAMS['colParams']
+            COLHYPARAMS["Nbins"] = int(HYPARAMS["Nbins"]**(2/3))
+            colstatsDict = cr.cr_calculate_statistics(
+                colout,
+                CRPARAMS = COLHYPARAMS,
+                xParam=COLHYPARAMS["xParam"],
+                Nbins=COLHYPARAMS["Nbins"],
+                xlimDict=xlimDict,
+                printpercent=5.0,
+                exclusions = None,
+                weightedStatsBool = False,
+            )
+
+            tmp = copy.copy(colstatsDict)
+            colstatsDict = {(baseResLevel, haloLabel): tmp}
+
+            print(
+                "\n"+f"[@{int(snapNumber)}]: Plot column density medians versus {HYPARAMS['xParam']}..."
+            )
+
+            apt.medians_versus_plot(
+                colstatsDict,
+                COLHYPARAMS,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                snapNumber=snapNumber,
+                yParam=COLHYPARAMS["colParams"],
+                xParam=COLHYPARAMS["xParam"],
+                titleBool=COLHYPARAMS["titleBool"],
+                DPI = COLHYPARAMS["DPI"],
+                xsize = COLHYPARAMS["xsize"],
+                ysize = COLHYPARAMS["ysize"],
+                fontsize = COLHYPARAMS["fontsize"],
+                fontsizeTitle = COLHYPARAMS["fontsizeTitle"],
+                opacityPercentiles = COLHYPARAMS["opacityPercentiles"],
+                colourmapMain = "tab10",
+                savePathBase = savePathBase
+            )
+
+            print(
+                "\n"+f"[@{int(snapNumber)}]: Plot full statistics medians versus {HYPARAMS['xParam']}..."
+            )
+
+            apt.medians_versus_plot(
+                statsDict,
+                HYPARAMS,
+                ylabel=ylabel,
+                xlimDict=xlimDict,
+                snapNumber=snapNumber,
+                yParam=HYPARAMS["mediansParams"],
+                xParam=HYPARAMS["xParam"],
+                titleBool=HYPARAMS["titleBool"],
+                DPI = HYPARAMS["DPI"],
+                xsize = HYPARAMS["xsize"],
+                ysize = HYPARAMS["ysize"],
+                fontsize = HYPARAMS["fontsize"],
+                fontsizeTitle = HYPARAMS["fontsizeTitle"],
+                opacityPercentiles = HYPARAMS["opacityPercentiles"],
+                colourmapMain = "tab10",
+                savePathBase = savePathBase
+            )
 
             # # print(
             # #     f"[@{int(snapNumber)}]: Remove beyond 1.5 x Virial Radius..."
@@ -787,11 +1164,11 @@ if __name__ == "__main__":
             # #
             # # xlimDict["R"]["xmax"] = Rvir*rvirFrac#*1.2
             # #
-            # # snaptmp = remove_selection(
+            # # snap = cr.remove_selection(
             # #     snap,
             # #     removalConditionMask = whereOutsideVirial,
             # #     errorString = "Remove Outside Virial from Gas",
-            # #     DEBUG = DEBUG,
+            # #     verbose = verbose,
             # #     )
             #
             # # print(
@@ -799,7 +1176,7 @@ if __name__ == "__main__":
             # # )
             # # # Make normal dictionary form of snap
             # # out = {}
-            # # for key, value in snaptmp.data.items():
+            # # for key, value in snap.data.items():
             # #     if value is not None:
             # #         out.update({key: copy.deepcopy(value)})
             # #
@@ -808,28 +1185,28 @@ if __name__ == "__main__":
             # #     f"[@{int(snapNumber)}]: Remove other halos from dictionary..."
             # # )
             # #
-            # # whereSatellite = np.isin(out["subhalo"],np.array([-1,0,np.nan]))==False
+            # # whereSatellite = np.isin(out["subhalo"],np.array([-1,int(HYPARAMS["HaloID"]),np.nan]))==False
             # #
-            # # out = remove_selection(
+            # # out = cr.remove_selection(
             # #     out,
             # #     removalConditionMask = whereSatellite,
             # #     errorString = "Remove Satellites",
-            # #     DEBUG = DEBUG,
+            # #     verbose = verbose,
             # #     )
 
             print(
                 f"[@{int(snapNumber)}]: Hist_plot_xyz plot"
             )
 
-            hist_plot_xyz(
+            apt.hist_plot_xyz(
                 out,
                 ylabel,
                 xlimDict,
-                logParameters,
+                HYPARAMS["logParameters"],
                 snapNumber = snapNumber,
-                yParams = ["T","ndens"],
-                xParams = ["R","rho_rhomean","vol","ndens"],
-                weightKeys = ["mass"],
+                yParams = HYPARAMS["phasesyParams"],
+                xParams = HYPARAMS["phasesxParams"],
+                weightKeys = HYPARAMS["phasesWeightParams"],
                 savePathBase = savePathBase,
             )
 
