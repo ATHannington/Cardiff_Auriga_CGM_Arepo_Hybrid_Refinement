@@ -26,7 +26,7 @@ windowBins = 0.100 #(Gyr) size of ageWindow Bins. Ignored if ageWindow is None
 Nbins = 250
 snapStart = 100
 snapEnd = 127 #116
-DEBUG = False
+verbose = False
 forceLogMass = False
 numthreads = 18
 
