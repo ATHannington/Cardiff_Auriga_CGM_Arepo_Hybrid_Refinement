@@ -1,73 +1,73 @@
 {
   "savepathfigures": "./",
 
-  "savepathdata": "/home/universe/c1838736/Hybrid_Refinement/level4/level4_cgm/apt-figures/",
+  "savepathdata": "/home/universe/c1838736/Hybrid_Refinement/level4/level4_cgm/apt-figures/tmp/",
 
-  "loadRotationMatrix" : false,
+  "saveParams": [ "T", "Tdens", "R", "rho", "nh", "n_H", "n_HI", "ndens", "rho_rhomean", "B", "vrad", "gz", "L", "P_kinetic", "P_thermal", "P_magnetic", "Pthermal_Pmagnetic", "cool_length", "tcool", "tff", "tcool_tff" ],
 
-  "constantRotationMatrix" : false,
-
-  "saveParams": [ "T", "Tdens", "R", "nh", "n_H", "n_HI", "ndens","B", "vrad", "gz", "L"],
-
-  "saveEssentials": [ "halo", "subhalo", "Redshift", "Lookback", "Snap", "type", "mass", "pos", "vol", "hrgm", "sfr", "Rvir", "gima", "age" , "boxsize", "gmet", "ne", "rho", "u", "bfld", "vel", "gcol", "tcool", "cren"],
+  "saveEssentials": [ "halo", "subhalo", "Redshift", "Lookback", "Snap", "type", "mass", "pos", "vol", "Rvir", "gima", "age" ],
 
   "snapMin": 120,
 
-  "snapMax": 127,
+  "snapMax": 122,
 
-  "percentiles": [0.13, 2.28 , 15.87, 50.0, 84.13, 97.72, 99.87],
+  "percentiles": [ 15.87, 50.0, 84.13 ],
 
-  "boxsize": 400.0,
+  "rvirFrac": 2.0,
 
-  "rvirFrac" : 1.2,
+  "rvirFracImages": 1.00,
 
   "xParam": "R",
 
   "colParams": [ "n_H_col", "n_HI_col" ],
 
-  "imageParams": [],
+  "imageParams": [ "T", "nh", "n_H", "n_HI", "B", "gz", "P_thermal", "n_H_col", "n_HI_col" ],
 
-  "pdfParams": [ "T", "vol", "nh", "n_H", "n_HI", "ndens","B", "vrad", "gz", "L"],
+  "pdfParams": [ "T", "vol", "rho", "nh", "n_H", "n_HI", "ndens", "rho" ],
 
-  "phasesxParams": [ "R", "n_H", "vol", "ndens" ],
+  "phasesxParams": [ "R", "rho_rhomean", "vol", "ndens" ],
 
-  "phasesyParams": [ "T", "n_H", "nh", "ndens","B", "vrad", "gz", "L"],
+  "phasesyParams": [ "T", "ndens", "gz" ],
 
   "phasesWeightParams": [ "mass" ],
 
-  "mediansParams": [ "T", "R", "nh", "n_H", "n_HI", "ndens","B", "vrad", "gz", "L"],
+  "mediansParams": [ "T", "R", "rho", "ndens", "rho_rhomean", "nh", "n_H", "n_HI", "B", "vrad", "gz", "L", "P_kinetic", "P_thermal", "P_magnetic", "Pthermal_Pmagnetic", "tcool", "tff", "tcool_tff" ],
 
   "NxParamBins": 100,
 
   "Nbins": 250,
 
-  "Axes": [ 1, 0 ],
+  "Axes": [ 0, 1 ],
 
   "opacityPercentiles": 0.25,
 
+  "projections": false,
+
+  "QuadPlotBool": true,
+
   "forceLogMass": false,
 
-  "numthreads": 20,
+  "numthreads": 28,
+
+  "boxsizeFreekeComparisons": 400.0,
 
   "boxlos": 50.0,
 
   "coldenslos": 600.0,
 
-  "pixres": 0.5,
+  "pixres": 0.1,
 
-  "pixreslos": 0.5,
+  "pixreslos": 0.1,
 
-  "pixresproj": 0.5,
+  "pixresproj": 0.1,
 
-  "pixreslosproj": 0.5,
+  "pixreslosproj": 0.1,
 
-  "coldenspixreslos": 0.5,
+  "coldenspixreslos": 0.1,
 
   "HaloID": 0,
 
-  "DPI": 200,
-
-  "DPIimages" : 250,
+  "DPI": 150,
 
   "xsizeImages": 6.0,
 
@@ -93,11 +93,11 @@
 
   "nonMassWeightDict": {
     "mass": "vol",
-    "nh": "vol",
+    "nh": null,
     "n_H": "vol",
     "n_HI": "vol",
-    "n_H_col": "vol",
-    "n_HI_col": "vol",
+    "n_H_col": null,
+    "n_HI_col": null,
     "ndens": "vol",
     "dens": "vol",
     "rho_rhomean": "vol",
