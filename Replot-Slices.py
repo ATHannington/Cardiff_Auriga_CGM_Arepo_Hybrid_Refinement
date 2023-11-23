@@ -28,8 +28,6 @@ verbose = False
 # We want to utilise inplace operations to keep memory within RAM limits...
 inplace = True
 
-
-
 HYPARAMSPATH = "HYParams.json"
 HYPARAMS = json.load(open(HYPARAMSPATH, "r"))
 
@@ -44,16 +42,19 @@ if HYPARAMS["ageWindow"] is not None:
 else:
     HYPARAMS["SFRBins"]  = HYPARAMS["Nbins"] 
 
+AxesLabels = ["z","x","y"]
+
+
 loadPathBase = "/home/cosmos/"
 loadDirectories = [
-    # "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
-    "c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
+#     "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
+    # "c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
     # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
     # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
     # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
     # "c1838736/Auriga/level3_cgm_almost/h5_standard",
-    # "spxfv/Auriga/level4_cgm/h5_1kpc",
-    # "spxfv/Auriga/level4_cgm/h5_standard",
+    "spxfv/Auriga/level4_cgm/h5_1kpc",
+    "spxfv/Auriga/level4_cgm/h5_standard",
     #"h5_standard",
     #"c1838736/Auriga/level5_cgm/h5_2kpc",
     #"h5_1kpc",
@@ -111,40 +112,41 @@ snapRange = [
         )
     ]
 
+
 ylabel = {
     "T": r"Temperature (K)",
     "R": r"Radius (kpc)",
-    "n_H": r"n$_H$ (cm$^{-3}$)",
-    "n_H_col": r"n$_H$ (cm$^{-2}$)",
-    "n_HI": r"n$_{HI}$ (cm$^{-3}$)",
-    "n_HI_col": r"n$_{HI}$ (cm$^{-2}$)",
+    "n_H": r"n$_{\mathrm{H}}$ (cm$^{-3}$)",
+    "n_H_col": r"n$_{\mathrm{H}}$ (cm$^{-2}$)",
+    "n_HI": r"n$_{\mathrm{HI}}$ (cm$^{-3}$)",
+    "n_HI_col": r"n$_{\mathrm{HI}}$ (cm$^{-2}$)",
     "nh": r"Neutral Hydrogen Fraction",
     "B": r"|B| ($ \mu $G)",
     "vrad": r"Radial Velocity (km s$^{-1}$)",
     "gz": r"Metallicity Z$_{\odot}$",
     "L": r"Specific Angular Momentum" + "\n" + r"(kpc km s$^{-1}$)",
-    "P_thermal": r"P$_{Thermal}$ / k$_B$ (K cm$^{-3}$)",
-    "P_magnetic": r"P$_{Magnetic}$ / k$_B$ (K cm$^{-3}$)",
-    "P_kinetic": r"P$_{Kinetic}$ / k$_B$ (K cm$^{-3}$)",
-    "P_tot": r"P$_{tot}$ = (P$_{thermal}$ + P$_{magnetic}$)/ k$_B$"
-    + "\n"
-    + r"(K cm$^{-3}$)",
+    "P_thermal": r"P$_{Thermal}$ (erg cm$^{-3}$)",
+    "P_magnetic": r"P$_{Magnetic}$ (erg cm$^{-3}$)",
+    "P_kinetic": r"P$_{Kinetic}$ (erg cm$^{-3}$)",
+    "P_tot": r"P$_{\mathrm{Tot}}$ (erg cm$^{-3}$)",
+    "P_tot+k": r"P$_{\mathrm{Tot}}$ (erg cm$^{-3}$)",
     "Pthermal_Pmagnetic": r"P$_{thermal}$/P$_{magnetic}$",
-    "P_CR": r"P$_{CR}$ (K cm$^{-3}$)",
-    "PCR_Pthermal": r"(X$_{CR}$ = P$_{CR}$/P$_{Thermal}$)",
+    "P_CR": r"P$_{\mathrm{CR}}$ (erg cm$^{-3}$)",
+    "PCR_Pmagnetic" : r"P$_{\mathrm{CR}}$/P$_{magnetic}$",
+    "PCR_Pthermal": r"(X$_{\mathrm{CR}}$ = P$_{\mathrm{CR}}$/P$_{Thermal}$)",
     "gah": r"Alfven Gas Heating (erg s$^{-1}$)",
     "bfld": r"||B-Field|| ($ \mu $G)",
     "Grad_T": r"||Temperature Gradient|| (K kpc$^{-1}$)",
-    "Grad_n_H": r"||n$_H$ Gradient|| (cm$^{-3}$ kpc$^{-1}$)",
+    "Grad_n_H": r"||n$_{\mathrm{H}}$ Gradient|| (cm$^{-3}$ kpc$^{-1}$)",
     "Grad_bfld": r"||B-Field Gradient|| ($ \mu $G kpc$^{-1}$)",
-    "Grad_P_CR": r"||P$_{CR}$ Gradient|| (K kpc$^{-4}$)",
+    "Grad_P_CR": r"||P$_{\mathrm{CR}}$ Gradient|| (erg kpc$^{-4}$)",
     "gima" : r"Star Formation Rate (M$_{\odot}$ yr$^{-1}$)",
     # "crac" : r"Alfven CR Cooling (erg s$^{-1}$)",
     "tcool": r"Cooling Time (Gyr)",
     "theat": r"Heating Time (Gyr)",
     "tcross": r"Sound Crossing Cell Time (Gyr)",
     "tff": r"Free Fall Time (Gyr)",
-    "tcool_tff": r"t$_{Cool}$/t$_{FreeFall}$",
+    "tcool_tff": r"t$_{\mathrm{Cool}}$/t$_{FreeFall}$",
     "csound": r"Sound Speed (km s$^{-1}$)",
     "rho_rhomean": r"$\rho / \langle \rho \rangle$",
     "rho": r"Density (M$_{\odot}$ kpc$^{-3}$)",
@@ -154,6 +156,13 @@ ylabel = {
     "vol": r"Volume (kpc$^{3}$)",
     "age": "Lookback Time (Gyr)",
     "cool_length" : "Cooling Length (kpc)",
+    "halo" : "FoF Halo",
+    "subhalo" : "SubFind Halo",
+    "x": r"x (kpc)",
+    "y": r"y (kpc)",
+    "z": r"z (kpc)",
+    "count": r"Number of data points per pixel",
+    "e_CR": r"Cosmic Ray Energy Density (eV cm$^{-3}$)",
 }
 
 colImagexlimDict ={
@@ -165,23 +174,25 @@ colImagexlimDict ={
 xlimDict = {
     "R": {"xmin": 0.0, "xmax": 200.0},
     "mass": {"xmin": 4.0, "xmax": 9.0},
-    "L": {"xmin": 3.0, "xmax": 4.5},
-    "T": {"xmin": 3.75, "xmax": 7.0},
+    "L": {"xmin": 1.5, "xmax": 4.5},
+    "T": {"xmin": 3.5, "xmax": 7.0},
     "n_H": {"xmin": -6.0, "xmax": 1.0},
     "n_HI" : {"xmin": -13.0, "xmax": 0.0},
     "n_H_col": {"xmin": 19.0, "xmax": 21.5},
     "n_HI_col" : {"xmin": 12.0, "xmax": 21.5},
     "B": {"xmin": -2.5, "xmax": 1.0},
     "vrad": {"xmin": -100.0, "xmax": 100.0},
-    "gz": {"xmin": -1.5, "xmax": 0.75},
-    "P_thermal": {"xmin": 0.5, "xmax": 3.5},
-    "P_CR": {"xmin": -1.5, "xmax": 5.5},
-    "PCR_Pthermal": {"xmin": -2.0, "xmax": 2.0},
-    "P_magnetic": {"xmin": -2.0, "xmax": 4.5},
-    "P_kinetic": {"xmin": 0.0, "xmax": 6.0},
-    "P_tot": {},#{"xmin": -1.0, "xmax": 7.0},
-    "Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 10.0},
-    "tcool": {},#{"xmin": -3.5, "xmax": 2.0},
+    "gz": {"xmin": -2.0, "xmax": 1.0},
+    "P_thermal": {"xmin": -19.5, "xmax": -10.0},
+    "P_CR": {"xmin": -19.5, "xmax": -10.0},
+    "PCR_Pthermal": {"xmin": -4.0, "xmax": 1.0},
+    "PCR_Pmagnetic": {"xmin": -3.0, "xmax": 3.0},
+    "Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 4.0},
+    "P_magnetic": {"xmin": -19.5, "xmax": -10.0},
+    "P_kinetic": {"xmin": -19.5, "xmax": -10.0},
+    "P_tot": {"xmin": -19.5, "xmax": -10.0},
+    "P_tot+k": {"xmin": -19.5, "xmax": -10.0},
+    "tcool": {"xmin": -4.0, "xmax": 4.0},
     "theat": {"xmin": -4.0, "xmax": 4.0},
     "tff": {"xmin": -1.5, "xmax": 0.75},
     "tcool_tff": {"xmin": -2.5, "xmax": 2.0},
@@ -189,15 +200,18 @@ xlimDict = {
     "dens": {"xmin": -30.0, "xmax": -22.0},
     "ndens": {"xmin": -6.0, "xmax": 2.0},
     "rho_rhomean": {"xmin": 0.25, "xmax": 6.5},
-    "rho" :{},
-    "vol": {},
-    "cool_length" : {},
+    "rho" : {"xmin": 2.0, "xmax": 7.0},
+    "vol": {"xmin": -2.0, "xmax" : 3.0},
+    "cool_length" : {"xmin": -1.0, "xmax": 2.0},
     "csound" : {},
     "nh" : {"xmin": -7.0, "xmax": 1.0},
+    "e_CR": {"xmin": -8.0, "xmax": 0.0},
 }
 
+
+
 for entry in HYPARAMS["logParameters"]:
-    ylabel[entry] = r"$Log_{10}$" + ylabel[entry]
+    ylabel[entry] = r"$\mathrm{Log_{10}}$" + ylabel[entry]
 
 #   Perform forbidden log of Grad check
 deleteParams = []
@@ -263,7 +277,7 @@ if __name__ == "__main__":
             for param in cols:
                 additionalParam = HYPARAMS["nonMassWeightDict"][param]
                 if (np.any(np.isin(np.asarray([additionalParam]),np.asarray(additionalColParams))) == False) \
-                & (additionalParam is not None):
+                & (additionalParam is not None) & (additionalParam != "count"):
                     additionalColParams.append(additionalParam)
             #---------------#
 
@@ -304,9 +318,12 @@ if __name__ == "__main__":
 
                 print("\n"+f"[@{int(snapNumber)}]: Loading {loadPathFigureData}")
 
-
-                out = {param: copy.deepcopy(slice)}
-                colsDict = tr.hdf5_load(loadPathFigureData+"_data.h5")
+                try:
+                    colsDict = tr.hdf5_load(loadPathFigureData+"_data.h5")
+                except Exception as e:
+                    print(str(e))
+                    print("File not found! Skipping ...")
+                    continue
 
                 print(
                     "\n"+f"[@{int(snapNumber)}]: Re-plot {param} map..."
@@ -327,8 +344,8 @@ if __name__ == "__main__":
                     colourmapMain=HYPARAMS["colourmapMain"],
                     boxsize=HYPARAMS["boxsize"],
                     boxlos=HYPARAMS["coldenslos"],
-                    pixreslos=HYPARAMS["coldenspixreslos"],
-                    pixres=HYPARAMS["pixresproj"],
+                    pixreslos=HYPARAMS["pixreslos"],
+                    pixres=HYPARAMS["pixres"],
                     projection = projection,
                     DPI = HYPARAMS["DPIimages"],
                     numthreads=HYPARAMS["numthreads"],
@@ -337,63 +354,74 @@ if __name__ == "__main__":
                     saveFigureData = False,
                     saveFigure = True,
                     inplace = inplace,
+                    replotFromData = True,
                 )
             #=============================================================#
         
-            params = ["T","T","n_H","n_H","n_HI","n_HI","nh"]
-            projectionBools = [True, False, True, False, True, False, False]
+            params = HYPARAMS["imageParams"]+["Tdens", "rho_rhomean"]
+            projectionBools = [True, False]
 
-            for param, projection in zip(params,projectionBools):
+            for projection in projectionBools:
+                for param in params:
 
-                if projection is False:
-                    loadPathFigureData = savePathFigureData + f"Slice_Plot_{param}{SaveSnapNumber}"
-                    hyparamsAdjust = ""
-                else:
-                    loadPathFigureData = savePathFigureData + f"Projection_Plot_{param}{SaveSnapNumber}" 
-                    hyparamsAdjust = "proj"
+                    if projection is False:
+                        loadPathFigureData = savePathFigureData + f"Slice_Plot_{AxesLabels[Axes[0]]}-{AxesLabels[Axes[1]]}_{param}{SaveSnapNumber}"
+                        hyparamsAdjust = ""
+                    else:
+                        loadPathFigureData = savePathFigureData + f"Projection_Plot_{AxesLabels[Axes[0]]}-{AxesLabels[Axes[1]]}_{param}{SaveSnapNumber}" 
+                        hyparamsAdjust = "proj"
 
-                if param == "T":
-                    colourmapAdjust = "_r"
-                else:
-                    colourmapAdjust = ""
+                    if param == "T":
+                        colourmapadjusted = HYPARAMS["colourmapMain"]+ "_r"
+                    elif param == "vrad":
+                        colourmapadjusted = "seismic" #HYPARAMS["colourmapMain"]
+                    else:
+                        colourmapadjusted = HYPARAMS["colourmapMain"]
 
-                print("\n"+f"[@{int(snapNumber)}]: Loading {loadPathFigureData}")
+                    print("\n"+f"[@{int(snapNumber)}]: Loading {loadPathFigureData}")
 
 
-                out = {param: copy.deepcopy(slice)}
-                dataDict = tr.hdf5_load(loadPathFigureData+"_data.h5")
+                    try:
+                        dataDict = tr.hdf5_load(loadPathFigureData+"_data.h5")
+                    except Exception as e:
+                        print(str(e))
+                        print("File not found! Skipping ...")
+                        continue
 
-                print(
-                    "\n"+f"[@{int(snapNumber)}]: Re-plot {param} map..."
-                )
+                    print(
+                        "\n"+f"[@{int(snapNumber)}]: Re-plot {param} map..."
+                    )
 
-                if param == "n_H":
-                    limDict = tmpxlimDict
-                else:
-                    limDict = xlimDict
+                    if param == "n_H":
+                        limDict = tmpxlimDict
+                    else:
+                        limDict = xlimDict
 
-                _ = apt.plot_slices(dataDict,
-                ylabel=ylabel,
-                xlimDict=limDict,
-                logParameters = HYPARAMS["logParameters"],
-                snapNumber=snapNumber,
-                sliceParam = param,
-                Axes=HYPARAMS["Axes"],
-                xsize = HYPARAMS["xsizeImages"],
-                ysize = HYPARAMS["xsizeImages"],
-                colourmapMain=HYPARAMS["colourmapMain"]+colourmapAdjust,
-                boxsize=HYPARAMS["boxsize"],
-                boxlos=HYPARAMS["boxlos"],
-                pixreslos=HYPARAMS["pixreslos"+hyparamsAdjust],
-                pixres=HYPARAMS["pixres"+hyparamsAdjust],
-                projection = projection,
-                DPI = HYPARAMS["DPIimages"],
-                numthreads=HYPARAMS["numthreads"],
-                savePathBase = savePathBase,
-                savePathBaseFigureData = savePathBaseFigureData ,
-                saveFigureData = False,
-                inplace = inplace,
-                )
-           
+                    _ = apt.plot_slices(dataDict,
+                    ylabel=ylabel,
+                    xlimDict=limDict,
+                    logParameters = HYPARAMS["logParameters"],
+                    snapNumber=snapNumber,
+                    sliceParam = param,
+                    Axes=HYPARAMS["Axes"],
+                    xsize = HYPARAMS["xsizeImages"],
+                    ysize = HYPARAMS["xsizeImages"],
+                    colourmapMain=colourmapadjusted,
+                    boxsize=HYPARAMS["boxsize"],
+                    boxlos=HYPARAMS["boxlos"],
+                    pixreslos=HYPARAMS["pixreslos"+hyparamsAdjust],
+                    pixres=HYPARAMS["pixres"+hyparamsAdjust],
+                    projection = projection,
+                    DPI = HYPARAMS["DPIimages"],
+                    numthreads=HYPARAMS["numthreads"],
+                    savePathBase = savePathBase,
+                    savePathBaseFigureData = savePathBaseFigureData ,
+                    saveFigureData = False,
+                    saveFigure=True,
+                    inplace = inplace,
+                    replotFromData = True,
+
+                    )
+            
         print("finished sim:", loadpath)
     print("Finished fully! :)")

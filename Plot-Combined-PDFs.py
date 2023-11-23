@@ -27,7 +27,7 @@ Nbins = 250
 snapStart = 100
 snapEnd = 127 #116
 verbose = False
-forceLogMass = False
+forceYAxisLog = False
 numthreads = 18
 
 loadPathBase = "/home/cosmos/"
@@ -97,7 +97,7 @@ snapRange = [
 ylabel = {
     "T": r"Temperature (K)",
     "R": r"Radius (kpc)",
-    "n_H": r"n$_H$ (cm$^{-3}$)",
+    "n_H": r"n$_{\mathrm{H}}$ (cm$^{-3}$)",
     "B": r"|B| ($ \mu $G)",
     "vrad": r"Radial Velocity (km s$^{-1}$)",
     "gz": r"Metallicity Z$_{\odot}$",
@@ -105,25 +105,25 @@ ylabel = {
     "P_thermal": r"P$_{Thermal}$ / k$_B$ (K cm$^{-3}$)",
     "P_magnetic": r"P$_{Magnetic}$ / k$_B$ (K cm$^{-3}$)",
     "P_kinetic": r"P$_{Kinetic}$ / k$_B$ (K cm$^{-3}$)",
-    "P_tot": r"P$_{tot}$ = (P$_{thermal}$ + P$_{magnetic}$)/ k$_B$"
+    "P_tot": r"P$_{\mathrm{Tot}}$ = (P$_{thermal}$ + P$_{magnetic}$)/ k$_B$"
     + "\n"
     + r"(K cm$^{-3}$)",
     "Pthermal_Pmagnetic": r"P$_{thermal}$/P$_{magnetic}$",
-    "P_CR": r"P$_{CR}$ (K cm$^{-3}$)",
-    "PCR_Pthermal": r"(X$_{CR}$ = P$_{CR}$/P$_{Thermal}$)",
+    "P_CR": r"P$_{\mathrm{CR}}$ (K cm$^{-3}$)",
+    "PCR_Pthermal": r"(X$_{\mathrm{CR}}$ = P$_{\mathrm{CR}}$/P$_{Thermal}$)",
     "gah": r"Alfven Gas Heating (erg s$^{-1}$)",
     "bfld": r"||B-Field|| ($ \mu $G)",
     "Grad_T": r"||Temperature Gradient|| (K kpc$^{-1}$)",
-    "Grad_n_H": r"||n$_H$ Gradient|| (cm$^{-3}$ kpc$^{-1}$)",
+    "Grad_n_H": r"||n$_{\mathrm{H}}$ Gradient|| (cm$^{-3}$ kpc$^{-1}$)",
     "Grad_bfld": r"||B-Field Gradient|| ($ \mu $G kpc$^{-1}$)",
-    "Grad_P_CR": r"||P$_{CR}$ Gradient|| (K kpc$^{-4}$)",
+    "Grad_P_CR": r"||P$_{\mathrm{CR}}$ Gradient|| (K kpc$^{-4}$)",
     "gima" : r"Star Formation Rate (M$_{\odot}$ yr$^{-1}$)",
     # "crac" : r"Alfven CR Cooling (erg s$^{-1}$)",
     "tcool": r"Cooling Time (Gyr)",
     "theat": r"Heating Time (Gyr)",
     "tcross": r"Sound Crossing Cell Time (Gyr)",
     "tff": r"Free Fall Time (Gyr)",
-    "tcool_tff": r"t$_{Cool}$/t$_{FreeFall}$",
+    "tcool_tff": r"t$_{\mathrm{Cool}}$/t$_{FreeFall}$",
     "csound": r"Sound Speed (km s$^{-1}$)",
     "rho_rhomean": r"$\rho / \langle \rho \rangle$",
     "dens": r"Density (g cm$^{-3}$)",
@@ -167,7 +167,7 @@ logParameters = ["dens","ndens","rho_rhomean","csound","T","n_H","B","gz","L","P
 
 
 for entry in logParameters:
-    ylabel[entry] = r"$Log_{10}$" + ylabel[entry]
+    ylabel[entry] = r"$\mathrm{Log_{10}}$" + ylabel[entry]
 
 #   Perform forbidden log of Grad check
 deleteParams = []
@@ -198,7 +198,7 @@ if __name__ == "__main__":
             snapNumber,
             weightKeys = ['mass'],
             xParams = ["R"],
-            forceLogMass = forceLogMass,
+            forceYAxisLog = forceYAxisLog,
         )
 
         print(
@@ -214,7 +214,7 @@ if __name__ == "__main__":
             weightKeys = ['mass'],
             xParams = ["R"],
             cumulative = True,
-            forceLogMass = forceLogMass,
+            forceYAxisLog = forceYAxisLog,
 
         )
 
@@ -232,7 +232,7 @@ if __name__ == "__main__":
             xParams = ["R"],
             cumulative = True,
             normalise = True,
-            forceLogMass = forceLogMass,
+            forceYAxisLog = forceYAxisLog,
 
         )
 
@@ -249,7 +249,7 @@ if __name__ == "__main__":
         #    weightKeys = ['mass'],
         #    xParams = ["R"],
         #    byType = True,
-        #    forceLogMass = forceLogMass,
+        #    forceYAxisLog = forceYAxisLog,
         #)
 
         #print(
@@ -266,7 +266,7 @@ if __name__ == "__main__":
         #    xParams = ["R"],
         #    cumulative = True,
         #    byType = True,
-        #    forceLogMass = forceLogMass,
+        #    forceYAxisLog = forceYAxisLog,
         #)
 
         #print(
@@ -284,7 +284,7 @@ if __name__ == "__main__":
         #    cumulative = True,
         #    byType = True,
         #    normalise = True,
-        #    forceLogMass = forceLogMass,
+        #    forceYAxisLog = forceYAxisLog,
         #)
 
         print(
@@ -300,7 +300,7 @@ if __name__ == "__main__":
             weightKeys = ['gima'],
             xParams = ["age"],
             SFR = True,
-            forceLogMass = forceLogMass,
+            forceYAxisLog = forceYAxisLog,
         )
 
         print(
@@ -317,7 +317,7 @@ if __name__ == "__main__":
             xParams = ["age"],
             cumulative = True,
             SFR = True,
-            forceLogMass = forceLogMass,
+            forceYAxisLog = forceYAxisLog,
         )
 
         print(
@@ -335,7 +335,7 @@ if __name__ == "__main__":
             cumulative = True,
             normalise = True,
             SFR = True,
-            forceLogMass = forceLogMass,
+            forceYAxisLog = forceYAxisLog,
         )
 
         print(
@@ -351,7 +351,7 @@ if __name__ == "__main__":
             snapNumber,
             weightKeys = ['mass'],
             xParams = ["T","vol","n_H"],
-            forceLogMass = forceLogMass,
+            forceYAxisLog = forceYAxisLog,
         )
 
 
@@ -368,7 +368,7 @@ if __name__ == "__main__":
             weightKeys = ['mass'],
             xParams = ["T","vol","n_H"],
             cumulative = True,
-            forceLogMass = forceLogMass,
+            forceYAxisLog = forceYAxisLog,
         )
 
         print(
@@ -385,7 +385,7 @@ if __name__ == "__main__":
             xParams = ["T","vol","n_H"],
             cumulative = True,
             normalise = True,
-            forceLogMass = forceLogMass,
+            forceYAxisLog = forceYAxisLog,
         )
 
     print("***")
