@@ -1,5 +1,5 @@
 %---- CGM refinement
-TargetVolumeRelativeToSFRThreshold  64
+TargetVolumeRelativeToSFRThreshold  8
 MinMassForCGMRefinement     0.005
 FracRadiusForCGMRefinement   1.2
 
@@ -10,9 +10,12 @@ FracRadiusForCGMRefinement   1.2
 %MaxVolumeDiff	    8.
 
 %---- Hybrid Refinement
-HybridVolumeDecreaseRelativeToRefinementCGM 	8.0
-HybridTransitionMassDecreaseRelativeToBaseLevel		8.0
+TargetForHybridRefinementLow    1e-4
+TargetForHybridRefinementHigh   3.16228e-3
 
+% vv Note: This should be the cube of length scale reduction from REFINEMENT_CGM
+% vv 1kpc -> 0.5kpc => HybridVolumeDecreaseFactor = 8.0 vv
+HybridVolumeDecreaseFactor   8.0
 
 %----  Relevant files 
 InitCondFile         /cosma8/data/dp221/dc-hann2/Auriga/ICs/ics4_resx8/ic_file.5
@@ -39,8 +42,8 @@ MHDSeedValue        1e-14
 %CRDiffusionCoefficient 1e28
 
 %---- CPU-time limits
-TimeLimitCPU              259000  % in seconds
-CpuTimeBetRestartFile     4000    % in seconds
+TimeLimitCPU              258900  % in seconds
+CpuTimeBetRestartFile     3600    % in seconds
 ResubmitOn        0
 ResubmitCommand   my-scriptfile 
 
@@ -75,8 +78,8 @@ OutputListOn              1
 TimeBetSnapshot           0.0
 TimeOfFirstSnapshot       0.0
 TimeBetStatistics         0.01
-NumFilesPerSnapshot       4
-NumFilesWrittenInParallel 4
+NumFilesPerSnapshot       20
+NumFilesWrittenInParallel 20
 
 
 %---- Accuracy of time integration

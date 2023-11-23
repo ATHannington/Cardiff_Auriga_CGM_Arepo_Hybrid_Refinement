@@ -2516,9 +2516,9 @@ extern struct global_data_all_processes
   double MinMassForCGMRefinement;
   double FracRadiusForCGMRefinement;
   #ifdef REFINEMENT_HYBRID
-    double TargetForHybridRefinement;
     double TargetHybridGasVolume;
-    double HybridVolumeDecreaseFactor;
+    double HybridVolumeDecreaseRelativeToRefinementCGM;
+    double HybridTransitionMassDecreaseRelativeToBaseLevel;
   #endif
 #endif
 

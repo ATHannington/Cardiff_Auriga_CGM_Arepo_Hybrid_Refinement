@@ -408,43 +408,60 @@ int refine_criterion_default(int i)
   {
    if(SphP[i].HighResMassCGM > HIGHRESMASSFAC * P[i].Mass)
    {
-    #ifdef GRACKLE
-          double temp_in_K = get_temp_individual_cell_grackle(i);
-    #else
-          double meanweight = 4.0 / (1. + 3. * HYDROGEN_MASSFRAC) * PROTONMASS;
-      #ifdef COOLING
-             meanweight = 4.0 / (1. + 3. * HYDROGEN_MASSFRAC + 4. * HYDROGEN_MASSFRAC * SphP[i].Ne) * PROTONMASS;
-      #endif
-    #endif
+     double n_cgs;
+     
+     n_cgs = SphP[i].Density * All.cf_a3inv * All.UnitDensity_in_cgs * All.HubbleParam * All.HubbleParam / PROTONMASS; /* cm^-3 */
 
-    #ifdef VARIABLE_GAMMA
-          double temp_in_K =
-              (SphP[i].GammaE - 1.0) * SphP[i].Utherm / BOLTZMANN * All.UnitEnergy_in_cgs / All.UnitMass_in_g * meanweight;
-    #else
-          double temp_in_K = GAMMA_MINUS1 * SphP[i].Utherm / BOLTZMANN * All.UnitEnergy_in_cgs / All.UnitMass_in_g * meanweight;
-    #endif
+     double transitionTargetMass = TargetGasMass / All.HybridTransitionMassDecreaseRelativeToBaseLevel;
 
+     double targetTransitionDensityCGM = (transitionTargetMass/All.TargetGasVolume) * All.UnitDensity_in_cgs * All.HubbleParam * All.HubbleParam / PROTONMASS; /* cm^-3 */
+     double targetTransitionDensityHybrid = (transitionTargetMass/All.TargetHybridGasVolume) * All.UnitDensity_in_cgs * All.HubbleParam * All.HubbleParam / PROTONMASS; /* cm^-3 */
 
-    if(temp_in_K <= All.TargetForHybridRefinement)
-    {
-      if(SphP[i].Volume > 2.0 * All.TargetHybridGasVolume * All.cf_a3inv)
-      {
-        mpi_printf("Calculated temperature in criterion_refinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
-        mpi_printf("Cell Volume in criterion_refinement.c %e versus (less than temeperature) greater than target %e\n",SphP[i].Volume , (2.0 * All.TargetHybridGasVolume * All.cf_a3inv));
-        mpi_printf("Cell refined - met temp and vol fancy refine!\n");
-        return 1;
-      }
-    }
-    else
-    {
-      if(SphP[i].Volume > 2.0 * All.TargetGasVolume * All.cf_a3inv)
-      {
-        mpi_printf("Calculated temperature in criterion_refinement.c %e versus less than target %e\n",temp_in_K,All.TargetForHybridRefinement);
-        mpi_printf("Cell Volume in criterion_refinement.c %e versus (greater than temeperature) greater than target %e\n",SphP[i].Volume , (2.0 * All.TargetGasVolume * All.cf_a3inv));
-        mpi_printf("Cell refined - met vol CGM refine!\n");
-        return 1;
-      }
-    }
+     double variableTargetGasVolume = All.TargetGasVolume;
+     double variableTargetGasMass = TargetGasMass;
+
+     if (n_cgs >= targetTransitionDensityHybrid)
+     {
+       variableTargetGasVolume = All.TargetHybridGasVolume;
+
+       //mpi_printf("\n");
+       //mpi_printf("REFINEMENT_HYBRID Refinement: Hybrid Gas volume! \n");
+       //mpi_printf("REFINEMENT_HYBRID Refinement: n_cgs = %g cm^-3 \n", n_cgs);
+       //mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+       //mpi_printf("REFINEMENT_HYBRID Refinement: P[i].Mass = %g\n", P[i].Mass);
+     }
+     else if (n_cgs <= targetTransitionDensityCGM)
+     {
+
+       variableTargetGasVolume = All.TargetGasVolume;
+
+     }
+     else
+     {
+       variableTargetGasVolume = All.TargetGasVolume;
+
+       variableTargetGasMass = transitionTargetMass;
+     }
+
+     if(SphP[i].Volume > 2.0 * variableTargetGasVolume * All.cf_a3inv)
+     {
+       return 1;
+     }
+     else if (P[i].Mass > 2.0 * variableTargetGasMass)
+     {
+       // If in CGM && If between densities of volume refinement such that variableTargetGasMass != TargetGasMass
+       // THEN If mass exceeds mass resolution Level n-1 (n being base resolution level, and here we go 1 res level higher)
+       // THEN refine!
+
+       mpi_printf("\n");
+       mpi_printf("REFINEMENT_HYBRID Refinement: Hybrid Gas volume, variable Mass! \n");
+       mpi_printf("REFINEMENT_HYBRID Refinement: Refining! \n");
+       mpi_printf("REFINEMENT_HYBRID Refinement: n_cgs = %g cm^-3 \n", n_cgs);
+       mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasVolume = %g\n", variableTargetGasVolume);
+       mpi_printf("REFINEMENT_HYBRID Refinement: variableTargetGasMass = %g\n", variableTargetGasMass);
+       mpi_printf("REFINEMENT_HYBRID Refinement: P[i].Mass = %g\n", P[i].Mass);
+       return 1;
+     }
    }
   }
   #else
