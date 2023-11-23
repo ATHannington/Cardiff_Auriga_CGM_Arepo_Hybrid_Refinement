@@ -1,121 +1,134 @@
 {
+  "restartFlag": true,
+
   "savepathfigures": "./",
-
-  "savepathdata": "/home/universe/c1838736/Hybrid_Refinement/level4/level4_cgm/apt-figures/tmp/",
-
-  "saveParams": [ "T", "Tdens", "R", "rho", "nh", "n_H", "n_HI", "ndens", "rho_rhomean", "B", "vrad", "gz", "L", "P_kinetic", "P_thermal", "P_magnetic", "Pthermal_Pmagnetic", "cool_length", "tcool", "tff", "tcool_tff" ],
-
-  "saveEssentials": [ "halo", "subhalo", "Redshift", "Lookback", "Snap", "type", "mass", "pos", "vol", "Rvir", "gima", "age" ],
-
-  "snapMin": 120,
-
-  "snapMax": 122,
-
+  
+  "savepathdata": "/home/universe/c1838736/Hybrid_Refinement/",
+  
+  "loadRotationMatrix" : false,
+  
+  "constantRotationMatrix" : false,
+  
+  "saveParams": [ "T", "R", "n_H", "n_HI", "nh", "ndens", "rho_rhomean", "B", "vrad", "vrad_in", "vrad_out", "gz", "L", "P_kinetic", "P_thermal", "P_magnetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic", "tcool", "tff", "tcool_tff"],
+  
+  "saveEssentials": [ "halo", "subhalo", "Redshift", "Lookback", "Snap", "type", "mass", "pos", "vol", "hrgm", "sfr", "Rvir", "gima", "age" , "boxsize", "gmet", "ne", "Tdens", "u", "bfld", "vel", "gcol", "cren", "rho"],
+  
+  "snapMin": 118,
+  
+  "snapMax": 127,
+  
   "percentiles": [ 15.87, 50.0, 84.13 ],
-
-  "rvirFrac": 2.0,
-
-  "rvirFracImages": 1.00,
-
+  
+  "Rinner": 0.0,
+  
+  "Router": 200.0,
+  
+  "rvirFrac" : 1.5,
+  
   "xParam": "R",
-
+  
   "colParams": [ "n_H_col", "n_HI_col" ],
-
-  "imageParams": [ "T", "nh", "n_H", "n_HI", "B", "gz", "P_thermal", "n_H_col", "n_HI_col" ],
-
-  "pdfParams": [ "T", "vol", "rho", "nh", "n_H", "n_HI", "ndens", "rho" ],
-
-  "phasesxParams": [ "R", "rho_rhomean", "vol", "ndens" ],
-
-  "phasesyParams": [ "T", "ndens", "gz" ],
-
-  "phasesWeightParams": [ "mass" ],
-
-  "mediansParams": [ "T", "R", "rho", "ndens", "rho_rhomean", "nh", "n_H", "n_HI", "B", "vrad", "gz", "L", "P_kinetic", "P_thermal", "P_magnetic", "Pthermal_Pmagnetic", "tcool", "tff", "tcool_tff" ],
-
-  "NxParamBins": 100,
-
+  
+  "imageParams": [ "T", "vol", "B", "vrad", "gz", "nh", "n_H", "n_HI", "vol", "P_kinetic", "P_thermal", "P_magnetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic"],
+  
+  "pdfParams": [  "T", "R", "vol", "B", "vrad", "vrad_in", "vrad_out", "gz", "L", "nh", "ndens", "n_H", "n_HI", "rho_rhomean", "P_kinetic", "P_thermal", "P_magnetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic"],
+  
+  "phasesxParams": [ "R",  "vol", "ndens" ],
+  
+  "phasesyParams": [ "T", "B", "gz", "ndens", "vol"],
+  
+  "phasesColourbarParams": [ "mass", "vrad", "L", "n_HI","n_H"],
+  
+  "mediansParams": [ "T", "R", "n_H", "n_HI", "nh", "rho_rhomean", "vol", "ndens", "B", "vrad", "vrad_in", "vrad_out", "gz", "L", "P_kinetic", "P_thermal", "P_magnetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic", "tcool", "tff", "tcool_tff"],
+  
+  "NStatsBins": 100,
+  
   "Nbins": 250,
-
-  "Axes": [ 0, 1 ],
-
+    
   "opacityPercentiles": 0.25,
 
+  "linewidth": 2.0,
+  
+  "Axes": [ 1, 0 ],
+  
   "projections": false,
+  
+  "SaveImages": true,
 
-  "QuadPlotBool": true,
+  "averageAcrossAxes" : true,
 
-  "forceLogMass": false,
-
+  "saveAllAxesImages" : false,
+  
+  "forceYAxisLog": false,
+  
   "numthreads": 28,
-
-  "boxsizeFreekeComparisons": 400.0,
-
+  
+  "boxsize": 400.0,
+  
   "boxlos": 50.0,
-
+  
   "coldenslos": 600.0,
-
-  "pixres": 0.1,
-
-  "pixreslos": 0.1,
-
-  "pixresproj": 0.1,
-
-  "pixreslosproj": 0.1,
-
-  "coldenspixreslos": 0.1,
-
+  
+  "pixres": 0.50,
+  
+  "pixreslos": 0.50,
+    
   "HaloID": 0,
-
-  "DPI": 150,
-
-  "xsizeImages": 6.0,
-
-  "ysizeImages": 6.0,
-
-  "xsize": 8.0,
-
-  "ysize": 8.0,
-
+  
+  "DPI": 200,
+  
+  "DPIimages" : 250,
+  
+  "xsizeImages": 5.5,
+  
+  "ysizeImages": 5.5,
+  
+  "xsize": 5.5,
+  
+  "ysize": 5.5,
+  
   "colourmapMain": "Spectral",
-
+  
   "titleBool": false,
+  
+  "legendBool": true,
 
-  "fontsize": 13,
-
-  "fontsizeTitle": 14,
-
+  "fontsize": 12,
+  
+  "fontsizeTitle": 13,
+  
   "ageWindow": null,
-
+  
   "windowBins": 0.100,
-
-  "logParameters": [ "nh", "dens", "ndens", "rho_rhomean", "rho", "vol", "csound", "T", "n_H", "n_H_col", "n_HI", "n_HI_col", "B", "gz", "L", "P_thermal", "P_magnetic", "P_kinetic", "P_tot", "Pthermal_Pmagnetic", "P_CR", "PCR_Pthermal", "gah", "Grad_T", "Grad_n_H", "Grad_bfld", "Grad_P_CR", "tcool", "theat", "tcross", "tff", "tcool_tff", "mass", "gima" ],
-
+  
+  "logParameters": [ "nh", "dens", "ndens", "rho_rhomean", "rho", "vol", "csound", "T", "n_H", "n_H_col", "n_HI", "n_HI_col", "B", "gz", "L", "P_thermal", "P_magnetic", "P_kinetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic", "P_CR", "PCR_Pthermal", "PCR_Pmagnetic", "gah", "Grad_T", "Grad_n_H", "Grad_bfld", "Grad_P_CR", "tcool", "theat", "tcross", "tff", "tcool_tff", "mass", "count", "e_CR"],
+  
   "nonMassWeightDict": {
-    "mass": "vol",
-    "nh": null,
-    "n_H": "vol",
-    "n_HI": "vol",
-    "n_H_col": null,
-    "n_HI_col": null,
-    "ndens": "vol",
-    "dens": "vol",
-    "rho_rhomean": "vol",
-    "rho": "vol",
-    "B": "vol",
-    "bfld": "vol",
-    "P_kinetic": "vol",
-    "P_thermal": "vol",
-    "P_magnetic": "vol",
-    "P_tot": "vol",
-    "Pthermal_Pmagnetic": "vol",
-    "P_CR": "vol",
-    "PCR_Pthermal": "vol",
-    "gah": "vol",
-    "Grad_T": "mass",
-    "Grad_n_H": "vol",
-    "Grad_bfld": "vol",
-    "Grad_P_CR": "vol"
+    "nh": "vol",
+     "n_H": "vol",
+     "n_HI": "vol",
+     "n_H_col": "count",
+     "n_HI_col": "count",
+     "ndens": "vol",
+     "dens": "vol",
+     "rho_rhomean": "vol",
+     "rho": "vol",
+     "B": "vol",
+     "bfld": "vol",
+     "P_kinetic": "vol",
+     "P_thermal": "vol",
+     "P_magnetic": "vol",
+     "P_tot": "vol",
+     "P_tot+k": "vol",
+     "Pthermal_Pmagnetic": "vol",
+     "P_CR": "vol",
+     "PCR_Pthermal": "vol",
+     "PCR_Pmagnetic": "vol",
+     "gah": "vol",
+     "Grad_T": "vol",
+     "Grad_n_H": "vol",
+     "Grad_bfld": "vol",
+     "Grad_P_CR": "vol"
+   }
+  
   }
-
-}
