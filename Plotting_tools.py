@@ -64,6 +64,41 @@ def check_params_are_in_xlimDict(xlimDict, params):
 
     return
 
+class AdaptedLogFormatterExponent(matplotlib.ticker.LogFormatterExponent):
+    """
+    Format values for log axis using ``exponent = log_base(value)`` Per Matplotlib v 3.3.4
+    Adapted from https://matplotlib.org/3.3.4/_modules/matplotlib/ticker.html#LogFormatterExponent on 28/11/2023
+    
+    Changes: references to 'd' in logic of 'fmt' variable definition in _pprint_val
+             altered to include 'abs()'. This prevents bug of large negative exponents
+             such as 1e-19.5 being formatted as -1.95e1 in return tick labels.
+    """
+
+    def __init__(self,base=10.0, labelOnlyBase=False, minor_thresholds=None, linthresh=None):
+        super().__init__(base, labelOnlyBase, minor_thresholds, linthresh)
+    def _pprint_val(self, x, d):
+        # If the number is not too big and it's an int, format it as an int.
+        if abs(x) < 1e4 and x == int(x):
+            return '%d' % x
+        fmt = ('%1.3e' if abs(d) < 1e-2 else
+               '%1.3f' if abs(d) <= 1 else
+               '%1.2f' if abs(d) <= 10 else
+               '%1.1f' if abs(d) <= 1e5 else
+               '%1.1e')
+        s = fmt % x
+        tup = s.split('e')
+        if len(tup) == 2:
+            mantissa = tup[0].rstrip('0').rstrip('.')
+            exponent = int(tup[1])
+            if exponent:
+                s = '%se%d' % (mantissa, exponent)
+            else:
+                s = mantissa
+        else:
+            s = s.rstrip('0').rstrip('.')
+        return s
+
+
 def phase_plot(
     dataDict,
     ylabel,
@@ -102,6 +137,8 @@ def phase_plot(
         return
 
     if subfigures:
+        # FIXME: update so logic and functionality is in line with plot_slices
+        raise Exception("Not implemented!!!")
         tmpyParams, tmpxParams, tmpcolourBarKeys = np.asarray(yParams,dtype=object), np.asarray(xParams,dtype=object), np.asarray(colourBarKeys,dtype=object)
         assert np.shape(tmpxParams) == np.shape(tmpyParams), f"[@phase_plot]: FAILURE! xParams, yParams, colourBarKeys must all have the same shape for subFigures == True!"
         assert np.shape(tmpxParams) == np.shape(tmpcolourBarKeys), f"[@phase_plot]: FAILURE! xParams, yParams, colourBarKeys must all have the same shape for subFigures == True!"
@@ -208,7 +245,12 @@ def phase_plot(
             ncols=figshape[0],
             figsize=(xsize, ysize),
             dpi=DPI,
+            squeeze = False,
         )
+        # if np.any(np.asarray(figshape)==1):
+        #     reorder = np.argsort(figshape)
+        #     hasPlotMask = np.moveaxis(hasPlotMask,[0,1],reorder)
+        #     figshape = tuple(sorted(figshape))
 
     for ii, xParam in enumerate(xParams):
         subplotCount+=1
@@ -235,6 +277,8 @@ def phase_plot(
                     currentAx = ax
                 else:
                     axindex = np.unravel_index(subplotCount, shape=figshape)
+                    # if np.any(np.asarray(figshape)==1):
+                    #     ax = ax.reshape(figshape)
                     currentAx = ax[axindex]
 
                 plt.tick_params(axis="both", direction="in")
@@ -1499,6 +1543,7 @@ def plot_slices(snap,
     alignSelectKeys = "vertical",
     rasterized = True,
     subfigures = False,
+    cbarscale = 0.4,
     sharex = True,
     sharey = True,
     verbose = False,
@@ -1524,59 +1569,79 @@ def plot_slices(snap,
         snapType = False
         if verbose: print("[@plot_slices]: dictionary type detected!")
 
+
+    if snapType == True:
+        # Where outer keys do not exist (as is the case for a snapshot object)
+        # we will skip iterating over select keys
+        if selectKeysList is not None:
+            print("\n"
+                +f"[@plot_slices]: WARNING! selectKeysList was provided for snapshot type object! This option is not implemented."
+                +"\n"
+                +"Please convert desired data into dictionary format (e.g. data = dict(snap.data) ) before making this call!"
+                +"\n"
+                +"selectKeysList will be ignored for current call..."
+                +"\n"
+            )
+        inputDict = snap.data
+        selectKeysList = None #list(inputDict.keys())    
+    else:
+        inputDict = snap
+        if selectKeysList is None: 
+            print(f"[@plot_slices]: WARNING! Plot called with no selectKeysList provided."
+                +"\n"
+                +f"Call details: sliceParam:{sliceParam}"
+                +"\n"
+                +"Will default to plotting all data provided to this call.")
+                
+            selectKeysList = list(inputDict.keys())          
+
+    nrows = len(sliceParam)
+    ncols = max([len(zz) for zz in sliceParam])
+    multrows = 1
+    multcols = 1
+
+    if selectKeysList is not None:
+        if (alignSelectKeys.lower() == "vertical"):
+            multrows = np.shape(selectKeysList)[0]
+        elif (alignSelectKeys.lower() == "horizontal"):
+            multrows = np.shape(selectKeysList)[0]
+            multcols = np.shape(selectKeysList)[0]
+        else:
+            raise Exception(f"[@plot_slices]: FAILURE! Unkown alignSelectKeys = {alignSelectKeys} requested! Please use 'vertical' or 'horizontal'! ")
+
+    tmp = []
+    tmpprojection = []
+    for ii in range(0,multrows):
+        tmp += sliceParam
+        tmpprojection += projection
+    sliceParam = tmp
+    projection = tmpprojection
+
+    dataSources = {}
+    for selectKey, dataDict in inputDict.items():
+        if selectKeysList is not None:
+            if selectKey in selectKeysList:
+                dataSources.update({selectKey : dataDict})
+        else:
+            dataSources = {"": inputDict}
+
+    ## Empty data checks ## 
+    if bool(dataSources) is False:
+        print("\n"
+            +f"[@plot_slices]: WARNING! dataSources dict is empty! Skipping plot call and exiting ..."
+            +"\n"
+        )
+        
+        return
+
+
+    # If subfigures have been requested, determine the necessary 2D dimensions of the subfigure array needed
+    # to contain the requested figures. This should include all rows and columns in sliceParam & projection
+    # AND the needed mult (multipier, rows or columns) for including more than one simulation type.
+    # The below logic should also detect where there is no data for a particular subpanel, and so set hasPlotMask
+    # to False for that subpanel such that it will be skipped and its axes spines removed.
     if subfigures:
-        if snapType == True:
-            # Where outer keys do not exist (as is the case for a snapshot object)
-            # we will skip iterating over select keys
-            if selectKeysList is not None:
-                print("\n"
-                    +f"[@plot_slices]: WARNING! selectKeysList was provided for snapshot type object! This option is not implemented."
-                    +"\n"
-                    +"Please convert desired data into dictionary format (e.g. data = dict(snap.data) ) before making this call!"
-                    +"\n"
-                    +"selectKeysList will be ignored for current call..."
-                    +"\n"
-                )
-            selectKeysList = None #range(0,len(sliceParam))
-            inputDict = snap.data
-        else:
-            inputDict = snap
-
-
-        nrows = len(sliceParam)
-        ncols = max([len(zz) for zz in sliceParam])
-        multrows = 1
-        multcols = 1
-        if selectKeysList is not None:
-            if (alignSelectKeys.lower() == "vertical"):
-                multrows = np.shape(selectKeysList)[0]
-                tmp = []
-                tmpprojection = []
-                for ii in range(0,multrows):
-                    tmp += sliceParam
-                    tmpprojection += projection
-                sliceParam = tmp
-                projection = tmpprojection
-
-            elif (alignSelectKeys.lower() == "horizontal"):
-                mulcols = np.shape(selectKeysList)[0]
-                tmp = []
-                tmpprojection = []
-                raise Exception("not implemented... come and fix this")
-                # for ii in range(0,nrows):
-                #     tmp += sliceParam
-                #     tmpprojection += projection
-                # sliceParam = tmp
-                # projection = tmpprojection
-          
-            else:
-                raise Exception(f"[@plot_slices]: FAILURE! Unkown alignSelectKeys = {alignSelectKeys} requested! Please use 'vertical' or 'horizontal'! ")
-
-        if selectKeysList is not None:
-            tmpdataSources = list(inputDict.values())
-        else:
-            tmpdataSources = None
-
+        dataSourcesValues = list(dataSources.values())
         tmpsliceParam = copy.deepcopy(sliceParam)
         tmpprojection = copy.deepcopy(projection)
         hasPlotMask = []
@@ -1584,7 +1649,7 @@ def plot_slices(snap,
             for ii in range(0,nrows):
                 rr = kk*nrows + ii
                 row = []
-                for ll in range(0,multcols):
+                for ll in range(0,1):
                     for jj in range(0, ncols): 
                         cc = ll*ncols + jj
                         try:
@@ -1592,13 +1657,10 @@ def plot_slices(snap,
                             tmp = sliceParam[rr][cc]
                             
                             key = sliceParam[rr][cc]
-                            if selectKeysList is not None:
-                                if (alignSelectKeys.lower() == "vertical"):
-                                    hasData = tmpdataSources[kk][key]
-                                elif (alignSelectKeys.lower() == "horizontal"):
-                                    hasData = tmpdataSources[ll][key]
-                            else:
-                                hasData = inputDict[key]
+                            # if selectKeysList is not None:
+                            hasData = dataSourcesValues[kk][key]
+                            # else:
+                            #     hasData = inputDict[key]
 
                             # Will fail 'try' if data for sliceParam[ii][jj] is not present in provided input data
                             # hasData = inputDict[tmp]
@@ -1607,77 +1669,32 @@ def plot_slices(snap,
                             else:
                                 hasPlot = False
                         except:
-                            if (selectKeysList is not None) & (alignSelectKeys.lower() == "horizontal"):
-                                hasPlot = False
-                                tmp1 = copy.deepcopy(tmpsliceParam[cc])
-                                tmp1[rr] = None
-                                tmpsliceParam[cc] = tmp1
+                            hasPlot = False
+                            tmp1 = copy.deepcopy(tmpsliceParam[rr])
+                            tmp1[cc] = None
+                            tmpsliceParam[rr] = tmp1
 
-                                tmp2 = copy.deepcopy(tmpprojection[cc])
-                                tmp2[rr] = None
-                                tmpprojection[cc] = tmp2
-                            else:
-                                hasPlot = False
-                                tmp1 = copy.deepcopy(tmpsliceParam[rr])
-                                tmp1[cc] = None
-                                tmpsliceParam[rr] = tmp1
-
-                                tmp2 = copy.deepcopy(tmpprojection[rr])
-                                tmp2[cc] = None
-                                tmpprojection[rr] = tmp2
+                            tmp2 = copy.deepcopy(tmpprojection[rr])
+                            tmp2[cc] = None
+                            tmpprojection[rr] = tmp2
                         row.append(copy.deepcopy(hasPlot))
                 hasPlotMask.append(copy.deepcopy(row))
 
-        sliceParam = copy.deepcopy(tmpsliceParam)
-        projection = copy.deepcopy(tmpprojection)
-
+        sliceParam = np.asarray(copy.deepcopy(tmpsliceParam))
+        projection = np.asarray(copy.deepcopy(tmpprojection))
         hasPlotMask = np.asarray(hasPlotMask)
         figshape = np.shape(hasPlotMask)
 
-        dataSources = {}
-        for selectKey, dataDict in inputDict.items():
-            if selectKeysList is not None:
-                if selectKey in selectKeysList:
-                    dataSources.update({selectKey : dataDict})
-            else:
-                dataSources = {"": inputDict}
-    # else:
-    #     if selectKeysList is None: 
-    #         if hush is False:
-    #             print(f"[@plot_slices]: WARNING! Plot called with no selectKeysList provided."
-    #                 +"\n"
-    #                 +f"Call details: sliceParam:{xParam}, yParam:{yParam}"
-    #                 +"\n"
-    #                 +"Will default to plotting all data provided to this call.")
-                
-    #         selectKeysList = list(inputDict.keys())           
-
-
-        ## Empty data checks ## 
-        if bool(dataSources) is False:
-            print("\n"
-                +f"[@plot_slices]: WARNING! dataSources dict is empty! Skipping plot call and exiting ..."
-                +"\n"
-            )
-            
-            return
-
-
+        if (selectKeysList is not None) & (alignSelectKeys.lower() == "horizontal"):
+            sliceParam = sliceParam.T
+            projection = projection.T
+            hasPlotMask = hasPlotMask.T
+            figshape = figshape[::-1]
+            multrows = figshape[0]  
 
     savePath = savePathBase + "Plots/Slices/"
     savePathFigureData = savePathBaseFigureData + "Plots/Slices/"
     
-    if subfigures:
-        if (type(sliceParam[0]) == list):
-            sliceParam = list(itertools.chain.from_iterable(sliceParam))
-        if (type(projection[0]) == list):
-            projection = list(itertools.chain.from_iterable(projection))
-    else:
-        if (type(sliceParam) != list):
-            sliceParam = [sliceParam]
-        if (type(projection) != list):
-            projection = [projection]
-
     tmp = ""
     for savePathChunk in savePath.split("/")[:-1]:
         tmp += savePathChunk + "/"
@@ -1712,21 +1729,41 @@ def plot_slices(snap,
     halfbox = boxsize / 2.0
 
 
-    subplotCount = -1
+    # Grab the dictionaries for each simulation dataset passed to this function and enter them into an easily iterable list.
     if subfigures == True:
         dataSourcesValues = list(dataSources.values())
     else:
         dataSourcesValues = [snap]
 
+    # Makes the subsequent enumerate(zip(...,...)) much easier to handle...
+    if subfigures:
+        if (type(sliceParam[0]) == np.ndarray):
+            sliceParam = sliceParam.flatten().tolist()
+        if (type(projection[0]) == np.ndarray):
+            projection = projection.flatten().tolist()
+    else:
+        if (type(sliceParam) != list):
+            sliceParam = [sliceParam]
+        if (type(projection) != list):
+            projection = [projection]
 
+    # Detect any column density type plots and check for relevant volume density if needing to be derived from
+    # snapshot type object; else check that the precomputed column density data is present for non-snapshot type objects.
+    # Also make necessary adjustment to projection == True for column density properties.
+    subplotCount = -1
     for ii,(param,proj) in enumerate(zip(sliceParam,projection)):
         subplotCount+=1
         if subfigures == True:
-            axindex = np.unravel_index(subplotCount, shape=figshape)
+            axindex = np.unravel_index(subplotCount, shape=figshape)  
             if hasPlotMask[axindex] == False:
                 projection[subplotCount] = None
                 continue
-            snap = dataSourcesValues[axindex[0]]
+            if (selectKeysList is not None):
+                if(alignSelectKeys.lower() == "horizontal"):
+                    datasourceindex = axindex[1]
+                else:
+                    datasourceindex = axindex[0]
+            snap = dataSourcesValues[datasourceindex]
         else:
             pass
 
@@ -1766,8 +1803,11 @@ def plot_slices(snap,
                 )
                 return
 
-    cbarscale = 0.5
 
+    # Adjust size and shape of subplots if subfigures are requested. Should try to maintain the aspect per the xsize and ysize provided.
+    # Colorbar axes will have size determined by cbarscale times the size of the rest of the subpanels.
+    # Also adjust figshape to account for these cbar axes, and add None, None, False to sliceparam projection hasPlotMask
+    # so that no figures try to be drawn in place of colorbars. 
     if subfigures:
         newxsize = xsize
         newysize = ysize
@@ -1782,10 +1822,12 @@ def plot_slices(snap,
             tmp[1] += 1
             figshape = tuple(tmp)
 
-            print(height,width)
-            print(newysize,newxsize)
-            sliceParam += [None]*multrows
-            projection += [None]*multrows
+            # print(height,width)
+            # print(newysize,newxsize)
+            sliceParam = np.pad(np.asarray(sliceParam).reshape(figshape[0],-1),((0,0),(0,1)),constant_values=None)
+            sliceParam = sliceParam.flatten().tolist()
+            projection = np.pad(np.asarray(projection).reshape(figshape[0],-1),((0,0),(0,1)),constant_values=None)
+            projection = projection.flatten().tolist()
             hasPlotMask = np.pad(hasPlotMask,((0,0),(0,1)),constant_values=False)
         elif (alignSelectKeys.lower() == "vertical"):
             width = float(figshape[1])
@@ -1798,10 +1840,12 @@ def plot_slices(snap,
             tmp[0] += 1
             figshape = tuple(tmp)
 
-            print(height,width)
-            print(newysize,newxsize)
-            sliceParam += [None]*multcols
-            projection += [None]*multcols
+            # print(height,width)
+            # print(newysize,newxsize)
+            sliceParam = np.pad(np.asarray(sliceParam).reshape(-1,figshape[1]),((0,1),(0,0)),constant_values=None)
+            sliceParam = sliceParam.flatten().tolist()
+            projection = np.pad(np.asarray(projection).reshape(-1,figshape[1]),((0,1),(0,0)),constant_values=None)
+            projection = projection.flatten().tolist()
             hasPlotMask = np.pad(hasPlotMask,((0,1),(0,0)),constant_values=False)
 
     if subfigures:
@@ -1811,46 +1855,191 @@ def plot_slices(snap,
                 ncols=figshape[1],
                 figsize=(newxsize, newysize),
                 dpi=DPI,
-                gridspec_kw={'width_ratios': [1]*multcols + [cbarscale]}
+                gridspec_kw={'width_ratios': [1]*multcols + [cbarscale]},
+                sharey = sharey,
+                sharex = sharex,
+                squeeze = False,
             )
+            cbardrawn = np.full(figshape[0],fill_value=False)
+            whereNoPlots = np.where(np.all(~hasPlotMask,axis=1)==True)[0]
+            cbardrawn[whereNoPlots] = True
+            
         elif (alignSelectKeys.lower() == "vertical"):
             fig, axes = plt.subplots(
                 nrows=figshape[0],
                 ncols=figshape[1],
                 figsize=(newxsize, newysize),
                 dpi=DPI,
-                gridspec_kw={'height_ratios': [1]*multrows + [cbarscale]}
+                gridspec_kw={'height_ratios': [1]*multrows + [cbarscale]},
+                sharey = sharey,
+                sharex = sharex,
+                squeeze = False,
             )
+            cbardrawn = np.full(figshape[1],fill_value=False)
+            whereNoPlots = np.where(np.all(~hasPlotMask,axis=0)==True)[0]
+            cbardrawn[whereNoPlots] = True
 
+        # if np.any(np.asarray(figshape)==1):
+        #     reorder = np.argsort(figshape)
+        #     hasPlotMask = np.moveaxis(hasPlotMask,[0,1],reorder)
+        #     figshape = tuple(sorted(figshape))
 
     halfbox = boxsize/2.0
     fullTicks = [xx for xx in np.linspace(-1.0 * halfbox, halfbox, 5)]
     fudgeTicks = fullTicks[1:]
     
+    # Array to hold the outputs of pcolormesh needed for the colorbars
     subplotCount = -1
-    plotlist = []
+    if subfigures: 
+        imageArray = np.full(shape=figshape,fill_value=None)
+    else:
+        imageArray = np.full(shape=(1),fill_value=None)
+
+
     for (param,proj) in zip(sliceParam,projection):
 
         # print(param,subplotCount)
 
         subplotCount+=1
         if subfigures == True:
-
+            # print(param, proj)
             axindex = np.unravel_index(subplotCount, shape=figshape)
-            # print(axindex)
+            # if np.any(np.asarray(figshape)==1):
+            #     axes = axes.reshape(figshape)
+
+            # Determine whether a colorbar has been drawn yet, and if not whether there is data available for one to be drawn now.
+            if (alignSelectKeys.lower() == "horizontal"):
+                cbarPerAx = axindex[0]
+                posInCurrentCbarAx = axindex[1]
+                plotForCbarDrawn = np.any(hasPlotMask[axindex[0],:posInCurrentCbarAx])
+                if plotForCbarDrawn:
+                    indexOfDrawnCbarPlot = np.where(hasPlotMask[axindex[0],:posInCurrentCbarAx])[0][0]
+                    paramindex = np.ravel_multi_index((axindex[0],indexOfDrawnCbarPlot),dims=figshape)
+                    cbarparam = sliceParam[paramindex]
+
+            elif (alignSelectKeys.lower() == "vertical"):
+                cbarPerAx = axindex[1]
+                posInCurrentCbarAx = axindex[0]
+                plotForCbarDrawn = np.any(hasPlotMask[:posInCurrentCbarAx,axindex[1]])
+                if plotForCbarDrawn:
+                    indexOfDrawnCbarPlot = np.where(hasPlotMask[:posInCurrentCbarAx,axindex[1]])[0][0]
+                    paramindex = np.ravel_multi_index((indexOfDrawnCbarPlot,axindex[1]),dims=figshape)
+                    cbarparam = sliceParam[paramindex]
+
+            # If colorbar hasn't been drawn yet, if at least on second row/column, and if at least one 
+            # panel in that row/column has been drawn already (so that the colorbar has data to work with).
+            # THEN make colorbar...
+            if (cbardrawn[cbarPerAx] == False)&(posInCurrentCbarAx>0)&(plotForCbarDrawn == True):
+
+                if xlimBool is True:
+                    if cbarparam in logParameters:
+                        zmin = 10**(np.floor(xlimDict[cbarparam]['xmin']))
+                        zmax = 10**(np.ceil(xlimDict[cbarparam]['xmax']))
+                        norm = matplotlib.colors.LogNorm(vmin = zmin, vmax = zmax,clip=True)
+
+                        numdecs = (np.ceil(xlimDict[cbarparam]['xmax']) - np.floor(xlimDict[cbarparam]['xmin']))
+                        if numdecs<3:
+                            subs = [10.0**0.5,1.0]
+                        else:
+                            subs = [1.0]
+
+                        cbarticklocator = matplotlib.ticker.LogLocator(base=10.0, subs=subs,numdecs=numdecs, numticks=6)
+                        formatter = AdaptedLogFormatterExponent(base=10.0, labelOnlyBase=False, minor_thresholds=(np.inf,np.inf))
+                        # formatter.set_locs(locs=None)
+                    else:
+                        zmin = xlimDict[cbarparam]['xmin']
+                        zmax = xlimDict[cbarparam]['xmax']
+                        norm = matplotlib.colors.Normalize(vmin = zmin, vmax = zmax,clip=True)
+
+                        cbarticklocator = matplotlib.ticker.MaxNLocator(nbins=6,steps=[1, 2, 2.5, 5, 10])
+                        formatter = matplotlib.ticker.ScalarFormatter()
+                else:
+                    if cbarparam in logParameters:
+                        zmin = 10**np.floor(np.log10(np.nanmax(slice["grid"])))
+                        zmax = 10**np.ceil(np.log10(np.nanmin(slice["grid"])))
+                        norm = matplotlib.colors.LogNorm(vmin = zmin, vmax = zmax,clip=True)
+
+                        numdecs = (np.ceil(np.log10(np.nanmin(slice["grid"]))) - np.floor(np.log10(np.nanmax(slice["grid"]))))
+                        if numdecs<3:
+                            subs = [10.0**0.5,1.0]
+                        else:
+                            subs = [1.0]
+
+                        cbarticklocator = matplotlib.ticker.LogLocator(base=10.0, subs=subs, numdecs=numdecs, numticks=6)
+                        formatter = AdaptedLogFormatterExponent(base=10.0, labelOnlyBase=False, minor_thresholds=(np.inf,np.inf))
+                        # formatter.set_locs(locs=None)
+                    else:
+                        zmin = np.nanmax(slice["grid"])
+                        zmax = np.nanmin(slice["grid"])
+                        norm = matplotlib.colors.Normalize(vmin = zmin, vmax = zmax,clip=True)
+
+                        cbarticklocator = matplotlib.ticker.MaxNLocator(nbins=6,steps=[1, 2, 2.5, 5, 10])
+                        formatter = matplotlib.ticker.ScalarFormatter()
+
+
+                if (alignSelectKeys.lower() == "vertical"): 
+                    # print("make cbar vert")
+                    caxorient = "horizontal"
+                    caxtickloc = "bottom"
+                    cax = axes[-1,axindex[1]]
+                    im = imageArray[indexOfDrawnCbarPlot,axindex[1]]
+                    
+                    clb = plt.colorbar(im, ax = cax, ticks=cbarticklocator, format=formatter, orientation = caxorient, ticklocation = caxtickloc, shrink=0.85)
+                    clb.set_label(label=f"{ylabel[cbarparam]}", size=fontsize)
+                    # clb.yaxis.set_ticks_position("left")
+                    clb.ax.tick_params(axis="both", which="both", labelsize=fontsize)
+                    clb.ax.xaxis.set_major_formatter(formatter)
+                    # clb.ax.xaxis.set_minor_formatter(formatter)
+                    clb.ax.yaxis.set_major_formatter(formatter)
+                    # clb.ax.yaxis.set_minor_formatter(formatter) 
+
+                elif (alignSelectKeys.lower() == "horizontal"): 
+                    # print("make cbar horiz")
+                    caxorient = "vertical"
+                    caxtickloc = "left"
+                    labellocation = "left"
+
+                    cax = axes[axindex[0],-1]
+                    im = imageArray[axindex[0],indexOfDrawnCbarPlot]
+                    
+                    clb = plt.colorbar(im, ax = cax, ticks=cbarticklocator, format=formatter, orientation = caxorient, ticklocation = caxtickloc, shrink=0.85)
+                    clb.set_label(label=f"{ylabel[cbarparam]}", size=fontsize)
+                    clb.ax.yaxis.set_ticks_position(labellocation)
+                    clb.ax.tick_params(axis="both", which="both", labelsize=fontsize)
+                    clb.ax.xaxis.set_major_formatter(formatter)
+                    # clb.ax.xaxis.set_minor_formatter(formatter)
+                    clb.ax.yaxis.set_major_formatter(formatter)
+                    # clb.ax.yaxis.set_minor_formatter(formatter) 
+                    # clb.ax.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())                  
+
+                cbardrawn[cbarPerAx] = True
+
+            # If the current axis has no plotabble data, turn off the axis ticks and spines and skip to next values
+            # in sliceparam projection iterables. 
             if hasPlotMask[axindex] == False:
                 if saveFigure:
+                    # if np.any(np.asarray(figshape)==1):
+                    #     reorder = np.argsort(figshape)
+                    #     currentAx = axes[axindex[reorder]]
+                    # else:
                     currentAx = axes[axindex]
                     currentAx.axis('off')
-                    if (axindex[0]==(figshape[0]-2))&(alignSelectKeys.lower() == "vertical"): 
-                        cax = axes[axindex[0]+1,axindex[1]]
-                        cax.axis("off")
-                    elif (axindex[1]==(figshape[1]-2))&(alignSelectKeys.lower() == "horizontal"): 
-                        cax = axes[axindex[0],axindex[1]+1]
-                        cax.axis("off")
-                    plotlist.append(None)
+                    imageArray[axindex] = None
+
+                    # Restore xaxis ticks for lowest plot in column. Will otherwise be dropped for vertical
+                    # alignment as last "axes" are for the cbar's which will trigger the hasPlotMask == False
+                    # logic of this outer if statement and so without the folowing, no xaxis ticks would be drawn. 
+                    if (alignSelectKeys.lower() == "vertical"):
+                        lastPlottable = np.where(hasPlotMask[:,axindex[1]])[0][-1]
+                        if (axindex[0]==figshape[0]-1):
+                           axes[lastPlottable,axindex[1]].xaxis.set_tick_params(labelbottom=True)
+
                     continue
+            if(alignSelectKeys.lower() == "horizontal"):
+                snap = dataSourcesValues[axindex[1]]
+            else:
                 snap = dataSourcesValues[axindex[0]]
+
         else:
             pass
 
@@ -1888,7 +2077,7 @@ def plot_slices(snap,
                         xlimDict=xlimDict,
                         logParameters=logParameters,
                         snapNumber = snapNumber,
-                        sliceParam = param,
+                        sliceParam = [param],
                         xsize = xsize,
                         ysize = ysize,
                         fontsize=fontsize,
@@ -1899,9 +2088,10 @@ def plot_slices(snap,
                         boxlos=boxlos,
                         pixreslos=pixreslos,
                         pixres=pixres,
-                        projection=proj,
+                        projection=[proj],
                         DPI=DPI,
                         colourmapMain=colourmapMain,
+                        colourmapsUnique = colourmapsUnique,
                         numthreads=numthreads,
                         savePathBase = savePathBase,
                         savePathBaseFigureData = savePathBaseFigureData,
@@ -2021,14 +2211,31 @@ def plot_slices(snap,
                     nrows=1, ncols=1, figsize=(xsize, ysize), dpi=DPI, sharex=True, sharey=True
                 )
                 currentAx = axes
-                currentAx.tick_params(axis="both", direction="in")
+                currentAx.tick_params(axis="both", which="both", direction="in",labelsize=fontsize)
 
             else:
                 axindex = np.unravel_index(subplotCount, shape=figshape)
+                # if np.any(np.asarray(figshape)==1):
+                #     reorder = np.argsort(figshape)
+                #     currentAx = axes[axindex[reorder]]
+                # else:
+                #     currentAx = axes[axindex]
                 currentAx = axes[axindex]
-                currentAx.tick_params(axis="both", direction="in")
+
+                currentAx.tick_params(axis="both", which="both", direction="in",labelsize=fontsize)
+                locy = matplotlib.ticker.MaxNLocator(nbins=12,steps=[1, 2, 2.5, 5, 10],prune="both")
+                locx = matplotlib.ticker.MaxNLocator(nbins=6,steps=[1, 2, 2.5, 5, 10],prune="both")
+                currentAx.xaxis.set_major_locator(locx)
+                currentAx.xaxis.set_minor_locator(locx)
+                currentAx.yaxis.set_major_locator(locy)
+                currentAx.yaxis.set_minor_locator(locy)
                 if subfigures == True:
-                    snap = dataSourcesValues[axindex[0]]
+                    if (selectKeysList is not None):
+                        if(alignSelectKeys.lower() == "horizontal"):
+                            datasourceindex = axindex[1]
+                        else:
+                            datasourceindex = axindex[0]
+                    snap = dataSourcesValues[datasourceindex]
                 else:
                     pass
 
@@ -2045,69 +2252,23 @@ def plot_slices(snap,
 
             if xlimBool is True:
                 if param in logParameters:
-                    zmin = 10**(xlimDict[param]['xmin'])
-                    zmax = 10**(xlimDict[param]['xmax'])
+                    zmin = 10**(np.floor(xlimDict[param]['xmin']))
+                    zmax = 10**(np.ceil(xlimDict[param]['xmax']))
                     norm = matplotlib.colors.LogNorm(vmin = zmin, vmax = zmax,clip=True)
-
-                    decs = np.abs(np.round(np.log10(zmax)-np.log10(zmin),2))
-                    if (decs%1 != 0.0):
-                        nticks = int(math.floor(decs))
-                    else:
-                        nticks = int(decs) + 1
-
-                    # To prevent 1 tick or fewer (especially negative nticks, as linspace will throw an error)
-                    nticks = int(max(nticks,2))
-                    # print(zmin,zmax,nticks)
-                    cbarticks = [10**xx for xx in np.linspace(np.round(xlimDict[param]['xmin'],1),np.round(xlimDict[param]['xmax'],1),nticks)]
-
-                    while len(cbarticks)>=8:
-                        cbarticks = cbarticks[::2] + [cbarticks[-1]]
-
-                    if (xlimDict[param]['xmin']%1 != 0): cbarticks = [zmin] + cbarticks
-                    if (xlimDict[param]['xmax']%1 != 0): cbarticks = cbarticks + [zmax]
-                    cbarticklabels = [r"$10^{%3.0f}$" % (xx) for xx in cbarticks]
-                    # print(cbarticks)
-                    formatter = matplotlib.ticker.LogFormatterExponent(base=10.0, labelOnlyBase=False, minor_thresholds=(np.inf,np.inf))
                 else:
                     zmin = xlimDict[param]['xmin']
                     zmax = xlimDict[param]['xmax']
                     norm = matplotlib.colors.Normalize(vmin = zmin, vmax = zmax,clip=True)
-                    cbarticks = [xx for xx in np.linspace(zmin,zmax,5)]
-                    cbarticklabels = [str(xx) for xx in cbarticks]
-                    formatter = matplotlib.ticker.ScalarFormatter()
             else:
                 if param in logParameters:
-                    zmin = np.nanmax(slice["grid"])
-                    zmax = np.nanmin(slice["grid"])
+                    zmin = 10**np.floor(np.log10(np.nanmax(slice["grid"])))
+                    zmax = 10**np.ceil(np.log10(np.nanmin(slice["grid"])))
                     norm = matplotlib.colors.LogNorm(vmin = zmin, vmax = zmax,clip=True)
 
-                    decs = np.abs(np.round(np.log10(zmax)-np.log10(zmin),2))
-                    if (decs%1 != 0.0):
-                        nticks = int(math.floor(decs))
-                    else:
-                        nticks = int(decs) + 1
-
-                    # To prevent 1 tick or fewer (especially negative nticks, as linspace will throw an error)
-                    nticks = int(max(nticks,2))
-
-                    # print(zmin,zmax,nticks)
-                    cbarticks = [10**xx for xx in np.linspace(np.round(np.log10(zmin),1),np.round(np.log10(zmax),1),nticks)]
-
-                    while len(cbarticks)>=8:
-                        cbarticks = cbarticks[::2] + [cbarticks[-1]]
-
-                    # if (np.log10(zmin)%1 != 0): cbarticks = [zmin] + cbarticks
-                    # if (np.log10(zmax)%1 != 0): cbarticks = cbarticks + [zmax]
-                    cbarticklabels = [r"$10^{%3.0f}$" % (xx) for xx in cbarticks]
-                    # print(cbarticks)
-                    formatter = matplotlib.ticker.LogFormatterExponent(base=10.0, labelOnlyBase=False, minor_thresholds=(np.inf,np.inf))
                 else:
                     zmin = np.nanmax(slice["grid"])
                     zmax = np.nanmin(slice["grid"])
                     norm = matplotlib.colors.Normalize(vmin = zmin, vmax = zmax,clip=True)
-                    cbarticks = [xx for xx in np.linspace(zmin,zmax,5)]
-                    cbarticklabels = [str(xx) for xx in cbarticks]
-                    formatter = matplotlib.ticker.ScalarFormatter()
 
             pcm = currentAx.pcolormesh(
                 slice["x"],
@@ -2118,59 +2279,19 @@ def plot_slices(snap,
                 rasterized=rasterized,
             )
 
-            plotlist.append(pcm)
+            if subfigures:
+                imageArray[axindex] = pcm
+            else:
+                imageArray[0] = pcm
             #currentAx.set_title(f"{param} Slice", fontsize=fontsize)
 
-
-            # currentAx.set_ylabel(f"{AxesLabels[Axes[1]]}" + " (kpc)", fontsize=fontsize)
-            # currentAx.set_xlabel(f"{AxesLabels[Axes[0]]}" + " (kpc)", fontsize=fontsize)
-            # Pad snapNumber with zeroes to enable easier video making
-            if ((subfigures == True)&(sharex == True)&(sharey == True)):
-                if (axindex[1]==0):
-                    if (axindex[0]==(figshape[0]-2)):
-                        currentAx.set_yticks(fullTicks)
-                        currentAx.set_ylabel(f"{AxesLabels[Axes[1]]}" + " (kpc)", fontsize=fontsize)
-                        currentAx.set_xticks(fullTicks)
-                        currentAx.set_xlabel(f"{AxesLabels[Axes[0]]}" + " (kpc)", fontsize=fontsize)
-                    else:
-                        currentAx.set_yticks(fudgeTicks)
-                        currentAx.set_xticks(ticks=[])
-                else:
-                    currentAx.set_yticks(ticks=[])
-                    if (axindex[0]==(figshape[0]-2)):
-                        currentAx.set_xticks(fudgeTicks)
-                        currentAx.set_xlabel(f"{AxesLabels[Axes[0]]}" + " (kpc)", fontsize=fontsize)
-                    else:
-                        currentAx.set_xticks(ticks=[])
-
-                if (axindex[0]==(figshape[0]-2))&(alignSelectKeys.lower() == "vertical"): 
-                    caxorient = "horizontal"
-                    caxtickloc = "bottom"
-                    cax = axes[axindex[0]+1,axindex[1]]
-                    cax.axis("off")
-                    clb = plt.colorbar(plotlist[axindex[1]], ax = axes[axindex[0]+1,axindex[1]], ticks=cbarticks, format=formatter, orientation = caxorient, ticklocation = caxtickloc, shrink=0.85)
-                    clb.ax.set_title(label=f"{ylabel[param]}", size=fontsize)
-                    clb.ax.tick_params(axis="y", which="major", labelsize=fontsize)
-                    clb.ax.tick_params(axis="y", which="minor", labelsize=fontsize)  
-
-                elif (axindex[1]==(figshape[1]-2))&(alignSelectKeys.lower() == "horizontal"): 
-                    caxorient = "vertical"
-                    caxtickloc = "left"
-                    cax = axes[axindex[0],axindex[1]+1]
-                    cax.axis("off")
-                    clb = plt.colorbar(pcm, ax = axes[axindex[0],axindex[1]+1], ticks=cbarticks, format=formatter, orientation = caxorient, ticklocation = caxtickloc, shrink=0.85)
-                    clb.ax.set_title(label=f"{ylabel[param]}", size=fontsize)
-                    clb.ax.tick_params(axis="y", which="major", labelsize=fontsize)
-                    clb.ax.tick_params(axis="y", which="minor", labelsize=fontsize)                   
-
-
-            else:
+            if subfigures == False:
                 currentAx.set_xticks(fullTicks)
                 currentAx.set_yticks(fullTicks)
                 currentAx.set_ylabel(f"{AxesLabels[Axes[1]]}" + " (kpc)", fontsize=fontsize)
                 currentAx.set_xlabel(f"{AxesLabels[Axes[0]]}" + " (kpc)", fontsize=fontsize)
                 cax1 = inset_axes(currentAx, width="5%", height="95%", loc="right")
-                fig.colorbar(pcm, cax=cax1, ticks=cbarticks, format=formatter, orientation="vertical").set_label(
+                fig.colorbar(pcm, cax=cax1, ticks=cbarticklocator, format=formatter, orientation="vertical").set_label(
                     label=f"{ylabel[param]}", size=fontsize, weight="bold"
                 )
                 cax1.yaxis.set_ticks_position("left")
@@ -2202,9 +2323,9 @@ def plot_slices(snap,
                 plt.close("all")
                 print(f" ...done!")
             else:
-                if ((sharex == True)&(sharey == True)):plt.subplots_adjust(hspace=0.0, wspace=0.0)
-                elif (sharex == True):plt.subplots_adjust(wspace=0.0)
-                elif (sharey == True):plt.subplots_adjust(hspace=0.0)
+                if ((sharex == True)&(sharey == True)):plt.subplots_adjust(hspace=0.0, wspace=0.0, top=0.925, bottom=0.075, left=0.1, right=0.95)
+                elif (sharex == True):plt.subplots_adjust(hspace=0.0, top=0.925, bottom=0.075, left=0.1, right=0.95)
+                elif (sharey == True):plt.subplots_adjust(wspace=0.0, top=0.925, bottom=0.075, left=0.1, right=0.95)
 
     # Pad snapNumber with zeroes to enable easier video making
 
@@ -2218,16 +2339,27 @@ def plot_slices(snap,
 
     if subfigures:
         opslaan = savePath + f"Images_Plot{SaveSnapNumber}.pdf"
-      
+
+        if (alignSelectKeys.lower() == "vertical"):
+            for ax in axes[-2,:]:
+                ax.set_xlabel(f"{AxesLabels[Axes[0]]}" + " (kpc)", fontsize=fontsize)  
+        elif (alignSelectKeys.lower() == "horizontal"):
+            for ax in axes[-1,:]:
+                ax.set_xlabel(f"{AxesLabels[Axes[0]]}" + " (kpc)", fontsize=fontsize)  
+
+        for ax in axes[:,0]:
+                ax.set_ylabel(f"{AxesLabels[Axes[1]]}" + " (kpc)", fontsize=fontsize)
+    
         plt.gcf()
         plt.savefig(opslaan, dpi=DPI, transparent=False)
         print(opslaan)
         matplotlib.rc_file_defaults()
         plt.close("all")
 
-        print(
-            f"[@plot_slices]: WARNING! Not implemented! Cannot return output dictionary from subfigures==True version! Output dictionary will be empty..."
-        )
+        if (verbose==True):
+            print(
+                f"[@plot_slices]: WARNING! Not implemented! Cannot return output dictionary from subfigures==True version! Output dictionary will be empty..."
+            )
         out = {}
     else:
         if projection[0] is False:
@@ -2261,9 +2393,13 @@ def medians_versus_plot(
     linewidth=1.0,
     opacityPercentiles=0.25,
     colourmapMain="tab10",
+    colourmapsUnique = {},
     savePathBase ="./",
     savePathBaseFigureData = "./",
     allowPlotsWithoutxlimits = False,
+    subfigures = False,
+    sharex = False,
+    sharey = False,
     inplace = False,
     saveFigureData = False,
     replotFromData = False,
@@ -2294,6 +2430,49 @@ def medians_versus_plot(
         # # check_params_are_in_xlimDict(xlimDict, weightKeys) <-- Not needed, as y-axis not used when combining data
         check_params_are_in_xlimDict(xlimDict, [xParam])
 
+
+    if subfigures:        
+        nrows = len(plotParams)
+        ncols = max([len(zz) for zz in plotParams])
+
+        hasPlotMask = []
+        tmpplotParams = copy.deepcopy(plotParams)
+        for ii in range(0,nrows):
+            row = []
+            for jj in range(0, ncols):
+                if (type(plotParams[ii])==list):
+                    try:
+                        tmp = plotParams[ii][jj]
+                        if tmp is not None:
+                            hasPlot = True
+                        else:
+                            hasPlot = False
+                    except:
+                        hasPlot = False
+                        tmp1 = copy.deepcopy(tmpplotParams[ii])
+                        tmp1[jj] = None
+                        tmpplotParams[ii] = tmp1
+                elif (type(plotParams[ii])==dict):
+                    try:
+                        tmp = list(plotParams[ii].keys())[0]
+                        if tmp is not None:
+                            hasPlot = True
+                        else:
+                            hasPlot = False
+                    except:
+                        hasPlot = False
+                        tmp1 = [None]
+                        tmpplotParams[ii] = tmp1
+
+                row.append(copy.deepcopy(hasPlot))
+            hasPlotMask.append(copy.deepcopy(row))
+
+        plotParams = tmpplotParams
+
+        hasPlotMask = np.asarray(hasPlotMask)
+        figshape = np.shape(hasPlotMask)
+
+    
     savePath = savePathBase + "/Plots/Medians/"
  
     tmp = ""
@@ -2304,6 +2483,25 @@ def medians_versus_plot(
         except:
             pass
 
+    subplotCount = -1
+    if subfigures:
+        width = float(figshape[1])
+        height = float(figshape[0])
+        aspect_ratio = height/width
+        newxsize = xsize
+        newysize = ysize*aspect_ratio
+        
+        fig, axes = plt.subplots(
+            nrows=figshape[0],
+            ncols=figshape[1],
+            figsize=(newxsize, newysize),
+            dpi=DPI,
+            sharex=sharex,
+            sharey=sharey,
+            squeeze = False,
+        )
+
+            
 
     if combineMultipleOntoAxis is False:
         selectKeysList = list(inputDict.keys())  
@@ -2362,374 +2560,488 @@ def medians_versus_plot(
 
 
 
-    for analysisParam in plotParams:
-        if analysisParam != xParam:
-            print("")
-            print(f"Starting {analysisParam} plots!")
-  
-            fig, ax = plt.subplots(
+    for xx, plotp in enumerate(plotParams):
+        if plotp != xParam:
 
-            nrows=1,
-            ncols=1,
-            sharex=True,
-            sharey=True,
-            figsize=(xsize, ysize),
-            dpi=DPI,
-            )
+            #
+            # Following functionality is to plot multiple curves on the same axis
+            # thus we do NOT want subplotCount to increase (and move on to the next subplot)
+            # until all curves for this axis have been made.
+            #
+            # TL;DR keep this iterator OUTSIDE of the 'for analysisParam in tmpparamlist:' for loop!!!
+            subplotCount+=1
 
-            plt.tick_params(axis="both", direction="in")
-            yminlist = []
-            ymaxlist = []
+            
+            if type(plotp)==str:
+                tmpparamlist = [plotp]
+                superParamKey = plotp
+            elif type(plotp)==dict:
+                tmp1, tmp2 = list(plotp.keys()), list(plotp.values())
+                superParamKey = tmp1[0]
+                tmpparamlist = tmp2[0]
+            elif type(plotp)==list:
+                tmpparamlist = plotp
+                superParamKey = plotp[0]
+            
+            for analysisParam in tmpparamlist:
+                print("")
+                print(f"Starting {analysisParam} plots!")
+    
+                if subfigures == False:
+                    fig, axes = plt.subplots(
 
-            skipBool = False
-
-            for jj, (selectKey, simDict) in enumerate(dataSources.items()):
-                skipBool = False
-                Nkeys = len(list(selectKeysList))
-
-                if ("Stars" in selectKey) | ("col" in selectKey) :
-                    selectKeyShort = tuple([xx for xx in selectKey if (xx != "Stars") & (xx != "col")])
-                else:
-                    selectKeyShort = selectKey
-
-                ## Empty data checks ## 
-                if bool(simDict) is False:
-                    skipBool = True
-                    print("\n"
-                        +f"[@medians_versus_plot]: WARNING! simDict is empty! Skipping plots ..."
-                        +"\n"
+                    nrows=1,
+                    ncols=1,
+                    sharex=True,
+                    sharey=True,
+                    figsize=(xsize, ysize),
+                    dpi=DPI,
                     )
-
-                print(f"Starting {selectKey} plot")     
-
-
-                label = " ".join(list(selectKeyShort))
-
-                if combineMultipleOntoAxis is False:
-                    cmap = matplotlib.cm.get_cmap(colourmapMain)
-                    if colourmapMain == "tab10":
-                        colour = cmap(float(jj) / 10.0)
-                    else:
-                        colour = cmap(float(jj) / float(Nkeys))
-                    linestyle = "solid"
-                    plotData = copy.deepcopy(simDict)
-                    xData = np.array(copy.deepcopy(simDict[xParam]))
+                    currentAx = axes
                 else:
-                    if selectKeysList is not None:
-                        label = " ".join(list(selectKeyShort))
-                        if styleDict is not None:
-                            colour=styleDict[selectKeyShort]["colour"]
-                            linestyle=styleDict[selectKeyShort]["linestyle"]
-                        else:
-                            cmap = matplotlib.cm.get_cmap(colourmapMain)
+                    axindex = np.unravel_index(subplotCount, shape=figshape)
+                    currentAx = axes[axindex]
+                    if hasPlotMask[axindex] == False:
+                        axes[axindex].axis('off')
+                        continue
+                    # if np.any(np.asarray(figshape)==1):
+                    #     reorder = np.argsort(figshape)
+                    #     currentAx = axes[axindex]
+                    #     if hasPlotMask[axindex] == False:
+                    #         axes[axindex[reorder]].axis('off')
+                    #         continue
+                    # else:
+                    #     currentAx = axes[axindex]
+                    #     if hasPlotMask[axindex] == False:
+                    #         axes[axindex].axis('off')
+                    #         continue
+
+                
+                plt.tick_params(axis="both", direction="in")
+                yminlist = []
+                ymaxlist = []
+
+                skipBool = False
+
+                for jj, (selectKey, simDict) in enumerate(dataSources.items()):
+                    skipBool = False
+                    Nkeys = len(list(selectKeysList))
+
+                    if ("Stars" in selectKey) | ("col" in selectKey) :
+                        selectKeyShort = tuple([xx for xx in selectKey if (xx != "Stars") & (xx != "col")])
+                    else:
+                        selectKeyShort = selectKey
+
+                    ## Empty data checks ## 
+                    if bool(simDict) is False:
+                        skipBool = True
+                        print("\n"
+                            +f"[@medians_versus_plot]: WARNING! simDict is empty! Skipping plots ..."
+                            +"\n"
+                        )
+
+                    print(f"Starting {selectKey} plot")     
+
+
+                    label = " ".join(list(selectKeyShort))
+
+                    if (len(tmpparamlist) == 1):
+                        try: 
+                            paramcmap = colourmapsUnique[superParamKey]
+                            cmap = plt.get_cmap(paramcmap)
+                        except:
+                            cmap = plt.get_cmap(colourmapMain)
+
+                        if combineMultipleOntoAxis is False:
                             if colourmapMain == "tab10":
                                 colour = cmap(float(jj) / 10.0)
                             else:
                                 colour = cmap(float(jj) / float(Nkeys))
                             linestyle = "solid"
-                    else:
-                        cmap = matplotlib.cm.get_cmap(colourmapMain)
-                        if colourmapMain == "tab10":
-                            colour = cmap(float(jj) / 10.0)
+                            plotData = copy.deepcopy(simDict)
+                            xData = np.array(copy.deepcopy(simDict[xParam]))
                         else:
-                            colour = cmap(float(jj) / float(Nkeys))
-                        linestyle = "solid"
+                            if selectKeysList is not None:
+                                label = " ".join(list(selectKeyShort))
+                                if styleDict is not None:
+                                    colour=styleDict[selectKeyShort]["colour"]
+                                    linestyle=styleDict[selectKeyShort]["linestyle"]
+                                else:
+                                    if colourmapMain == "tab10":
+                                        colour = cmap(float(jj) / 10.0)
+                                    else:
+                                        colour = cmap(float(jj) / float(Nkeys))
+                                    linestyle = "solid"
+                            else:
+                                if colourmapMain == "tab10":
+                                    colour = cmap(float(jj) / 10.0)
+                                else:
+                                    colour = cmap(float(jj) / float(Nkeys))
+                                linestyle = "solid"
+                            plotData = copy.deepcopy(simDict[selectKey])
+                            xData = np.array(copy.deepcopy(simDict[selectKey][xParam]))
+                    else:
+                        try: 
+                            paramcmap = colourmapsUnique[superParamKey]
+                            cmap = plt.get_cmap(paramcmap)
+                        except:
+                            cmap = plt.get_cmap(colourmapMain)
+
+                        if combineMultipleOntoAxis is False:
+                            if colourmapMain == "tab10":
+                                colour = cmap(float(xx) / 10.0)
+                            else:
+                                colour = cmap(float(xx) / float(Nkeys))
+                            linestyle = "solid"
+                            plotData = copy.deepcopy(simDict)
+                            xData = np.array(copy.deepcopy(simDict[xParam]))
+                        else:
+                            if selectKeysList is not None:
+                                label = " ".join(list(selectKeyShort))
+                                if styleDict is not None:
+                                    colour=styleDict[selectKeyShort]["colour"]
+                                    linestyle=styleDict[selectKeyShort]["linestyle"]
+                                else:
+                                    if colourmapMain == "tab10":
+                                        colour = cmap(float(xx) / 10.0)
+                                    else:
+                                        colour = cmap(float(xx) / float(Nkeys))
+                                    linestyle = "solid"
+                            else:
+                                if colourmapMain == "tab10":
+                                    colour = cmap(float(xx) / 10.0)
+                                else:
+                                    colour = cmap(float(xx) / float(Nkeys))
+                                linestyle = "solid"                  
+
+                            plotData = copy.deepcopy(simDict[selectKey])
+                            xData = np.array(copy.deepcopy(simDict[selectKey][xParam]))
 
 
-                    plotData = copy.deepcopy(simDict[selectKey])
-                    xData = np.array(copy.deepcopy(simDict[selectKey][xParam]))
+
+                    loadPercentilesTypes = [
+                        analysisParam + "_" + str(percentile) + "%"
+                        for percentile in PARAMS[selectKeyShort]["percentiles"]
+                    ]
 
 
-
-                loadPercentilesTypes = [
-                    analysisParam + "_" + str(percentile) + "%"
-                    for percentile in PARAMS[selectKeyShort]["percentiles"]
-                ]
-
-
-                ## Check that any percentiles other than median (50th) have been requested ##
-                LO = (
-                    analysisParam
-                    + "_"
-                    + str(min(PARAMS[selectKeyShort]["percentiles"]))
-                    + "%"
-                )
-                UP = (
-                    analysisParam
-                    + "_"
-                    + str(max(PARAMS[selectKeyShort]["percentiles"]))
-                    + "%"
-                )
-                median = analysisParam + "_" + "50.00%"
-
-            
-                try:
-                    tmpPerData = plotData[LO]
-                except Exception as e:
-                    print(f"{str(e)}")
-                    print(
-                        f"[@medians_versus_plot]: Lower percentile {analysisParam} not found! Omitting this from plot..."
+                    ## Check that any percentiles other than median (50th) have been requested ##
+                    LO = (
+                        analysisParam
+                        + "_"
+                        + str(min(PARAMS[selectKeyShort]["percentiles"]))
+                        + "%"
                     )
-
-                try:
-                    tmpPerData = plotData[UP]
-                except Exception as e:
-                    print(f"{str(e)}")
-                    print(
-                        f"[@medians_versus_plot]: Upper percentile {analysisParam} not found! Omitting this from plot..."
+                    UP = (
+                        analysisParam
+                        + "_"
+                        + str(max(PARAMS[selectKeyShort]["percentiles"]))
+                        + "%"
                     )
+                    median = analysisParam + "_" + "50.00%"
 
-                try:
-                    tmpPerData = plotData[median]
-                except Exception as e:
-                    print(f"{str(e)}")
-                    print(
-                        f"[@medians_versus_plot]: Median value for {analysisParam} not found! Skipping plot entirely..."
-                    )
-                    if replotFromData is False: skipBool = True
-                    continue
+                
+                    try:
+                        tmpPerData = plotData[LO]
+                    except Exception as e:
+                        print(f"{str(e)}")
+                        print(
+                            f"[@medians_versus_plot]: Lower percentile {analysisParam} not found! Omitting this from plot..."
+                        )
 
-                if skipBool == True: continue
+                    try:
+                        tmpPerData = plotData[UP]
+                    except Exception as e:
+                        print(f"{str(e)}")
+                        print(
+                            f"[@medians_versus_plot]: Upper percentile {analysisParam} not found! Omitting this from plot..."
+                        )
 
-                tmpPerData = np.isfinite(plotData[median])
+                    try:
+                        tmpPerData = plotData[median]
+                    except Exception as e:
+                        print(f"{str(e)}")
+                        print(
+                            f"[@medians_versus_plot]: Median value for {analysisParam} not found! Skipping plot entirely..."
+                        )
+                        if replotFromData is False: skipBool = True
+                        continue
 
-                if np.all(~tmpPerData) == True:
-                    print(
-                        f"[@medians_versus_plot]: Median values for {analysisParam} all not finite! Skipping plot entirely..."
-                    )
-                    if replotFromData is False: skipBool = True
-                    continue
+                    if skipBool == True: continue
 
-                if skipBool == True: continue
+                    tmpPerData = np.isfinite(plotData[median])
 
-                if analysisParam in PARAMS[selectKeyShort]["logParameters"]:
-                    for k, v in plotData.items():
-                        plotData.update({k: np.log10(v)})
+                    if np.all(~tmpPerData) == True:
+                        print(
+                            f"[@medians_versus_plot]: Median values for {analysisParam} all not finite! Skipping plot entirely..."
+                        )
+                        if replotFromData is False: skipBool = True
+                        continue
 
-                loExists = True
-                try:
-                    ymin = np.nanmin(
-                        plotData[LO][np.isfinite(plotData[LO])])
-                    yminlist.append(ymin)
-                except Exception as e:
-                    print(f"{str(e)}")
-                    print(
-                        f"[@medians_versus_plot]: Lower percentile {analysisParam} has no finite values. Omitting this from plot...")
-                    loExists = False    
-                    ymin = np.nanmin(plotData[median][np.isfinite(plotData[median])])
-                    yminlist.append(ymin)
+                    if skipBool == True: continue
 
-                upExists = True
-                try:
-                    ymax = np.nanmax(
-                        plotData[UP][np.isfinite(plotData[UP])])
-                    ymaxlist.append(ymax)
+                    if superParamKey in PARAMS[selectKeyShort]["logParameters"]:
+                        for k, v in plotData.items():
+                            plotData.update({k: np.log10(v)})
 
-                except Exception as e:
-                    print(f"{str(e)}")
-                    print(
-                        f"[@medians_versus_plot]: Upper percentile {analysisParam} has no finite values. Omitting this from plot...")
-                    upExists = False
-                    ymax = np.nanmax(plotData[median][np.isfinite(plotData[median])])
-                    ymaxlist.append(ymax)
+                    loExists = True
+                    try:
+                        ymin = np.nanmin(
+                            plotData[LO][np.isfinite(plotData[LO])])
+                        yminlist.append(ymin)
+                    except Exception as e:
+                        print(f"{str(e)}")
+                        print(
+                            f"[@medians_versus_plot]: Lower percentile {analysisParam} has no finite values. Omitting this from plot...")
+                        loExists = False    
+                        ymin = np.nanmin(plotData[median][np.isfinite(plotData[median])])
+                        yminlist.append(ymin)
 
-                currentAx = ax
-                # # # path = copy.copy(savePathBase)
+                    upExists = True
+                    try:
+                        ymax = np.nanmax(
+                            plotData[UP][np.isfinite(plotData[UP])])
+                        ymaxlist.append(ymax)
 
-                # # # splitbase = path.split("/")
-                # # # # print(splitbase)
-                # # # if "" in splitbase:
-                # # #     splitbase.remove("")
-                # # # if "." in splitbase:
-                # # #     splitbase.remove(".")
-                # # # if "Plots" in splitbase:
-                # # #     splitbase.remove("Plots")
-                # # # # print(splitbase)
+                    except Exception as e:
+                        print(f"{str(e)}")
+                        print(
+                            f"[@medians_versus_plot]: Upper percentile {analysisParam} has no finite values. Omitting this from plot...")
+                        upExists = False
+                        ymax = np.nanmax(plotData[median][np.isfinite(plotData[median])])
+                        ymaxlist.append(ymax)
 
-                # # # if len(splitbase)>2:
-                # # #     label = f'{splitbase[0]}: {"_".join(((splitbase[-2]).split("_"))[:2])} ({splitbase[-1]})'
-                # # # elif len(splitbase)>1:
-                # # #     label = f'{splitbase[0]}: {"_".join(((splitbase[-1]).split("_"))[:2])}'
-                # # # else:
-                # # #     label = f'Original: {"_".join(((splitbase[-1]).split("_"))[:2])}'
+                    # # # path = copy.copy(savePathBase)
+
+                    # # # splitbase = path.split("/")
+                    # # # # print(splitbase)
+                    # # # if "" in splitbase:
+                    # # #     splitbase.remove("")
+                    # # # if "." in splitbase:
+                    # # #     splitbase.remove(".")
+                    # # # if "Plots" in splitbase:
+                    # # #     splitbase.remove("Plots")
+                    # # # # print(splitbase)
+
+                    # # # if len(splitbase)>2:
+                    # # #     label = f'{splitbase[0]}: {"_".join(((splitbase[-2]).split("_"))[:2])} ({splitbase[-1]})'
+                    # # # elif len(splitbase)>1:
+                    # # #     label = f'{splitbase[0]}: {"_".join(((splitbase[-1]).split("_"))[:2])}'
+                    # # # else:
+                    # # #     label = f'Original: {"_".join(((splitbase[-1]).split("_"))[:2])}'
 
 
 
-                ## Load in all percentiles requested ##
-                midPercentile = math.floor(len(loadPercentilesTypes) / 2.0)
-                percentilesPairs = zip(
-                    loadPercentilesTypes[:midPercentile],
-                    loadPercentilesTypes[midPercentile + 1:],
-                )
-                if (loExists==True)&(upExists==True):
+                    ## Load in all percentiles requested ##
+                    midPercentile = math.floor(len(loadPercentilesTypes) / 2.0)
                     percentilesPairs = zip(
                         loadPercentilesTypes[:midPercentile],
                         loadPercentilesTypes[midPercentile + 1:],
                     )
-                    for (LO, UP) in percentilesPairs:
-                        currentAx.fill_between(
-                            xData,
-                            plotData[UP],
-                            plotData[LO],
-                            facecolor=colour,
-                            alpha=opacityPercentiles,
-                            interpolate=False,
+                    if (loExists==True)&(upExists==True):
+                        percentilesPairs = zip(
+                            loadPercentilesTypes[:midPercentile],
+                            loadPercentilesTypes[midPercentile + 1:],
                         )
-                elif(loExists==True)&(upExists==False):
-                    percentilesPairs = list(loadPercentilesTypes[:-1])
-                    for LO in percentilesPairs:
-                        currentAx.fill_between(
-                            xData,
-                            plotData[median],
-                            plotData[LO],
-                            facecolor=colour,
-                            alpha=opacityPercentiles,
-                            interpolate=False,
-                        )
-                elif(loExists==False)&(upExists==True):
-                    percentilesPairs = list(loadPercentilesTypes[1:])
-                    for UP in percentilesPairs:
-                        currentAx.fill_between(
-                            xData,
-                            plotData[UP],
-                            plotData[median],
-                            facecolor=colour,
-                            alpha=opacityPercentiles,
-                            interpolate=False,
-                        )
-                else:
-                    pass
+                        for (LO, UP) in percentilesPairs:
+                            currentAx.fill_between(
+                                xData,
+                                plotData[UP],
+                                plotData[LO],
+                                facecolor=colour,
+                                alpha=opacityPercentiles,
+                                interpolate=False,
+                            )
+                    elif(loExists==True)&(upExists==False):
+                        percentilesPairs = list(loadPercentilesTypes[:-1])
+                        for LO in percentilesPairs:
+                            currentAx.fill_between(
+                                xData,
+                                plotData[median],
+                                plotData[LO],
+                                facecolor=colour,
+                                alpha=opacityPercentiles,
+                                interpolate=False,
+                            )
+                    elif(loExists==False)&(upExists==True):
+                        percentilesPairs = list(loadPercentilesTypes[1:])
+                        for UP in percentilesPairs:
+                            currentAx.fill_between(
+                                xData,
+                                plotData[UP],
+                                plotData[median],
+                                facecolor=colour,
+                                alpha=opacityPercentiles,
+                                interpolate=False,
+                            )
+                    else:
+                        pass
 
-                currentAx.plot(
-                    xData,
-                    plotData[median],
-                    label= label,
-                    color=colour,
-                    linestyle = linestyle,
-                    linewidth = linewidth,
+                    currentAx.plot(
+                        xData,
+                        plotData[median],
+                        label= label,
+                        color=colour,
+                        linestyle = linestyle,
+                        linewidth = linewidth,
+                    )
+                    locc = matplotlib.ticker.MaxNLocator(nbins=10,steps=[1, 2, 2.5, 5, 10],prune="both")
+                    currentAx.yaxis.set_major_locator(locc)
+                    currentAx.yaxis.set_minor_locator(locc)
+                    currentAx.tick_params(axis="both", which="both", direction="in", labelsize=fontsize)    
+                    currentAx.set_ylabel(ylabel[superParamKey], fontsize=fontsize)
+
+                    if titleBool is True:
+                        if "Stars" in selectKey:
+                            fig.suptitle(
+                                f"Median and Percentiles of"
+                                + "\n"
+                                + f" Stellar-{superParamKey} vs {xParam}",
+                                fontsize=fontsizeTitle,
+                            )
+
+                        elif "col" in selectKey:
+                            fig.suptitle(
+                                f"Median and Percentiles of"
+                                + "\n"
+                                + f" Projected Maps of {superParamKey} vs {xParam}",
+                                fontsize=fontsizeTitle,
+                            )    
+
+                        else:
+                            fig.suptitle(
+                                f"Median and Percentiles of"
+                                + "\n"
+                                + f" {superParamKey} vs {xParam}",
+                                fontsize=fontsizeTitle,
+                            )
+
+                if subfigures==False: 
+                    locc = matplotlib.ticker.AutoLocator()
+                    currentAx.xaxis.set_major_locator(locc)
+                    currentAx.xaxis.set_minor_locator(locc)
+                    currentAx.tick_params(axis="both", which="both", direction="in", labelsize=fontsize)    
+                    
+                    currentAx.set_xlabel(ylabel[xParam], fontsize=fontsize)
+
+                if (skipBool == True):
+                    print(
+                        f"Variable {superParamKey} plot failed (reason should have been printed to stdout above). Skipping plot...")
+                    continue
+
+
+                if (len(yminlist) == 0) | (len(ymaxlist) == 0):
+                    print(
+                        f"[@medians_versus_plot]: Variable {superParamKey} has no ymin or ymax. Skipping plot..."
+                    )
+                    continue
+
+                try:
+                    xmin, xmax =(
+                    xlimDict[xParam]["xmin"], xlimDict[xParam]["xmax"]
+                    )
+                except:
+                    xmin, xmax, = ( np.nanmin(xData), np.nanmax(xData))
+
+                try:
+                    finalymin, finalymax =(
+                    xlimDict[superParamKey]["xmin"], xlimDict[superParamKey]["xmax"]
+                    )
+                except:
+                    finalymin, finalymax, = ( np.nanmin(yminlist), np.nanmax(ymaxlist))
+
+
+                if (
+                    (np.isinf(finalymin) == True)
+                    or (np.isinf(finalymax) == True)
+                    or (np.isnan(finalymin) == True)
+                    or (np.isnan(finalymax) == True)
+                ):
+                    print("[@medians_versus_plot]: Data All Inf/NaN! Skipping entry!")
+                    continue
+
+                custom_xlim = (xmin, xmax)
+                custom_ylim = (finalymin, finalymax)
+                # xticks = [round_it(xx,2) for xx in np.linspace(min(xData),max(xData),5)]
+                # custom_xlim = (min(xData),max(xData)*1.05)
+                # if xParam == "R":
+                #     if PARAMS[selectKeyShort]['analysisType'] == "cgm":
+                #         ax.fill_betweenx([finalymin,finalymax],0,min(xData), color="tab:gray",alpha=opacityPercentiles)
+                #         custom_xlim = (0,max(xData)*1.05)
+                #     else:
+                #         custom_xlim = (0,max(xData)*1.05)
+                # ax.set_xticks(xticks)
+                if ((label != "")&(legendBool == True)): currentAx.legend(loc="best", fontsize=fontsize)
+
+                plt.setp(
+                    currentAx,
+                    ylim=custom_ylim,
+                    xlim=custom_xlim
                 )
+                # plt.tight_layout()
 
-                currentAx.xaxis.set_minor_locator(AutoMinorLocator())
-                currentAx.yaxis.set_minor_locator(AutoMinorLocator())
-                currentAx.tick_params(
-                    axis="both", which="both", labelsize=fontsize)
-
-                currentAx.set_ylabel(
-                    ylabel[analysisParam], fontsize=fontsize)
+                if snapNumber is not None:
+                    if str(snapNumber).isdigit() is True:
+                        SaveSnapNumber = "_" + str(snapNumber).zfill(4)
+                    else:
+                        SaveSnapNumber = "_" + str(snapNumber)
+                else:
+                    SaveSnapNumber = ""
 
                 if titleBool is True:
-                    if "Stars" in selectKey:
-                        fig.suptitle(
-                            f"Median and Percentiles of"
-                            + "\n"
-                            + f" Stellar-{analysisParam} vs {xParam}",
-                            fontsize=fontsizeTitle,
-                        )
-
-                    elif "col" in selectKey:
-                        fig.suptitle(
-                            f"Median and Percentiles of"
-                            + "\n"
-                            + f" Projected Maps of {analysisParam} vs {xParam}",
-                            fontsize=fontsizeTitle,
-                        )    
-
-                    else:
-                        fig.suptitle(
-                            f"Median and Percentiles of"
-                            + "\n"
-                            + f" {analysisParam} vs {xParam}",
-                            fontsize=fontsizeTitle,
-                        )
-
-            ax.set_xlabel(ylabel[xParam], fontsize=fontsize)
-
-            if (skipBool == True):
-                print(
-                    f"Variable {analysisParam} plot failed (reason should have been printed to stdout above). Skipping plot...")
-                continue
-
-
-            if (len(yminlist) == 0) | (len(ymaxlist) == 0):
-                print(
-                    f"[@medians_versus_plot]: Variable {analysisParam} has no ymin or ymax. Skipping plot..."
-                )
-                continue
-
-            try:
-                xmin, xmax =(
-                xlimDict[xParam]["xmin"], xlimDict[xParam]["xmax"]
-                )
-            except:
-                xmin, xmax, = ( np.nanmin(xData), np.nanmax(xData))
-
-            try:
-                finalymin, finalymax =(
-                xlimDict[analysisParam]["xmin"], xlimDict[analysisParam]["xmax"]
-                )
-            except:
-                finalymin, finalymax, = ( np.nanmin(yminlist), np.nanmax(ymaxlist))
-
-
-            if (
-                (np.isinf(finalymin) == True)
-                or (np.isinf(finalymax) == True)
-                or (np.isnan(finalymin) == True)
-                or (np.isnan(finalymax) == True)
-            ):
-                print("[@medians_versus_plot]: Data All Inf/NaN! Skipping entry!")
-                continue
-
-            custom_xlim = (xmin, xmax)
-            custom_ylim = (finalymin, finalymax)
-            # xticks = [round_it(xx,2) for xx in np.linspace(min(xData),max(xData),5)]
-            # custom_xlim = (min(xData),max(xData)*1.05)
-            # if xParam == "R":
-            #     if PARAMS[selectKeyShort]['analysisType'] == "cgm":
-            #         ax.fill_betweenx([finalymin,finalymax],0,min(xData), color="tab:gray",alpha=opacityPercentiles)
-            #         custom_xlim = (0,max(xData)*1.05)
-            #     else:
-            #         custom_xlim = (0,max(xData)*1.05)
-            # ax.set_xticks(xticks)
-            if ((label != "")&(legendBool == True)): ax.legend(loc="best", fontsize=fontsize)
-
-            plt.setp(
-                ax,
-                ylim=custom_ylim,
-                xlim=custom_xlim
-            )
-            # plt.tight_layout()
-
-            if snapNumber is not None:
-                if str(snapNumber).isdigit() is True:
-                    SaveSnapNumber = "_" + str(snapNumber).zfill(4)
+                    plt.subplots_adjust(top=0.875, hspace=0.1, left=0.15)
                 else:
-                    SaveSnapNumber = "_" + str(snapNumber)
-            else:
-                SaveSnapNumber = ""
+                    plt.subplots_adjust(hspace=0.1, left=0.15)
 
-            if titleBool is True:
-                plt.subplots_adjust(top=0.875, hspace=0.1, left=0.15)
-            else:
-                plt.subplots_adjust(hspace=0.1, left=0.15)
+                if subfigures == False:
+                    if "Stars" in selectKey:
+                        opslaan = savePath + \
+                            f"Stellar-{superParamKey}_Medians{SaveSnapNumber}"
+                    elif "col" in selectKey:
+                        opslaan = savePath + \
+                            f"Projection-Mapped-{superParamKey}_Medians{SaveSnapNumber}"
+                    else:
+                        opslaan = savePath + f"{superParamKey}_Medians{SaveSnapNumber}"
 
-            if "Stars" in selectKey:
-                opslaan = savePath + \
-                    f"Stellar-{analysisParam}_Medians{SaveSnapNumber}"
-            elif "col" in selectKey:
-                opslaan = savePath + \
-                    f"Projection-Mapped-{analysisParam}_Medians{SaveSnapNumber}"
-            else:
-                opslaan = savePath + f"{analysisParam}_Medians{SaveSnapNumber}"
 
-            if combineMultipleOntoAxis is True: opslaan = opslaan + "-Simulations-Combined"
+                    if combineMultipleOntoAxis is True: opslaan = opslaan + "-Simulations-Combined"
 
-            plt.savefig(opslaan + ".pdf", dpi=DPI, transparent=False)
-            matplotlib.rc_file_defaults()
-            plt.close("all")
-            print(opslaan)
-            plt.close()
+                    plt.savefig(opslaan + ".pdf", dpi=DPI, transparent=False)
+                    matplotlib.rc_file_defaults()
+                    plt.close("all")
+                    print(opslaan)
+                    plt.close()
+                else:
+                    if ((sharex == True)&(sharey == True)):plt.subplots_adjust(hspace=0.0, wspace=0.0, top=0.95, bottom=0.05, left=0.20, right=0.95)
+                    elif (sharex == True):plt.subplots_adjust(hspace=0.0, top=0.95, bottom=0.05, left=0.20, right=0.95)
+                    elif (sharey == True):plt.subplots_adjust(wspace=0.0, top=0.95, bottom=0.05, left=0.20, right=0.95)
 
+    if subfigures:        
+        if "Stars" in selectKey:
+            opslaan = savePath + \
+                f"Subfigure-Stellar_Medians{SaveSnapNumber}"
+        elif "col" in selectKey:
+            opslaan = savePath + \
+                f"Subfigure-Projection-Mapped_Medians{SaveSnapNumber}"
+        else:
+            opslaan = savePath + f"Subfigure_Medians{SaveSnapNumber}"
+        if combineMultipleOntoAxis is True: opslaan = opslaan + "-Simulations-Combined"
+
+        locc = matplotlib.ticker.MaxNLocator(nbins=6,steps=[1, 2, 2.5, 5, 10],prune="both")
+
+        for ax in axes[-1,:]:
+            ax.xaxis.set_major_locator(locc)
+            ax.xaxis.set_minor_locator(locc)
+            ax.tick_params(
+                axis="both", which="both", direction="in", labelsize=fontsize)
+            ax.set_xlabel(
+                ylabel[xParam], fontsize=fontsize)           
+
+        plt.savefig(opslaan + ".pdf", dpi=DPI, transparent=False)
+        matplotlib.rc_file_defaults()
+        plt.close("all")
+        print(opslaan)
+        plt.close()
     if (saveFigureData is True)&(replotFromData is False)&(combineMultipleOntoAxis is False):
         print("\n"+"[@medians_versus_plot]: saveFigureData is redundant for this plot type. Save data from calculate_statistics calls instead!")
 
@@ -3720,10 +4032,14 @@ def cr_medians_versus_plot(
     linewidth=1.0,
     opacityPercentiles=0.25,
     colourmapMain="tab10",
+    colourmapsUnique = {},
     savePathBase ="./",
     savePathBaseFigureData = "./",
     inplace = False,
     saveFigureData = False,
+    subfigures = False,
+    sharex = False,
+    sharey = False,
     allowPlotsWithoutxlimits = False,
     replotFromData = False,
     combineMultipleOntoAxis = False,
@@ -3810,11 +4126,15 @@ def cr_medians_versus_plot(
                     linewidth=linewidth,
                     opacityPercentiles=opacityPercentiles,
                     colourmapMain=colourmapMain,
+                    colourmapsUnique=colourmapsUnique,
                     savePathBase = savePath,
                     savePathBaseFigureData = savePathBaseFigureData,
                     allowPlotsWithoutxlimits = allowPlotsWithoutxlimits,
                     inplace = inplace,
                     saveFigureData=saveFigureData,
+                    subfigures = subfigures,
+                    sharex = sharex,
+                    sharey = sharey,
                     replotFromData = replotFromData,
                     combineMultipleOntoAxis = combineMultipleOntoAxis,
                     selectKeysList = selectKeysList,
@@ -3907,11 +4227,15 @@ def cr_medians_versus_plot(
                     linewidth=linewidth,
                     opacityPercentiles=opacityPercentiles,
                     colourmapMain=colourmapMain,
+                    colourmapsUnique=colourmapsUnique,
                     savePathBase = savePath,
                     savePathBaseFigureData = savePathBaseFigureData,
                     allowPlotsWithoutxlimits = allowPlotsWithoutxlimits,
                     inplace = inplace,
                     saveFigureData=saveFigureData,
+                    subfigures = subfigures,
+                    sharex = sharex,
+                    sharey = sharey,
                     replotFromData = replotFromData,
                     combineMultipleOntoAxis = combineMultipleOntoAxis,
                     selectKeysList = selectKeysList,
@@ -4216,14 +4540,18 @@ def cr_load_slice_plot_data(
     selectKeyLen=3,
     delimiter="-",
     stack = None,
+    allowFindOtherAxesData = False,
     verbose = False,
     hush = False,
     ):
+
+    from itertools import permutations
 
     out = {}
 
     #Legacy labelling... 
     AxesLabels = ["x","y","z"]
+    
 
     for selectKey in selectKeysList:
         if ("Stars" in selectKey) | ("col" in selectKey) :
@@ -4243,6 +4571,7 @@ def cr_load_slice_plot_data(
         if loadpath is not None:
             inner = {}
             for param in sliceParam:
+                fileFound = False
                 if verbose: print(f"{CRPARAMS[selectKeyShort]['resolution']}, {CRPARAMS[selectKeyShort]['CR_indicator']}{CRPARAMS[selectKeyShort]['no-alfven_indicator']}")
 
                 paramSplitList = param.split("_")
@@ -4279,11 +4608,69 @@ def cr_load_slice_plot_data(
                         selectKeyLen = selectKeyLen,
                         delimiter=delimiter,
                         )
+                    inner.update(tmp)
+                    fileFound = True
                 except Exception as e:
                     if hush == False: print(str(e))
                     if hush == False: print("File not found! Skipping ...")
-                    continue
-                inner.update(tmp)
+                    fileFound = False
+                    if allowFindOtherAxesData == False :
+                        continue
+
+                    
+                if ((fileFound == False) & (allowFindOtherAxesData == True)):
+                        possibleAxes = permutations(range(len(AxesLabels)),2)
+                        print(f"[@cr_load_slice_plot_data]: Data not found for Axes selection provided for"
+                              + "\n"
+                              + f"{loadPathFigureData}"
+                              + "\n"
+                              +"Attempting to recover other single-axis data!")
+                        for ax0, ax1 in possibleAxes:
+                            print(f"[@cr_load_slice_plot_data]: Attempting {AxesLabels[ax0]} {AxesLabels[ax1]} data load...")
+                            paramSplitList = param.split("_")
+
+
+                            if paramSplitList[-1] == "col":
+                                ## If _col variant is called we want to calculate a projection of the non-col parameter
+                                ## Thus, we force projection to now be true, and incorporate a dummy variable tmpsliceParam
+                                ## to force plots to generate non-col variants but save output as column density version
+
+                                tmpsliceParam = "_".join(paramSplitList[:-1])
+                                projection = True
+                            else:
+                                tmpsliceParam = param
+                                projection = False
+
+                            if ("Stars" in selectKey):
+                                simSavePath = f"type-{CRPARAMS[selectKeyShort]['analysisType']}/{CRPARAMS[selectKeyShort]['halo']}/"+f"{CRPARAMS[selectKeyShort]['resolution']}/{CRPARAMS[selectKeyShort]['CR_indicator']}"+f"{CRPARAMS[selectKeyShort]['no-alfven_indicator']}/Stars/"
+                            elif ("col" in selectKey):
+                                simSavePath = f"type-{CRPARAMS[selectKeyShort]['analysisType']}/{CRPARAMS[selectKeyShort]['halo']}/"+f"{CRPARAMS[selectKeyShort]['resolution']}/{CRPARAMS[selectKeyShort]['CR_indicator']}"+f"{CRPARAMS[selectKeyShort]['no-alfven_indicator']}/Col-Projection-Mapped/"
+                            else:
+                                simSavePath = f"type-{CRPARAMS[selectKeyShort]['analysisType']}/{CRPARAMS[selectKeyShort]['halo']}/"+f"{CRPARAMS[selectKeyShort]['resolution']}/{CRPARAMS[selectKeyShort]['CR_indicator']}"+f"{CRPARAMS[selectKeyShort]['no-alfven_indicator']}/"
+
+                            if projection is False:
+                                loadPathFigureData = simSavePath + "/Plots/Slices/" + f"Slice_Plot_{AxesLabels[ax0]}-{AxesLabels[ax1]}_{param}{SaveSnapNumber}"
+                            else:
+                                loadPathFigureData = simSavePath + "/Plots/Slices/" + f"Projection_Plot_{AxesLabels[ax0]}-{AxesLabels[ax1]}_{param}{SaveSnapNumber}" 
+
+                            datapath = loadPathBase + loadPathFigureData
+                            if verbose: print("\n"+f"[@{int(snapNumber)}]: Loading {loadPathFigureData}")
+                            try:
+                                tmp = tr.hdf5_load(
+                                    datapath+"_data.h5",
+                                    selectKeyLen = selectKeyLen,
+                                    delimiter=delimiter,
+                                    )
+                                inner.update(tmp)
+                                print(f"[@cr_load_slice_plot_data]: {AxesLabels[ax0]} {AxesLabels[ax1]} data load successful!")
+                                fileFound = True
+                                break
+                            except Exception as e:
+                                fileFound = False
+                                if hush == False: print(str(e))
+                                if hush == False: print("File not found! Skipping ...")
+                                
+                            
             out.update({selectKey : copy.deepcopy(inner)})
 
     return out
