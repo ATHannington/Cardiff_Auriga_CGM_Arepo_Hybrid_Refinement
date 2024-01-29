@@ -27,7 +27,7 @@ Nbins = 250
 snapStart = 100
 snapEnd = 127 #116
 verbose = False
-forceYAxisLog = False
+forceLogPDF = False
 numthreads = 18
 
 loadPathBase = "/home/cosmos/"
@@ -198,7 +198,7 @@ if __name__ == "__main__":
             snapNumber,
             weightKeys = ['mass'],
             xParams = ["R"],
-            forceYAxisLog = forceYAxisLog,
+            forceLogPDF = forceLogPDF,
         )
 
         print(
@@ -214,7 +214,7 @@ if __name__ == "__main__":
             weightKeys = ['mass'],
             xParams = ["R"],
             cumulative = True,
-            forceYAxisLog = forceYAxisLog,
+            forceLogPDF = forceLogPDF,
 
         )
 
@@ -232,7 +232,7 @@ if __name__ == "__main__":
             xParams = ["R"],
             cumulative = True,
             normalise = True,
-            forceYAxisLog = forceYAxisLog,
+            forceLogPDF = forceLogPDF,
 
         )
 
@@ -249,7 +249,7 @@ if __name__ == "__main__":
         #    weightKeys = ['mass'],
         #    xParams = ["R"],
         #    byType = True,
-        #    forceYAxisLog = forceYAxisLog,
+        #    forceLogPDF = forceLogPDF,
         #)
 
         #print(
@@ -266,7 +266,7 @@ if __name__ == "__main__":
         #    xParams = ["R"],
         #    cumulative = True,
         #    byType = True,
-        #    forceYAxisLog = forceYAxisLog,
+        #    forceLogPDF = forceLogPDF,
         #)
 
         #print(
@@ -284,7 +284,7 @@ if __name__ == "__main__":
         #    cumulative = True,
         #    byType = True,
         #    normalise = True,
-        #    forceYAxisLog = forceYAxisLog,
+        #    forceLogPDF = forceLogPDF,
         #)
 
         print(
@@ -300,7 +300,7 @@ if __name__ == "__main__":
             weightKeys = ['gima'],
             xParams = ["age"],
             SFR = True,
-            forceYAxisLog = forceYAxisLog,
+            forceLogPDF = forceLogPDF,
         )
 
         print(
@@ -317,7 +317,7 @@ if __name__ == "__main__":
             xParams = ["age"],
             cumulative = True,
             SFR = True,
-            forceYAxisLog = forceYAxisLog,
+            forceLogPDF = forceLogPDF,
         )
 
         print(
@@ -335,7 +335,7 @@ if __name__ == "__main__":
             cumulative = True,
             normalise = True,
             SFR = True,
-            forceYAxisLog = forceYAxisLog,
+            forceLogPDF = forceLogPDF,
         )
 
         print(
@@ -351,7 +351,7 @@ if __name__ == "__main__":
             snapNumber,
             weightKeys = ['mass'],
             xParams = ["T","vol","n_H"],
-            forceYAxisLog = forceYAxisLog,
+            forceLogPDF = forceLogPDF,
         )
 
 
@@ -368,7 +368,7 @@ if __name__ == "__main__":
             weightKeys = ['mass'],
             xParams = ["T","vol","n_H"],
             cumulative = True,
-            forceYAxisLog = forceYAxisLog,
+            forceLogPDF = forceLogPDF,
         )
 
         print(
@@ -385,7 +385,7 @@ if __name__ == "__main__":
             xParams = ["T","vol","n_H"],
             cumulative = True,
             normalise = True,
-            forceYAxisLog = forceYAxisLog,
+            forceLogPDF = forceLogPDF,
         )
 
     print("***")
