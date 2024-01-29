@@ -59,7 +59,7 @@
 
   "saveAllAxesImages" : false,
   
-  "forceYAxisLog": false,
+  "forceLogPDF": false,
   
   "numthreads": 28,
   
@@ -87,7 +87,7 @@
   
   "ysize": 5.5,
   
-  "colourmapMain": "Spectral",
+  "colourmapMain": "Spectral_r",
   
   "titleBool": false,
   
