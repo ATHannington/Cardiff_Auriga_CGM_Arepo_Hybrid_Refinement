@@ -28,13 +28,13 @@ plt.rcParams.update(matplotlib.rcParamsDefault)
 inplace = False
 
 stack = True
-DEBUG = False
+DEBUG = True
 
 HYPARAMSPATH = "HYParams.json"
 HYPARAMS = json.load(open(HYPARAMSPATH, "r"))
 
 
-#if "mass"not in HYPARAMS["colParams"]:
+#if "mass" not in HYPARAMS["colParams"]:
 #    HYPARAMS["colParams"]+=["mass"]
 
 if HYPARAMS["ageWindow"] is not None:
@@ -42,7 +42,7 @@ if HYPARAMS["ageWindow"] is not None:
 else:
     HYPARAMS["SFRBins"]  = HYPARAMS["Nbins"] 
 
-loadPathBase = ""
+loadPathBase = "/home/universe/c1838736/Hybrid_Refinement/"
 loadDirectories = [
 
     "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/",
@@ -61,21 +61,23 @@ loadDirectories = [
     ]
 
 styleDictGroupingKeys = {
-    "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/": ("surge","500pc","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/": ("surge","1kpc","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/": ("hy","500pc","final","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/": ("hy","1kpc","final","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/": ("hy","1kpc","l3-mass","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/": ("hy","1kpc","hard","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/": ("std","L3"), 
-    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/": ("std","L4"),
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/": ("std","L5"),
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/": ("surge","2kpc","L5"),
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc/": ("surge","1kpc","L5"),
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/": ("hy","2kpc","final","L5"),
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/": ("hy","1kpc","final","L5"),
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/" : ("surge","500pc","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/" : ("surge","1kpc","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/" : ("hy","500pc","final","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/" : ("hy","1kpc","final","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/" : ("hy","1kpc","l3-mass","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/" : ("hy","1kpc","hard","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/" : ("std","L3"), 
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/" : ("std","L4"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/" : ("std","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/" : ("surge","2kpc","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc/" : ("surge","1kpc","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/" : ("hy","2kpc","final","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/" : ("hy","1kpc","final","L5"),
 }
 
+ordering = list(styleDictGroupingKeys.values())
+keepPercentiles = []
 
 simulations = []
 savePaths = []
@@ -101,76 +103,89 @@ snapRange = [
     ]
 
 ylabel = {
-    "T": r"Temperature (K)",
-    "R": r"Radius (kpc)",
+    "T": r"T (K)",
+    "R": r"R (kpc)",
     "n_H": r"n$_{\mathrm{H}}$ (cm$^{-3}$)",
     "n_H_col": r"N$_{\mathrm{H}}$ (cm$^{-2}$)",
     "n_HI": r"n$_{\mathrm{HI}}$ (cm$^{-3}$)",
     "n_HI_col": r"N$_{\mathrm{HI}}$ (cm$^{-2}$)",
     "nh": r"Neutral Hydrogen Fraction",
     "B": r"|B| ($ \mu $G)",
-    "vrad": r"Radial Velocity (km s$^{-1}$)",
-    "vrad_in": r"Inflow Velocity (km s$^{-1}$)",
-    "vrad_out": r"Outflow Velocity (km s$^{-1}$)",
-    "gz": r"Metallicity Z$_{\odot}$",
-    "L": r"Specific Angular Momentum"+ "\n"+ r"(kpc km s$^{-1}$)",
-    "P_thermal": r"P$_{Thermal}$ (erg cm$^{-3}$)",
-    "P_magnetic": r"P$_{Magnetic}$ (erg cm$^{-3}$)",
-    "P_kinetic": r"P$_{Kinetic}$ (erg cm$^{-3}$)",
+    "vrad": r"$v_{\mathrm{r}}$ (km s$^{-1}$)",
+    "vrad_in": r"$v_{\mathrm{r}}$ (km s$^{-1}$)",
+    "vrad_out": r"$v_{\mathrm{r}}$ (km s$^{-1}$)",
+    "gz": r"Z/Z$_{\odot}$",
+    "L": r"L" + "\n" + r"(kpc km s$^{-1}$)",
+    "Pressure": r"P (erg cm$^{-3}$)",
+    "P_thermal": r"P$_{\mathrm{Th}}$ (erg cm$^{-3}$)",
+    "P_magnetic": r"P$_{\mathrm{B}}$ (erg cm$^{-3}$)",
+    "P_kinetic": r"P$_{\mathrm{Kin}}$(erg cm$^{-3}$)",
     "P_tot": r"P$_{\mathrm{Tot}}$ (erg cm$^{-3}$)",
     "P_tot+k": r"P$_{\mathrm{Tot}}$ (erg cm$^{-3}$)",
-    "Pthermal_Pmagnetic": r"P$_{thermal}$/P$_{magnetic}$",
+    "Pthermal_Pmagnetic": r"P$_{\mathrm{Th}}$/P$_{\mathrm{B}}$",
     "P_CR": r"P$_{\mathrm{CR}}$ (erg cm$^{-3}$)",
-    "PCR_Pmagnetic": r"P$_{\mathrm{CR}}$/P$_{magnetic}$",
-    "PCR_Pthermal": r"(X$_{\mathrm{CR}}$ = P$_{\mathrm{CR}}$/P$_{Thermal}$)",
-    "gah": r"Alfven Gas Heating (erg s$^{-1}$)",
-    "bfld": r"||B-Field|| ($ \mu $G)",
-    "Grad_T": r"||Temperature Gradient|| (K kpc$^{-1}$)",
-    "Grad_n_H": r"||n$_{\mathrm{H}}$ Gradient|| (cm$^{-3}$ kpc$^{-1}$)",
-    "Grad_bfld": r"||B-Field Gradient|| ($ \mu $G kpc$^{-1}$)",
-    "Grad_P_CR": r"||P$_{\mathrm{CR}}$ Gradient|| (erg kpc$^{-4}$)",
-    "gima": r"Star Formation Rate (M$_{\odot}$ yr$^{-1}$)",
-    # "crac": r"Alfven CR Cooling (erg s$^{-1}$)",
-    "tcool": r"Cooling Time (Gyr)",
-    "theat": r"Heating Time (Gyr)",
-    "tcross": r"Sound Crossing Cell Time (Gyr)",
-    "tff": r"Free Fall Time (Gyr)",
-    "tcool_tff": r"t$_{\mathrm{Cool}}$/t$_{FreeFall}$",
-    "csound": r"Sound Speed (km s$^{-1}$)",
+    "PCR_Pmagnetic" : r"P$_{\mathrm{CR}}$/P$_{\mathrm{B}}$",
+    "PCR_Pthermal": r"P$_{\mathrm{CR}}$/P$_{\mathrm{Th}}$",
+    "gah": r"Alfvén Gas Heating (erg s$^{-1}$)",
+    "bfld": r"$\mathbf{B}$ ($ \mu $G)",
+    "Grad_T": r"||$\nabla$ T|| (K kpc$^{-1}$)",
+    "Grad_n_H": r"||$\nabla$ n$_{\mathrm{H}}$|| (cm$^{-3}$ kpc$^{-1}$)",
+    "Grad_bfld": r"||$\nabla$ $\mathrm{B}$|| ($ \mu $G kpc$^{-1}$)",
+    "Grad_P_CR": r"||P$_{\mathrm{CR}}$|| (erg kpc$^{-4}$)",
+    "gima" : r"SFR (M$_{\odot}$ yr$^{-1}$)",
+    # "crac" : r"Alfvén CR Cooling (erg s$^{-1}$)",
+    "tcool": r"t$_{\mathrm{Cool}}$ (Gyr)",
+    "theat": r"t$_{\mathrm{Heat}}$ (Gyr)",
+    "tcross": r"t$_{\mathrm{Sound}}$ (Gyr)",
+    "tff": r"t$_{\mathrm{FF}}$ (Gyr)",
+    "tcool_tff": r"t$_{\mathrm{Cool}}$/t$_{\mathrm{FF}}$",
+    "csound": r"c$_{\mathrm{s}}$ (km s$^{-1}$)",
     "rho_rhomean": r"$\rho / \langle \rho \rangle$",
-    "rho": r"Density (M$_{\odot}$ kpc$^{-3}$)",
-    "dens": r"Density (g cm$^{-3}$)",
-    "ndens": r"Number density (cm$^{-3}$)",
+    "rho": r"$\rho$ (M$_{\odot}$ kpc$^{-3}$)",
+    "dens": r"$\rho$  (g cm$^{-3}$)",
+    "ndens": r"n (cm$^{-3}$)",
     "mass": r"Mass (M$_{\odot}$)",
     "vol": r"Volume (kpc$^{3}$)",
     "age": "Lookback Time (Gyr)",
-    "cool_length": "Cooling Length (kpc)",
-    "halo": "FoF Halo",
-    "subhalo": "SubFind Halo",
+    "cool_length" : "Cooling Length (kpc)",
+    "halo" : "FoF Halo",
+    "subhalo" : "SubFind Halo",
     "x": r"x (kpc)",
     "y": r"y (kpc)",
     "z": r"z (kpc)",
-    "count": r"Number of data points per pixel",
-    "e_CR": r"Cosmic Ray Energy Density (eV cm$^{-3}$)",
+    "count": r"Count per pixel",
+    "e_CR": r"$\epsilon_{\mathrm{CR}}$ (eV cm$^{-3}$)",
 }
 
 colImagexlimDict ={
     "n_H_col": {"xmin": 19.0, "xmax": 21.5},
-    "n_HI_col": {"xmin": 14.0, "xmax": 21.5},
+    "n_HI_col" : {"xmin": 14.0, "xmax": 21.5},
     "n_H": {"xmin": -5.5, "xmax": -2.5},
     }
 
+imageCmapDict = {
+    "Pressure": "tab10",
+    "vrad": "seismic",
+    "vrad_out": "Reds",
+    "vrad_in": "Blues",
+    "n_H": (HYPARAMS["colourmapMain"].split("_"))[0],
+    "n_HI": (HYPARAMS["colourmapMain"].split("_"))[0],
+    "n_H_col": (HYPARAMS["colourmapMain"].split("_"))[0],
+    "n_HI_col": (HYPARAMS["colourmapMain"].split("_"))[0],
+}
 xlimDict = {
-    "R": {"xmin": 0.0, "xmax": 200.0},
+    "R": {"xmin": 0.0, "xmax": HYPARAMS["Router"]},
     "mass": {"xmin": 4.0, "xmax": 9.0},
     "L": {"xmin": 1.5, "xmax": 4.5},
     "T": {"xmin": 3.5, "xmax": 7.0},
     "n_H": {"xmin": -6.0, "xmax": 1.0},
-    "n_HI": {"xmin": -13.0, "xmax": 0.0},
+    "n_HI" : {"xmin": -13.0, "xmax": 0.0},
     "n_H_col": {"xmin": 19.0, "xmax": 21.5},
-    "n_HI_col": {"xmin": 12.0, "xmax": 21.5},
+    "n_HI_col" : {"xmin": 12.0, "xmax": 21.5},
     "B": {"xmin": -2.5, "xmax": 1.0},
-    "vrad": {"xmin": -100.0, "xmax": 100.0},
+    "vrad": {"xmin": -200.0, "xmax": 200.0},
+    "vrad_in": {"xmin": -200.0, "xmax": 200.0},
+    "vrad_out": {"xmin": -200.0, "xmax": 200.0},
     "gz": {"xmin": -2.0, "xmax": 1.0},
     "P_thermal": {"xmin": -19.5, "xmax": -10.0},
     "P_CR": {"xmin": -19.5, "xmax": -10.0},
@@ -189,11 +204,11 @@ xlimDict = {
     "dens": {"xmin": -30.0, "xmax": -22.0},
     "ndens": {"xmin": -6.0, "xmax": 2.0},
     "rho_rhomean": {"xmin": 0.25, "xmax": 6.5},
-    "rho": {"xmin": 2.0, "xmax": 7.0},
-    "vol": {"xmin": -2.0, "xmax": 3.0},
-    "cool_length": {"xmin": -1.0, "xmax": 2.0},
-    "csound": {},
-    "nh": {"xmin": -7.0, "xmax": 1.0},
+    "rho" : {"xmin": 2.0, "xmax": 7.0},
+    "vol": {"xmin": -2.0, "xmax" : 3.0},
+    "cool_length" : {"xmin": -1.0, "xmax": 2.0},
+    "csound" : {},
+    "nh" : {"xmin": -7.0, "xmax": 1.0},
     "e_CR": {"xmin": -8.0, "xmax": 0.0},
 }
 
@@ -208,7 +223,7 @@ xlimDict = {
 
 
 for entry in HYPARAMS["logParameters"]:
-    ylabel[entry] = r"$\mathrm{Log_{10}}$ "+ ylabel[entry]
+    ylabel[entry] = r"$\mathrm{Log_{10}}$ " + ylabel[entry]
     ylabel[entry] = ylabel[entry].replace("(","[")
     ylabel[entry] = ylabel[entry].replace(")","]")
 
@@ -217,7 +232,7 @@ deleteParams = []
 for entry in HYPARAMS["logParameters"]:
     entrySplit = entry.split("_")
     if (
-        ("Grad"in entrySplit) &
+        ("Grad" in entrySplit) &
         (np.any(np.isin(np.array(HYPARAMS["logParameters"]), np.array(
             "_".join(entrySplit[1:])))))
     ):
@@ -280,10 +295,109 @@ if __name__ == "__main__":
     for selectKey,dd in zip(selectKeysList,tmpstyleDict.values()):
         styleDict.update({selectKey : dd})
 
+
+    snapNumber=snapRange[-1]
+
+    sliceAndProjComparisonKey = [("std","L4")]
+    sliceAndProjComparisonPath = ["/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/"]
+    # loadpath = HYPARAMS["savepathdata"]
+
+    tmp = apt.hy_load_slice_plot_data(
+        sliceAndProjComparisonKey,
+        sliceAndProjComparisonPath,
+        PARAMS = HYPARAMSHALO,
+        snapNumber = snapNumber,
+        sliceParam = ["n_H","T","gz","vrad"],
+        Axes = HYPARAMS["Axes"],
+        projection=[False,False,False,False],
+        loadPathBase = loadPathBase,
+        loadPathSuffix = "",
+        selectKeyLen=1,
+        delimiter="-",
+        stack = None,
+        allowFindOtherAxesData = False,
+        verbose = DEBUG,
+        hush = not DEBUG,
+        )
+
+    orderedData = {}
+    for key in ordering:
+        if key in list(tmp.keys()):
+            orderedData.update({key : copy.deepcopy(tmp[key])})
+
+    tmp2 = apt.hy_load_slice_plot_data(
+        sliceAndProjComparisonKey,
+        sliceAndProjComparisonPath,
+        PARAMS = HYPARAMSHALO,
+        snapNumber = snapNumber,
+        sliceParam = ["n_H","T","gz","vrad"],
+        Axes = HYPARAMS["Axes"],
+        projection=[True,True,True,True],
+        loadPathBase = loadPathBase,
+        loadPathSuffix = "",
+        selectKeyLen=1,
+        delimiter="-",
+        stack = None,
+        allowFindOtherAxesData = False,
+        verbose = DEBUG,
+        hush = not DEBUG,
+        )
+    
+    orderedData2 = {}
+    for key in ordering:
+        if key in list(tmp2.keys()):
+            orderedData2.update({key : copy.deepcopy(tmp2[key])})
+
+    variableAdjust = "2"
+
+
+    for key,val in orderedData2.items():
+        tmpKey = list(key)
+        tmpKey2 = [variableAdjust] + tmpKey
+        newKey = tuple(tmpKey2)
+        orderedData.update({newKey: copy.deepcopy(val)})
+
+    tmpdict = apt.plot_slices(orderedData,
+        ylabel=ylabel,
+        xlimDict=xlimDict,
+        logParameters = HYPARAMS["logParameters"],
+        snapNumber=snapNumber,
+        sliceParam = [["n_H","T","gz","vrad"]],
+        Axes=HYPARAMS["Axes"],
+        averageAcrossAxes = False,
+        saveAllAxesImages = HYPARAMS["saveAllAxesImages"],
+        xsize = HYPARAMS["xsizeImages"]*1.8,
+        ysize = HYPARAMS["ysizeImages"]*1.8,
+        fontsize = HYPARAMS["fontsize"],
+        colourmapMain = HYPARAMS["colourmapMain"],
+        colourmapsUnique = imageCmapDict,
+        boxsize = HYPARAMS["boxsize"],
+        boxlos = HYPARAMS["boxlos"],
+        pixreslos = HYPARAMS["pixreslos"],
+        pixres = HYPARAMS["pixres"],
+        projection = [[False,False,False,False]],
+        DPI = HYPARAMS["DPI"],
+        numthreads=HYPARAMS["numthreads"],
+        savePathBase = HYPARAMS["savepathfigures"],
+        savePathBaseFigureData = HYPARAMS["savepathdata"],
+        saveFigureData = False,
+        saveFigure = HYPARAMS["SaveImages"],
+        selectKeysList = None,
+        alignSelectKeys = "vertical",
+        subfigures = True,
+        subfigureDatasetLabelsBool = True,
+        subfigureDatasetLabelsDict = {("std","L4") : "L4 Std. Slice", (variableAdjust, "std","L4") : "L4 Std. Proj."},
+        subfigureOffAlignmentAxisLabels = False,
+        offAlignmentAxisLabels = None,
+        inplace = False,
+        replotFromData = True,
+    )
+    
+    STOP387
     snapNumber="Averaged"
 
     print(
-        "\n" + f"Time averaged Medians profile plots..."
+        f"Time averaged Medians profile plots..."
     )
     matplotlib.rc_file_defaults()
     plt.close("all")     
@@ -292,7 +406,7 @@ if __name__ == "__main__":
         selectKeysList,
         loadDirectories,
         snapRange,
-        loadPathBase = HYPARAMS["savepathdata"],
+        loadPathBase = loadPathBase,
         loadFile = "statsDict",
         fileType = ".h5",
         stack = True,
@@ -324,6 +438,7 @@ if __name__ == "__main__":
         ysize = HYPARAMS["ysize"],
         fontsize = HYPARAMS["fontsize"],
         fontsizeTitle = HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         opacityPercentiles = HYPARAMS["opacityPercentiles"],
         savePathBase = HYPARAMS["savepathfigures"],
         savePathBaseFigureData = HYPARAMS["savepathdata"],
@@ -332,12 +447,11 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         )
 
 
     print(
-        "\n" + f"Time averaged Gas PDF plots..."
+        f"Time averaged Gas PDF plots..."
     )
     matplotlib.rc_file_defaults()
     plt.close("all")     
@@ -346,16 +460,15 @@ if __name__ == "__main__":
         selectKeysList,
         loadDirectories,
         snapRange,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+        weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = HYPARAMS["pdfParams"] + [HYPARAMS["xParam"]],
         cumulative = False,
-        loadPathBase = HYPARAMS["savepathdata"],
+        loadPathBase = loadPathBase,
         loadPathSuffix = "",
         SFR = False,
         normalise = False,
         stack = True,
         verbose = DEBUG,
-        hush = ~DEBUG,
         )
 
     pdfOut = copy.deepcopy(tmp)    
@@ -369,16 +482,18 @@ if __name__ == "__main__":
             pdfOut[sKey].update(dataCopy)
 
     print(
-        "\n" + f"Histogram of gas mass plot"
+        f"PDF of gas mass plot"
     )
-
+    matplotlib.rc_file_defaults()
+    plt.close("all")   
+    
     apt.pdf_versus_plot(
         pdfOut,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'], #<<<< Need to rerun these with vol weights
+        weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -386,6 +501,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["Nbins"],
         ageWindow=None,
         cumulative = False,
@@ -396,20 +512,25 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = False,
         verbose = DEBUG,
     )
 
+    print(
+        f"Cumulative PDF of gas mass plot"
+    )
+
+    matplotlib.rc_file_defaults()
+    plt.close("all")  
     apt.pdf_versus_plot(
         pdfOut,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+        weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -417,6 +538,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["Nbins"],
         ageWindow=None,
         cumulative = True,
@@ -427,90 +549,24 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = False,
         verbose = DEBUG,
     )
 
     print(
-        "\n" + f"Histogram of H and HI density plots"
+        f"Normalised 'True' PDF of gas properties plot"
     )
-
+    matplotlib.rc_file_defaults()
+    plt.close("all")  
     apt.pdf_versus_plot(
         pdfOut,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'], #<<<< Need to rerun these with vol weights
-        xParams = ["n_H","n_HI"],
-        titleBool=HYPARAMS["titleBool"],
-        DPI=HYPARAMS["DPI"],
-        xsize=HYPARAMS["xsize"],
-        ysize=HYPARAMS["ysize"],
-        fontsize=HYPARAMS["fontsize"],
-        fontsizeTitle=HYPARAMS["fontsizeTitle"],
-        Nbins=HYPARAMS["Nbins"],
-        ageWindow=None,
-        cumulative = False,
-        savePathBase = HYPARAMS["savepathfigures"],
-        savePathBaseFigureData = HYPARAMS["savepathdata"],
-        saveFigureData = False,
-        replotFromData = True,
-        combineMultipleOntoAxis = True,
-        selectKeysList = None,
-        styleDict = styleDict,
-        hush = ~DEBUG,
-        SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
-        normalise = False,
-        verbose = DEBUG,
-    )
-
-    apt.pdf_versus_plot(
-        pdfOut,
-        ylabel,
-        xlimDict,
-        HYPARAMS["logParameters"],
-        snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'],
-        xParams = ["n_H","n_HI"],
-        titleBool=HYPARAMS["titleBool"],
-        DPI=HYPARAMS["DPI"],
-        xsize=HYPARAMS["xsize"],
-        ysize=HYPARAMS["ysize"],
-        fontsize=HYPARAMS["fontsize"],
-        fontsizeTitle=HYPARAMS["fontsizeTitle"],
-        Nbins=HYPARAMS["Nbins"],
-        ageWindow=None,
-        cumulative = True,
-        savePathBase = HYPARAMS["savepathfigures"],
-        savePathBaseFigureData = HYPARAMS["savepathdata"],
-        saveFigureData = False,
-        replotFromData = True,
-        combineMultipleOntoAxis = True,
-        selectKeysList = None,
-        styleDict = styleDict,
-        hush = ~DEBUG,
-        SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
-        normalise = False,
-        verbose = DEBUG,
-    )
-
-    print(
-        "\n" + f"PDF of gas plot"
-    )
-
-    apt.pdf_versus_plot(
-        pdfOut,
-        ylabel,
-        xlimDict,
-        HYPARAMS["logParameters"],
-        snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+        weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = HYPARAMS["pdfParams"] + [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -518,6 +574,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["Nbins"],
         ageWindow=None,
         cumulative = False,
@@ -528,24 +585,24 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = True,
         verbose = DEBUG,        
     )
 
     print(
-        "\n" + f"Cumulative PDF of gas plot"
+        f"Normalised Cumulative 'True' PDF of gas properties plot"
     )
-
+    matplotlib.rc_file_defaults()
+    plt.close("all")  
     apt.pdf_versus_plot(
         pdfOut,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+        weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = HYPARAMS["pdfParams"] + [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -553,6 +610,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["Nbins"],
         ageWindow=None,
         cumulative = True,
@@ -563,9 +621,8 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = True,
         verbose = DEBUG,
     )
@@ -584,7 +641,7 @@ if __name__ == "__main__":
     # # # # # for contamination of the subhalo by different dark matter resolution types,
     # # # # # and for ensuring any changes made to Arepo haven't broken the dark matter in an unintended way.
     # # # # print(
-    # # # #    "\n" + f"By Type PDF of mass vs R plot..."
+    # # # #    f"By Type PDF of mass vs R plot..."
     # # # # )
 
     # # # # apt.pdf_versus_plot(
@@ -593,17 +650,17 @@ if __name__ == "__main__":
     # # # #    xlimDict,
     # # # #    HYPARAMS["logParameters"],
     # # # #    snapNumber,
-    # # # #    weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+    # # # #    weightKeys = HYPARAMS['nonMassWeightDict'],
     # # # #    xParams = ["R"],
     # # # #    savePathBase = HYPARAMS["savepathfigures"],
     # # # #    savePathBaseFigureData = HYPARAMS["savepathdata"],
     # # # #    saveFigureData = True,
     # # # #    
-    # # # #    forceYAxisLog = HYPARAMS["forceYAxisLog"],
+    # # # #    forceLogPDF = HYPARAMS["forceLogPDF"],
     # # # # )
 
     # # # # print(
-    # # # #    "\n" + f"By Type Cumulative PDF of mass vs R plot..."
+    # # # #    f"By Type Cumulative PDF of mass vs R plot..."
     # # # # )
 
     # # # # apt.pdf_versus_plot(
@@ -612,18 +669,18 @@ if __name__ == "__main__":
     # # # #    xlimDict,
     # # # #    HYPARAMS["logParameters"],
     # # # #    snapNumber,
-    # # # #    weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+    # # # #    weightKeys = HYPARAMS['nonMassWeightDict'],
     # # # #    xParams = ["R"],
     # # # #    cumulative = True,
     # # # #    savePathBase = HYPARAMS["savepathfigures"],
     # # # #    savePathBaseFigureData = HYPARAMS["savepathdata"],
     # # # #    saveFigureData = True,
     # # # #    
-    # # # #    forceYAxisLog = HYPARAMS["forceYAxisLog"],
+    # # # #    forceLogPDF = HYPARAMS["forceLogPDF"],
     # # # # )
 
     # # # # print(
-    # # # #    "\n" + f"By Type Normalised Cumulative PDF of mass vs R plot..."
+    # # # #    f"By Type Normalised Cumulative PDF of mass vs R plot..."
     # # # # )
 
     # # # # apt.pdf_versus_plot(
@@ -632,7 +689,7 @@ if __name__ == "__main__":
     # # # #    xlimDict,
     # # # #    HYPARAMS["logParameters"],
     # # # #    snapNumber,
-    # # # #    weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+    # # # #    weightKeys = HYPARAMS['nonMassWeightDict'],
     # # # #    xParams = ["R"],
     # # # #    cumulative = True,
     # # # #    normalise = True,
@@ -640,7 +697,7 @@ if __name__ == "__main__":
     # # # #    savePathBaseFigureData = HYPARAMS["savepathdata"],
     # # # #    saveFigureData = True,
     # # # #    
-    # # # #    forceYAxisLog = HYPARAMS["forceYAxisLog"],
+    # # # #    forceLogPDF = HYPARAMS["forceLogPDF"],
     # # # # )
 
 
@@ -656,7 +713,7 @@ if __name__ == "__main__":
     #-----------------------------------------------#
 
     print(
-        "\n" + f"Time averaged Star properties PDF plots..."
+        f"Time averaged Star properties PDF plots..."
     )
     matplotlib.rc_file_defaults()
     plt.close("all")     
@@ -665,39 +722,40 @@ if __name__ == "__main__":
         selectKeysList,
         loadDirectories,
         [snapRange[-1]],
-        weightKeys = {"age" : "gima"},
+        weightKeys = ['gima'],
         xParams = ["age"],
         cumulative = False,
-        loadPathBase = HYPARAMS["savepathdata"],
+        loadPathBase = loadPathBase,
         loadPathSuffix = "",
         SFR = True,
         normalise = False,
         stack = True,
         verbose = DEBUG,
-        hush = ~DEBUG,
         )
-    #STOP606
+
     pdfOutStars = copy.deepcopy(tmp)    
 
-    # if (len(snapRange)>1)&(stack is True):
-    #     for sKey, data in pdfOutStars.items():
-    #         dataCopy = copy.deepcopy(data)
-    #         for key,dd in data.items():
-    #             for kk, value in dd.items():
-    #                 dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
-    #         pdfOutStars[sKey].update(dataCopy)
+    if (len(snapRange)>1)&(stack is True):
+        for sKey, data in pdfOutStars.items():
+            dataCopy = copy.deepcopy(data)
+            for key,dd in data.items():
+                for kk, value in dd.items():
+                    dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
+            pdfOutStars[sKey].update(dataCopy)
 
 
     print(
-        "\n" + f"SFR plot..."
+        f"SFR plot..."
     )
+    matplotlib.rc_file_defaults()
+    plt.close("all")  
     apt.pdf_versus_plot(
         pdfOutStars,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = {"age" : "gima"},
+        weightKeys = ['gima'],
         xParams = ["age"],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -705,6 +763,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["SFRBins"],
         ageWindow=HYPARAMS["ageWindow"],
         cumulative = False,
@@ -715,16 +774,16 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = True,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = False,
         verbose = DEBUG,     
     )
-
+    matplotlib.rc_file_defaults()
+    plt.close("all")  
 
     print(
-        "\n" + f"Cumulative SFR plot..."
+        f"Cumulative SFR plot..."
     )
 
     apt.pdf_versus_plot(
@@ -733,7 +792,7 @@ if __name__ == "__main__":
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = {"age" : "gima"},
+        weightKeys = ['gima'],
         xParams = ["age"],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -741,6 +800,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["SFRBins"],
         ageWindow=HYPARAMS["ageWindow"],
         cumulative = True,
@@ -751,16 +811,16 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = True,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = False,
         verbose = DEBUG,
     )
 
-
+    matplotlib.rc_file_defaults()
+    plt.close("all")  
     print(
-        "\n" + f"Normalised Cumulative SFR plot..."
+        f"Normalised Cumulative SFR plot..."
     )
 
     apt.pdf_versus_plot(
@@ -769,7 +829,7 @@ if __name__ == "__main__":
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = {"age" : "gima"},
+        weightKeys = ['gima'],
         xParams = ["age"],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -777,6 +837,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["SFRBins"],
         ageWindow=HYPARAMS["ageWindow"],
         cumulative = True,
@@ -787,9 +848,8 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = True,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = True,
         verbose = DEBUG,
     )
@@ -801,7 +861,7 @@ if __name__ == "__main__":
     #-----------------------------------------------#
 
     print(
-        "\n" + f"Histogram of CGM gas mass plot"
+        f"PDF of CGM gas mass plot"
     )   
     matplotlib.rc_file_defaults()
     plt.close("all")     
@@ -810,18 +870,16 @@ if __name__ == "__main__":
         selectKeysList,
         loadDirectories,
         snapRange,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+        weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = HYPARAMS["pdfParams"] + [HYPARAMS["xParam"]],
         cumulative = False,
-        loadPathBase = HYPARAMS["savepathdata"],
+        loadPathBase = loadPathBase,
         loadPathSuffix = "CGM_only/",
-        SFR = False,
         normalise = False,
         stack = True,
         verbose = DEBUG,
-        hush = ~DEBUG,
         )
-    
+
     pdfOutCGM = copy.deepcopy(tmp)    
 
     if (len(snapRange)>1)&(stack is True):
@@ -832,14 +890,15 @@ if __name__ == "__main__":
                     dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
             pdfOutCGM[sKey].update(dataCopy)
 
-
+    matplotlib.rc_file_defaults()
+    plt.close("all")  
     apt.pdf_versus_plot(
         pdfOutCGM,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'], #<<<< Need to rerun these with vol weights
+        weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -847,6 +906,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["Nbins"],
         ageWindow=None,
         cumulative = False,
@@ -857,20 +917,20 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = False,
         verbose = DEBUG,
     )
-
+    matplotlib.rc_file_defaults()
+    plt.close("all")  
     apt.pdf_versus_plot(
         pdfOutCGM,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+        weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -878,6 +938,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["Nbins"],
         ageWindow=None,
         cumulative = True,
@@ -888,89 +949,24 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = False,
         verbose = DEBUG,
     )
 
     print(
-        "\n" + f"Histogram of CGM H and HI density plots"
+        f"Normalised PDF of CGM gas plot"
     )
-
+    matplotlib.rc_file_defaults()
+    plt.close("all")  
     apt.pdf_versus_plot(
         pdfOutCGM,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'], #<<<< Need to rerun these with vol weights
-        xParams = ["n_H","n_HI"],
-        titleBool=HYPARAMS["titleBool"],
-        DPI=HYPARAMS["DPI"],
-        xsize=HYPARAMS["xsize"],
-        ysize=HYPARAMS["ysize"],
-        fontsize=HYPARAMS["fontsize"],
-        fontsizeTitle=HYPARAMS["fontsizeTitle"],
-        Nbins=HYPARAMS["Nbins"],
-        ageWindow=None,
-        cumulative = False,
-        savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
-        savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
-        saveFigureData = False,
-        replotFromData = True,
-        combineMultipleOntoAxis = True,
-        selectKeysList = None,
-        styleDict = styleDict,
-        hush = ~DEBUG,
-        SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
-        normalise = False,
-        verbose = DEBUG,
-    )
-
-    apt.pdf_versus_plot(
-        pdfOutCGM,
-        ylabel,
-        xlimDict,
-        HYPARAMS["logParameters"],
-        snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'],
-        xParams = ["n_H","n_HI"],
-        titleBool=HYPARAMS["titleBool"],
-        DPI=HYPARAMS["DPI"],
-        xsize=HYPARAMS["xsize"],
-        ysize=HYPARAMS["ysize"],
-        fontsize=HYPARAMS["fontsize"],
-        fontsizeTitle=HYPARAMS["fontsizeTitle"],
-        Nbins=HYPARAMS["Nbins"],
-        ageWindow=None,
-        cumulative = True,
-        savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
-        savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
-        saveFigureData = False,
-        replotFromData = True,
-        combineMultipleOntoAxis = True,
-        selectKeysList = None,
-        styleDict = styleDict,
-        hush = ~DEBUG,
-        SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
-        normalise = False,
-        verbose = DEBUG,
-    )
-    print(
-        "\n" + f"PDF of CGM gas plot"
-    )
-
-    apt.pdf_versus_plot(
-        pdfOutCGM,
-        ylabel,
-        xlimDict,
-        HYPARAMS["logParameters"],
-        snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+        weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = HYPARAMS["pdfParams"] + [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -978,6 +974,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["Nbins"],
         ageWindow=None,
         cumulative = False,
@@ -988,24 +985,24 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = True,
         verbose = DEBUG,        
     )
 
     print(
-        "\n" + f"Cumulative PDF of CGM gas plot"
+        f"Normalised Cumulative PDF of CGM gas plot"
     )
-
+    matplotlib.rc_file_defaults()
+    plt.close("all")  
     apt.pdf_versus_plot(
         pdfOutCGM,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
         snapNumber,
-        weightKeys = None, #HYPARAMS['nonMassWeightDict'],
+        weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = HYPARAMS["pdfParams"] + [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
         DPI=HYPARAMS["DPI"],
@@ -1013,6 +1010,7 @@ if __name__ == "__main__":
         ysize=HYPARAMS["ysize"],
         fontsize=HYPARAMS["fontsize"],
         fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
         Nbins=HYPARAMS["Nbins"],
         ageWindow=None,
         cumulative = True,
@@ -1023,9 +1021,8 @@ if __name__ == "__main__":
         combineMultipleOntoAxis = True,
         selectKeysList = None,
         styleDict = styleDict,
-        hush = ~DEBUG,
         SFR = False,
-        forceYAxisLog = HYPARAMS["forceYAxisLog"],
+        forceLogPDF = HYPARAMS["forceLogPDF"],
         normalise = True,
         verbose = DEBUG,
     )
@@ -1062,7 +1059,7 @@ if __name__ == "__main__":
 
         # If there are other params to be tracked for col params, we need to create a projection
         # of them so as to be able to map these projection values back to the col param maps.
-        # A side effect of this is that we will create "images"of any of these additional params.
+        # A side effect of this is that we will create "images" of any of these additional params.
         # Thus, we want to provide empty limits for the colourbars of these images as they will almost
         # certainly require different limits to those provided for the PDF plots, for example. 
         # In particular, params like mass will need very different limits to those used in the
@@ -1092,7 +1089,7 @@ if __name__ == "__main__":
             selectKeysListCol,
             loadDirectories,
             snapRange,
-            loadPathBase = HYPARAMS["savepathdata"],
+            loadPathBase = loadPathBase,
             loadFile = "colStatsDict",
             fileType = ".h5",
             stack = True,
@@ -1109,7 +1106,8 @@ if __name__ == "__main__":
                         dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
                 statsOutCol[sKey].update(dataCopy)
 
-
+        matplotlib.rc_file_defaults()
+        plt.close("all")  
         apt.medians_versus_plot(
             statsOutCol,
             COLHYPARAMSHALO,
@@ -1124,6 +1122,7 @@ if __name__ == "__main__":
             ysize = HYPARAMS["ysize"],
             fontsize = HYPARAMS["fontsize"],
             fontsizeTitle = HYPARAMS["fontsizeTitle"],
+            linewidth=HYPARAMS["linewidth"],
             opacityPercentiles = HYPARAMS["opacityPercentiles"],
             savePathBase = HYPARAMS["savepathfigures"],
             savePathBaseFigureData = HYPARAMS["savepathdata"],
@@ -1132,12 +1131,11 @@ if __name__ == "__main__":
             combineMultipleOntoAxis = True,
             selectKeysList = None,
             styleDict = styleDict,
-            hush = ~DEBUG,
             )
         
 
         print(
-            "\n" + f"Time averaged column density gas PDF plots..."
+            f"Time averaged column density gas PDF plots..."
         )
         matplotlib.rc_file_defaults()
         plt.close("all")     
@@ -1146,16 +1144,15 @@ if __name__ == "__main__":
             selectKeysListCol,
             loadDirectories,
             snapRange,
-            weightKeys = None, #HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"],
+            weightKeys = HYPARAMS['nonMassWeightDict'],
+            xParams = HYPARAMS["colParams"] + [HYPARAMS["xParam"]],
             cumulative = False,
-            loadPathBase = HYPARAMS["savepathdata"],
+            loadPathBase = loadPathBase,
             loadPathSuffix = "",
             SFR = False,
             normalise = False,
             stack = True,
             verbose = DEBUG,
-            hush = ~DEBUG,
             )
 
         pdfOutCol = copy.deepcopy(tmp)    
@@ -1169,184 +1166,17 @@ if __name__ == "__main__":
                 pdfOutCol[sKey].update(dataCopy)
 
         print(
-            "\n" + f"Histogram of column density gas mass plot"
-        )
-
-        apt.pdf_versus_plot(
-            pdfOutCol,
-            ylabel,
-            xlimDict,
-            HYPARAMS["logParameters"],
-            snapNumber,
-            weightKeys = None, #HYPARAMS['nonMassWeightDict'], #<<<< Need to rerun these with vol weights
-            xParams = HYPARAMS["colParams"],
-            titleBool=HYPARAMS["titleBool"],
-            DPI=HYPARAMS["DPI"],
-            xsize=HYPARAMS["xsize"],
-            ysize=HYPARAMS["ysize"],
-            fontsize=HYPARAMS["fontsize"],
-            fontsizeTitle=HYPARAMS["fontsizeTitle"],
-            Nbins=HYPARAMS["Nbins"],
-            ageWindow=None,
-            cumulative = False,
-            savePathBase = HYPARAMS["savepathfigures"],
-            savePathBaseFigureData = HYPARAMS["savepathdata"],
-            saveFigureData = False,
-            replotFromData = True,
-            combineMultipleOntoAxis = True,
-            selectKeysList = None,
-            styleDict = styleDict,
-            hush = ~DEBUG,
-            SFR = False,
-            forceYAxisLog = HYPARAMS["forceYAxisLog"],
-            normalise = False,
-            verbose = DEBUG,
-        )
-
-        apt.pdf_versus_plot(
-            pdfOutCol,
-            ylabel,
-            xlimDict,
-            HYPARAMS["logParameters"],
-            snapNumber,
-            weightKeys = None, #HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"],
-            titleBool=HYPARAMS["titleBool"],
-            DPI=HYPARAMS["DPI"],
-            xsize=HYPARAMS["xsize"],
-            ysize=HYPARAMS["ysize"],
-            fontsize=HYPARAMS["fontsize"],
-            fontsizeTitle=HYPARAMS["fontsizeTitle"],
-            Nbins=HYPARAMS["Nbins"],
-            ageWindow=None,
-            cumulative = True,
-            savePathBase = HYPARAMS["savepathfigures"],
-            savePathBaseFigureData = HYPARAMS["savepathdata"],
-            saveFigureData = False,
-            replotFromData = True,
-            combineMultipleOntoAxis = True,
-            selectKeysList = None,
-            styleDict = styleDict,
-            hush = ~DEBUG,
-            SFR = False,
-            forceYAxisLog = HYPARAMS["forceYAxisLog"],
-            normalise = False,
-            verbose = DEBUG,
-        )
-
-        print(
-            "\n" + f"PDF of column density gas plot"
-        )
-
-        apt.pdf_versus_plot(
-            pdfOutCol,
-            ylabel,
-            xlimDict,
-            HYPARAMS["logParameters"],
-            snapNumber,
-            weightKeys = None, #HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"],
-            titleBool=HYPARAMS["titleBool"],
-            DPI=HYPARAMS["DPI"],
-            xsize=HYPARAMS["xsize"],
-            ysize=HYPARAMS["ysize"],
-            fontsize=HYPARAMS["fontsize"],
-            fontsizeTitle=HYPARAMS["fontsizeTitle"],
-            Nbins=HYPARAMS["Nbins"],
-            ageWindow=None,
-            cumulative = False,
-            savePathBase = HYPARAMS["savepathfigures"],
-            savePathBaseFigureData = HYPARAMS["savepathdata"],
-            saveFigureData = False,
-            replotFromData = True,
-            combineMultipleOntoAxis = True,
-            selectKeysList = None,
-            styleDict = styleDict,
-            hush = ~DEBUG,
-            SFR = False,
-            forceYAxisLog = HYPARAMS["forceYAxisLog"],
-            normalise = True,
-            verbose = DEBUG,        
-        )
-
-        print(
-            "\n" + f"Cumulative PDF of column density gas plot"
-        )
-
-        apt.pdf_versus_plot(
-            pdfOutCol,
-            ylabel,
-            xlimDict,
-            HYPARAMS["logParameters"],
-            snapNumber,
-            weightKeys = None, #HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"],
-            titleBool=HYPARAMS["titleBool"],
-            DPI=HYPARAMS["DPI"],
-            xsize=HYPARAMS["xsize"],
-            ysize=HYPARAMS["ysize"],
-            fontsize=HYPARAMS["fontsize"],
-            fontsizeTitle=HYPARAMS["fontsizeTitle"],
-            Nbins=HYPARAMS["Nbins"],
-            ageWindow=None,
-            cumulative = True,
-            savePathBase = HYPARAMS["savepathfigures"],
-            savePathBaseFigureData = HYPARAMS["savepathdata"],
-            saveFigureData = False,
-            replotFromData = True,
-            combineMultipleOntoAxis = True,
-            selectKeysList = None,
-            styleDict = styleDict,
-            hush = ~DEBUG,
-            SFR = False,
-            forceYAxisLog = HYPARAMS["forceYAxisLog"],
-            normalise = True,
-            verbose = DEBUG,
-        )
-
-        print(
-            "\n" + f"Time averaged CGM Only column density gas PDF plots..."
+            f"PDF of column density gas mass plot"
         )
         matplotlib.rc_file_defaults()
-        plt.close("all")     
-
-        tmp = apt.hy_load_pdf_versus_plot_data(
-            selectKeysListCol,
-            loadDirectories,
-            snapRange,
-            weightKeys = None, #HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"],
-            cumulative = False,
-            loadPathBase = HYPARAMS["savepathdata"],
-            loadPathSuffix = "CGM_only/",
-            SFR = False,
-            normalise = False,
-            stack = True,
-            verbose = DEBUG,
-            hush = ~DEBUG,
-            )
-
-        pdfOutCol = copy.deepcopy(tmp)    
-
-        if (len(snapRange)>1)&(stack is True):
-            for sKey, data in pdfOutCol.items():
-                dataCopy = copy.deepcopy(data)
-                for key,dd in data.items():
-                    for kk, value in dd.items():
-                        dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
-                pdfOutCol[sKey].update(dataCopy)
-
-        print(
-            "\n" + f"Histogram of CGM Only column density gas mass plot"
-        )
-
+        plt.close("all") 
         apt.pdf_versus_plot(
             pdfOutCol,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
             snapNumber,
-            weightKeys = None, #HYPARAMS['nonMassWeightDict'], #<<<< Need to rerun these with vol weights
+            weightKeys = HYPARAMS['nonMassWeightDict'],
             xParams = HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
             DPI=HYPARAMS["DPI"],
@@ -1354,124 +1184,183 @@ if __name__ == "__main__":
             ysize=HYPARAMS["ysize"],
             fontsize=HYPARAMS["fontsize"],
             fontsizeTitle=HYPARAMS["fontsizeTitle"],
+            linewidth=HYPARAMS["linewidth"],
             Nbins=HYPARAMS["Nbins"],
             ageWindow=None,
             cumulative = False,
-            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
-            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
+            savePathBase = HYPARAMS["savepathfigures"],
+            savePathBaseFigureData = HYPARAMS["savepathdata"],
             saveFigureData = False,
             replotFromData = True,
             combineMultipleOntoAxis = True,
             selectKeysList = None,
             styleDict = styleDict,
-            hush = ~DEBUG,
             SFR = False,
-            forceYAxisLog = HYPARAMS["forceYAxisLog"],
+            forceLogPDF = HYPARAMS["forceLogPDF"],
             normalise = False,
             verbose = DEBUG,
         )
-
+        matplotlib.rc_file_defaults()
+        plt.close("all") 
         apt.pdf_versus_plot(
             pdfOutCol,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
             snapNumber,
-            weightKeys = None, #HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"],
+            weightKeys = HYPARAMS['nonMassWeightDict'],
+            xParams =HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
             fontsize=HYPARAMS["fontsize"],
             fontsizeTitle=HYPARAMS["fontsizeTitle"],
+            linewidth=HYPARAMS["linewidth"],
             Nbins=HYPARAMS["Nbins"],
             ageWindow=None,
             cumulative = True,
-            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
-            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
+            savePathBase = HYPARAMS["savepathfigures"],
+            savePathBaseFigureData = HYPARAMS["savepathdata"],
             saveFigureData = False,
             replotFromData = True,
             combineMultipleOntoAxis = True,
             selectKeysList = None,
             styleDict = styleDict,
-            hush = ~DEBUG,
             SFR = False,
-            forceYAxisLog = HYPARAMS["forceYAxisLog"],
+            forceLogPDF = HYPARAMS["forceLogPDF"],
             normalise = False,
             verbose = DEBUG,
         )
 
         print(
-            "\n" + f"PDF of CGM Only column density gas plot"
+            f"Normalised PDF of column density gas plot"
         )
-
+        matplotlib.rc_file_defaults()
+        plt.close("all") 
         apt.pdf_versus_plot(
             pdfOutCol,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
             snapNumber,
-            weightKeys = None, #HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"],
+            weightKeys = HYPARAMS['nonMassWeightDict'],
+            xParams =HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
             fontsize=HYPARAMS["fontsize"],
             fontsizeTitle=HYPARAMS["fontsizeTitle"],
+            linewidth=HYPARAMS["linewidth"],
             Nbins=HYPARAMS["Nbins"],
             ageWindow=None,
             cumulative = False,
-            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
-            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
+            savePathBase = HYPARAMS["savepathfigures"],
+            savePathBaseFigureData = HYPARAMS["savepathdata"],
             saveFigureData = False,
             replotFromData = True,
             combineMultipleOntoAxis = True,
             selectKeysList = None,
             styleDict = styleDict,
-            hush = ~DEBUG,
             SFR = False,
-            forceYAxisLog = HYPARAMS["forceYAxisLog"],
+            forceLogPDF = HYPARAMS["forceLogPDF"],
             normalise = True,
             verbose = DEBUG,        
         )
 
         print(
-            "\n" + f"Cumulative PDF of CGM Only column density gas plot"
+            f"Normalised Cumulative PDF of column density gas plot"
         )
-
+        matplotlib.rc_file_defaults()
+        plt.close("all") 
         apt.pdf_versus_plot(
             pdfOutCol,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
             snapNumber,
-            weightKeys = None, #HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"],
+            weightKeys = HYPARAMS['nonMassWeightDict'],
+            xParams =HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
             fontsize=HYPARAMS["fontsize"],
             fontsizeTitle=HYPARAMS["fontsizeTitle"],
+            linewidth=HYPARAMS["linewidth"],
             Nbins=HYPARAMS["Nbins"],
             ageWindow=None,
             cumulative = True,
-            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
-            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
+            savePathBase = HYPARAMS["savepathfigures"],
+            savePathBaseFigureData = HYPARAMS["savepathdata"],
             saveFigureData = False,
             replotFromData = True,
             combineMultipleOntoAxis = True,
             selectKeysList = None,
             styleDict = styleDict,
-            hush = ~DEBUG,
             SFR = False,
-            forceYAxisLog = HYPARAMS["forceYAxisLog"],
+            forceLogPDF = HYPARAMS["forceLogPDF"],
             normalise = True,
             verbose = DEBUG,
         )
 
+
+        # # print(
+        # #     f"Phase plot"
+        # # )
+
+
+        # # tmp = apt.hy_load_phase_plot_data(
+        # #     selectKeysList,
+        # #     loadDirectories,
+        # #     snapRange,
+        # #     yParams = HYPARAMS["phasesyParams"],
+        # #     xParams = HYPARAMS["phasesxParams"],
+        # #     weightKeys = HYPARAMS["phasesColourbarParams"],
+        # #     loadPathBase = loadPathBase,
+        # #     stack = True,
+        # #     verbose = DEBUG,
+        # #     )
+
+        # # phaseOut = copy.deepcopy(tmp)    
+
+        # # if (len(snapRange)>1)&(stack is True):
+        # #     for sKey, data in phaseOut.items():
+        # #         dataCopy = copy.deepcopy(data)
+        # #         for key,dd in data.items():
+        # #             for kk, value in dd.items():
+        # #                 dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
+        # #         phaseOut[sKey].update(dataCopy)
+
+        # # matplotlib.rc_file_defaults()
+        # # plt.close("all")
+        # # apt.phase_plot(
+        # #     phaseOut,
+        # #     ylabel,
+        # #     xlimDict,
+        # #     logParameters=HYPARAMS["logParameters"],
+        # #     snapNumber = snapNumber,
+        # #     yParams = HYPARAMS["phasesyParams"],
+        # #     xParams = HYPARAMS["phasesxParams"],
+        # #     colourBarKeys = HYPARAMS["phasesColourbarParams"],
+        # #     weightKeys = HYPARAMS["nonMassWeightDict"],
+        # #     titleBool=HYPARAMS["titleBool"],
+        # #     DPI=HYPARAMS["DPI"],
+        # #     xsize=HYPARAMS["xsize"],
+        # #     ysize=HYPARAMS["ysize"],
+        # #     fontsize=HYPARAMS["fontsize"],
+        # #     fontsizeTitle=HYPARAMS["fontsizeTitle"],
+        # #     colourmapMain= HYPARAMS["colourmapMain"],
+        # #     Nbins=HYPARAMS["Nbins"],
+        # #     savePathBase = HYPARAMS["savepathfigures"],
+        # #     savePathBaseFigureData = HYPARAMS["savepathdata"],
+        # #     saveFigureData = True,
+        # #     verbose = DEBUG,
+        # #     inplace = inplace,
+        # #     replotFromData = True,
+        # #     allowPlotsWithoutxlimits = False,
+        # # )
 
         #     apt.phase_plot(
         #         out,
@@ -1497,8 +1386,7 @@ if __name__ == "__main__":
         # combineMultipleOntoAxis = True,
         # selectKeysList = None,
         # styleDict = styleDict,
-        # hush = ~DEBUG,
-            #         verbose = DEBUG,
+        #         verbose = DEBUG,
         #       )
      
     print("Finished fully! :)")
