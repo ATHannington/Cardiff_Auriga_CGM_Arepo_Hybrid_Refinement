@@ -48,22 +48,22 @@ else:
 
 loadPathBase = "/home/cosmos/" # "/home/tango/" #
 loadDirectories = [
-    # "spxfv/Auriga/level4_cgm/h5_standard",
-    # "c1838736/Auriga/level3_cgm_almost/h5_standard",
-    # "spxfv/Auriga/level4_cgm/h5_1kpc",
-    # "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
-    # "spxfv/surge/level4_cgm/h5_500pc",
-    # "spxfv/surge/level4_cgm/h5_500pc",
-    # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
-    # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
-    # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
     # "c1838736/Auriga/level5_cgm/h5_standard",
     # "c1838736/Auriga/level5_cgm/h5_2kpc",
     # "c1838736/Auriga/level5_cgm/h5_1kpc",
     # "c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc",
     # "c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc",
-    "c1838736/Auriga/level5_cgm/h5_hy-v1/",
+    # "c1838736/Auriga/level5_cgm/h5_hy-v1/",
     # "c1838736/Auriga/level5_cgm/h5_hy-v2",
+    "spxfv/Auriga/level4_cgm/h5_standard",
+    "c1838736/Auriga/level3_cgm_almost/h5_standard",
+    "spxfv/Auriga/level4_cgm/h5_1kpc",
+    "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
+    "spxfv/surge/level4_cgm/h5_500pc",
+    "spxfv/surge/level4_cgm/h5_500pc",
+    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
+    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
+    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
     ]
 
 simulations = []
@@ -517,7 +517,7 @@ if __name__ == "__main__":
                                 selectKeyLen=1,
                                 delimiter="-",
                                 stack = None,
-                                allowFindOtherAxesData = False,
+                                allowFindOtherAxesData = True,#False,
                                 verbose = DEBUG,
                                 hush = not DEBUG
                             )
