@@ -28,7 +28,7 @@ plt.rcParams.update(matplotlib.rcParamsDefault)
 inplace = False
 
 stack = True
-DEBUG = True
+DEBUG = False
 
 HYPARAMSPATH = "HYParams.json"
 HYPARAMS = json.load(open(HYPARAMSPATH, "r"))
@@ -45,38 +45,44 @@ else:
 loadPathBase = "/home/universe/c1838736/Hybrid_Refinement/"
 loadDirectories = [
 
-    "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/",
-    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/",
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/",
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/",
+    # "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/",
+    # "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/",
+    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/",
+    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/",
     # "/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/",
     # "/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/",
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/",
-    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/",
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/",
-    # "/c1838736/Auriga/level5_cgm/h5_2kpc/",
-    # "/c1838736/Auriga/level5_cgm/h5_1kpc/",
-    # "/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/",
-    # "/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/",
+    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/",
+    # "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/",
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/",
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/",
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v1/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v2/",
     ]
 
 styleDictGroupingKeys = {
-    "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/" : ("surge","500pc","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/" : ("surge","1kpc","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/" : ("hy","500pc","final","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/" : ("hy","1kpc","final","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/" : ("hy","1kpc","l3-mass","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/" : ("hy","1kpc","hard","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/" : ("std","L3"), 
-    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/" : ("std","L4"),
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/" : ("std","L5"),
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/" : ("surge","2kpc","L5"),
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc/" : ("surge","1kpc","L5"),
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/" : ("hy","2kpc","final","L5"),
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/" : ("hy","1kpc","final","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v1/" : ("hy","2kpc","V1","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v2/" : ("hy","2kpc","V2","L5"),
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/" : ("std","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/" : ("surge","500pc","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/" : ("surge","1kpc","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/" : ("hy","1kpc","final","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/" : ("hy","1kpc","hard","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/" : ("hy","1kpc","l3-mass","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/" : ("hy","500pc","final","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/" : ("std","L3")
 }
 
-ordering = list(styleDictGroupingKeys.values())
+ordering = [
+    ("std","L5"), ("surge","2kpc","L5"), ("surge","1kpc","L5"), ("hy","2kpc","final","L5"), ("hy","1kpc","final","L5"), ("hy","2kpc","V1","L5"), ("hy","2kpc","V2","L5"), ("std","L4"), ("surge","500pc","L4"), ("surge","1kpc","L4"), ("hy","1kpc","final","L4"), ("hy","1kpc","hard","L4"), ("hy","1kpc","l3-mass","L4"), ("hy","500pc","final","L4"), ("std","L3")
+]
 keepPercentiles = []
 
 simulations = []
@@ -288,7 +294,7 @@ if __name__ == "__main__":
     
 
 
-    tmpstyleDict = apt.get_linestyles_and_colours(styleKeys,colourmapMain="tab10",colourGroupBy=[],linestyleGroupBy=["std","hy","surge"],lastColourOffset = 0.0)
+    tmpstyleDict = apt.get_linestyles_and_colours(styleKeys,colourmapMain="tab10",colourGroupBy=[],linestyleGroupBy=["hy","surge","std"],lastColourOffset = 0.0)
     
     styleDict = {}
 
@@ -298,102 +304,117 @@ if __name__ == "__main__":
 
     snapNumber=snapRange[-1]
 
-    sliceAndProjComparisonKey = [("std","L4")]
-    sliceAndProjComparisonPath = ["/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/"]
-    # loadpath = HYPARAMS["savepathdata"]
 
-    tmp = apt.hy_load_slice_plot_data(
-        sliceAndProjComparisonKey,
-        sliceAndProjComparisonPath,
-        PARAMS = HYPARAMSHALO,
-        snapNumber = snapNumber,
-        sliceParam = ["n_H","T","gz","vrad"],
-        Axes = HYPARAMS["Axes"],
-        projection=[False,False,False,False],
-        loadPathBase = loadPathBase,
-        loadPathSuffix = "",
-        selectKeyLen=1,
-        delimiter="-",
-        stack = None,
-        allowFindOtherAxesData = False,
-        verbose = DEBUG,
-        hush = not DEBUG,
-        )
 
-    orderedData = {}
-    for key in ordering:
-        if key in list(tmp.keys()):
-            orderedData.update({key : copy.deepcopy(tmp[key])})
-
-    tmp2 = apt.hy_load_slice_plot_data(
-        sliceAndProjComparisonKey,
-        sliceAndProjComparisonPath,
-        PARAMS = HYPARAMSHALO,
-        snapNumber = snapNumber,
-        sliceParam = ["n_H","T","gz","vrad"],
-        Axes = HYPARAMS["Axes"],
-        projection=[True,True,True,True],
-        loadPathBase = loadPathBase,
-        loadPathSuffix = "",
-        selectKeyLen=1,
-        delimiter="-",
-        stack = None,
-        allowFindOtherAxesData = False,
-        verbose = DEBUG,
-        hush = not DEBUG,
-        )
+    # sliceAndProjComparisonKey = [("std","L4")]
+    # sliceAndProjComparisonPath = ["/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/" ]
+    # # loadpath = HYPARAMS["savepathdata"]
     
-    orderedData2 = {}
-    for key in ordering:
-        if key in list(tmp2.keys()):
-            orderedData2.update({key : copy.deepcopy(tmp2[key])})
+    # tmp = apt.hy_load_slice_plot_data(
+    #     sliceAndProjComparisonKey,
+    #     sliceAndProjComparisonPath,
+    #     PARAMS = HYPARAMSHALO,
+    #     snapNumber = snapNumber,
+    #     sliceParam = ["n_H","T","gz","vrad"],
+    #     Axes = HYPARAMS["Axes"],
+    #     projection=[False,False,False,False],
+    #     loadPathBase = loadPathBase,
+    #     loadPathSuffix = "",
+    #     selectKeyLen=1,
+    #     delimiter="-",
+    #     stack = None,
+    #     allowFindOtherAxesData = True,
+    #     verbose = DEBUG,
+    #     hush = not DEBUG,
+    #     )
 
-    variableAdjust = "2"
+    # # orderedData = {}
+    # # for key in ordering:
+    # #     if key in list(tmp.keys()):
+    # #         orderedData.update({key : copy.deepcopy(tmp[key])})
 
 
-    for key,val in orderedData2.items():
-        tmpKey = list(key)
-        tmpKey2 = [variableAdjust] + tmpKey
-        newKey = tuple(tmpKey2)
-        orderedData.update({newKey: copy.deepcopy(val)})
-
-    tmpdict = apt.plot_slices(orderedData,
-        ylabel=ylabel,
-        xlimDict=xlimDict,
-        logParameters = HYPARAMS["logParameters"],
-        snapNumber=snapNumber,
-        sliceParam = [["n_H","T","gz","vrad"]],
-        Axes=HYPARAMS["Axes"],
-        averageAcrossAxes = False,
-        saveAllAxesImages = HYPARAMS["saveAllAxesImages"],
-        xsize = HYPARAMS["xsizeImages"]*1.8,
-        ysize = HYPARAMS["ysizeImages"]*1.8,
-        fontsize = HYPARAMS["fontsize"],
-        colourmapMain = HYPARAMS["colourmapMain"],
-        colourmapsUnique = imageCmapDict,
-        boxsize = HYPARAMS["boxsize"],
-        boxlos = HYPARAMS["boxlos"],
-        pixreslos = HYPARAMS["pixreslos"],
-        pixres = HYPARAMS["pixres"],
-        projection = [[False,False,False,False]],
-        DPI = HYPARAMS["DPI"],
-        numthreads=HYPARAMS["numthreads"],
-        savePathBase = HYPARAMS["savepathfigures"],
-        savePathBaseFigureData = HYPARAMS["savepathdata"],
-        saveFigureData = False,
-        saveFigure = HYPARAMS["SaveImages"],
-        selectKeysList = None,
-        alignSelectKeys = "vertical",
-        subfigures = True,
-        subfigureDatasetLabelsBool = True,
-        subfigureDatasetLabelsDict = {("std","L4") : "L4 Std. Slice", (variableAdjust, "std","L4") : "L4 Std. Proj."},
-        subfigureOffAlignmentAxisLabels = False,
-        offAlignmentAxisLabels = None,
-        inplace = False,
-        replotFromData = True,
-    )
+    # sliceAndProjComparisonKey = [("std","L5")]
+    # sliceAndProjComparisonPath = ["/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/"]
+    # # loadpath = HYPARAMS["savepathdata"]
     
-    STOP387
+    # tmp2 = apt.hy_load_slice_plot_data(
+    #     sliceAndProjComparisonKey,
+    #     sliceAndProjComparisonPath,
+    #     PARAMS = HYPARAMSHALO,
+    #     snapNumber = snapNumber,
+    #     sliceParam = ["n_H","T","gz","vrad"],
+    #     Axes = HYPARAMS["Axes"],
+    #     projection=[False,False,False,False],
+    #     loadPathBase = loadPathBase,
+    #     loadPathSuffix = "",
+    #     selectKeyLen=1,
+    #     delimiter="-",
+    #     stack = None,
+    #     allowFindOtherAxesData = True,
+    #     verbose = DEBUG,
+    #     hush = not DEBUG,
+    #     )
+    
+    # # # orderedData2 = {}
+    # # for key in ordering:
+    # #     if key in list(tmp2.keys()):
+    # #         orderedData.update({key : copy.deepcopy(tmp2[key])})
+
+
+    # orderedData = {}
+    # for key in ordering:
+    #     if key in list(tmp.keys()):
+    #         orderedData.update({key : copy.deepcopy(tmp[key])})
+    #     elif key in list(tmp2.keys()):
+    #         orderedData.update({key : copy.deepcopy(tmp2[key])})
+
+    # # variableAdjust = "2"
+
+    # # for key,val in orderedData2.items():
+    # #     tmpKey = list(key)
+    # #     tmpKey2 = [variableAdjust] + tmpKey
+    # #     newKey = tuple(tmpKey2)
+    # #     orderedData.update({newKey: copy.deepcopy(val)})
+
+    # tmpdict = apt.plot_slices(orderedData,
+    #     ylabel=ylabel,
+    #     xlimDict=xlimDict,
+    #     logParameters = HYPARAMS["logParameters"],
+    #     snapNumber=snapNumber,
+    #     sliceParam = [["n_H","T","gz","vrad"]],
+    #     Axes=HYPARAMS["Axes"],
+    #     averageAcrossAxes = False,
+    #     saveAllAxesImages = HYPARAMS["saveAllAxesImages"],
+    #     xsize = HYPARAMS["xsizeImages"]*1.8,#*2.5,
+    #     ysize = HYPARAMS["ysizeImages"]*1.8,#*1.8,*2.5,
+    #     fontsize = HYPARAMS["fontsize"],
+    #     colourmapMain = HYPARAMS["colourmapMain"],
+    #     colourmapsUnique = imageCmapDict,
+    #     boxsize = HYPARAMS["boxsize"],
+    #     boxlos = HYPARAMS["boxlos"],
+    #     pixreslos = HYPARAMS["pixreslos"],
+    #     pixres = HYPARAMS["pixres"],
+    #     projection = [[False,False,False,False]],
+    #     DPI = HYPARAMS["DPI"],
+    #     numthreads=HYPARAMS["numthreads"],
+    #     savePathBase = HYPARAMS["savepathfigures"],
+    #     savePathBaseFigureData = HYPARAMS["savepathdata"],
+    #     saveFigureData = False,
+    #     saveFigure = HYPARAMS["SaveImages"],
+    #     selectKeysList = None,
+    #     compareSelectKeysOn = "vertical",
+    #     subfigures = True,
+    #     subfigureDatasetLabelsBool = True,
+    #     subfigureDatasetLabelsDict = {("std","L5"): "L5 Std. Slice", ("std","L4"): "L4 Std. Slice"},
+    #     subfigureOffAlignmentAxisLabels = False,
+    #     offAlignmentAxisLabels = None,
+    #     inplace = False,
+    #     replotFromData = True,
+    # )
+    
+    # STOP406
+
     snapNumber="Averaged"
 
     print(
@@ -1305,7 +1326,270 @@ if __name__ == "__main__":
             verbose = DEBUG,
         )
 
+        print(
+            f"Time averaged column density gas PDF plots..."
+        )
+        matplotlib.rc_file_defaults()
+        plt.close("all")     
 
+        tmp = apt.hy_load_pdf_versus_plot_data(
+            selectKeysListCol,
+            loadDirectories,
+            snapRange,
+            weightKeys = HYPARAMS['nonMassWeightDict'],
+            xParams = HYPARAMS["colParams"] + [HYPARAMS["xParam"]],
+            cumulative = False,
+            loadPathBase = loadPathBase,
+            loadPathSuffix = "CGM_only/",
+            SFR = False,
+            normalise = False,
+            stack = True,
+            verbose = DEBUG,
+            )
+
+        pdfOutColCGM = copy.deepcopy(tmp)    
+
+        if (len(snapRange)>1)&(stack is True):
+            for sKey, data in pdfOutColCGM.items():
+                dataCopy = copy.deepcopy(data)
+                for key,dd in data.items():
+                    for kk, value in dd.items():
+                        dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
+                pdfOutColCGM[sKey].update(dataCopy)
+
+        print(
+            f"PDF of column density gas mass plot"
+        )
+        matplotlib.rc_file_defaults()
+        plt.close("all") 
+        apt.pdf_versus_plot(
+            pdfOutColCGM,
+            ylabel,
+            xlimDict,
+            HYPARAMS["logParameters"],
+            snapNumber,
+            weightKeys = HYPARAMS['nonMassWeightDict'],
+            xParams = HYPARAMS["colParams"],
+            titleBool=HYPARAMS["titleBool"],
+            DPI=HYPARAMS["DPI"],
+            xsize=HYPARAMS["xsize"],
+            ysize=HYPARAMS["ysize"],
+            fontsize=HYPARAMS["fontsize"],
+            fontsizeTitle=HYPARAMS["fontsizeTitle"],
+            linewidth=HYPARAMS["linewidth"],
+            Nbins=HYPARAMS["Nbins"],
+            ageWindow=None,
+            cumulative = False,
+            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
+            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
+            saveFigureData = False,
+            replotFromData = True,
+            combineMultipleOntoAxis = True,
+            selectKeysList = None,
+            styleDict = styleDict,
+            SFR = False,
+            forceLogPDF = HYPARAMS["forceLogPDF"],
+            normalise = False,
+            verbose = DEBUG,
+        )
+        matplotlib.rc_file_defaults()
+        plt.close("all") 
+        apt.pdf_versus_plot(
+            pdfOutColCGM,
+            ylabel,
+            xlimDict,
+            HYPARAMS["logParameters"],
+            snapNumber,
+            weightKeys = HYPARAMS['nonMassWeightDict'],
+            xParams =HYPARAMS["colParams"],
+            titleBool=HYPARAMS["titleBool"],
+            DPI=HYPARAMS["DPI"],
+            xsize=HYPARAMS["xsize"],
+            ysize=HYPARAMS["ysize"],
+            fontsize=HYPARAMS["fontsize"],
+            fontsizeTitle=HYPARAMS["fontsizeTitle"],
+            linewidth=HYPARAMS["linewidth"],
+            Nbins=HYPARAMS["Nbins"],
+            ageWindow=None,
+            cumulative = True,
+            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
+            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
+            saveFigureData = False,
+            replotFromData = True,
+            combineMultipleOntoAxis = True,
+            selectKeysList = None,
+            styleDict = styleDict,
+            SFR = False,
+            forceLogPDF = HYPARAMS["forceLogPDF"],
+            normalise = False,
+            verbose = DEBUG,
+        )
+
+        print(
+            f"Normalised PDF of column density gas plot"
+        )
+        matplotlib.rc_file_defaults()
+        plt.close("all") 
+        apt.pdf_versus_plot(
+            pdfOutColCGM,
+            ylabel,
+            xlimDict,
+            HYPARAMS["logParameters"],
+            snapNumber,
+            weightKeys = HYPARAMS['nonMassWeightDict'],
+            xParams =HYPARAMS["colParams"],
+            titleBool=HYPARAMS["titleBool"],
+            DPI=HYPARAMS["DPI"],
+            xsize=HYPARAMS["xsize"],
+            ysize=HYPARAMS["ysize"],
+            fontsize=HYPARAMS["fontsize"],
+            fontsizeTitle=HYPARAMS["fontsizeTitle"],
+            linewidth=HYPARAMS["linewidth"],
+            Nbins=HYPARAMS["Nbins"],
+            ageWindow=None,
+            cumulative = False,
+            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
+            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
+            saveFigureData = False,
+            replotFromData = True,
+            combineMultipleOntoAxis = True,
+            selectKeysList = None,
+            styleDict = styleDict,
+            SFR = False,
+            forceLogPDF = HYPARAMS["forceLogPDF"],
+            normalise = True,
+            verbose = DEBUG,        
+        )
+
+        print(
+            f"Normalised Cumulative PDF of column density gas plot"
+        )
+        matplotlib.rc_file_defaults()
+        plt.close("all") 
+        apt.pdf_versus_plot(
+            pdfOutColCGM,
+            ylabel,
+            xlimDict,
+            HYPARAMS["logParameters"],
+            snapNumber,
+            weightKeys = HYPARAMS['nonMassWeightDict'],
+            xParams =HYPARAMS["colParams"],
+            titleBool=HYPARAMS["titleBool"],
+            DPI=HYPARAMS["DPI"],
+            xsize=HYPARAMS["xsize"],
+            ysize=HYPARAMS["ysize"],
+            fontsize=HYPARAMS["fontsize"],
+            fontsizeTitle=HYPARAMS["fontsizeTitle"],
+            linewidth=HYPARAMS["linewidth"],
+            Nbins=HYPARAMS["Nbins"],
+            ageWindow=None,
+            cumulative = True,
+            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
+            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
+            saveFigureData = False,
+            replotFromData = True,
+            combineMultipleOntoAxis = True,
+            selectKeysList = None,
+            styleDict = styleDict,
+            SFR = False,
+            forceLogPDF = HYPARAMS["forceLogPDF"],
+            normalise = True,
+            verbose = DEBUG,
+        )
+#         print(
+#             "\n" + f"Time averaged gas phases plots"
+#         )
+#         matplotlib.rc_file_defaults()
+#         plt.close("all")     
+
+#         tmp = apt.hy_load_phase_plot_data(
+#             selectKeysList,
+#             HYPARAMSHALO,
+#             snapRange,
+#             yParams = HYPARAMS["phasesyParams"],
+#             xParams = HYPARAMS["phasesxParams"],
+#             weightKeys = HYPARAMS["phasesColourbarParams"],
+#             loadPathBase = HYPARAMS["savepathdata"],
+#             stack = True,
+#             verbose = DEBUG,
+#             )
+#  hy_load_phase_plot_data(
+#     selectKeysList,
+#     loadPathList,
+#     snapRange,
+#     yParams = ["T"],
+#     xParams = ["rho_rhomean","R"],
+#     weightKeys = None,
+#     loadPathBase = "./",
+#     stack = True,
+#     verbose = False,
+#     )
+#         phaseOut = copy.deepcopy(tmp)    
+
+#         if (len(snapRange)>1)&(stack is True):
+#             for sKey, data in phaseOut.items():
+#                 dataCopy = copy.deepcopy(data)
+#                 for key,dd in data.items():
+#                     for kk, value in dd.items():
+#                         dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
+#                 phaseOut[sKey].update(dataCopy)
+
+#         matplotlib.rc_file_defaults()
+#         plt.close("all")
+#         apt.phase_plot(
+#             phaseOut,
+#             ylabel,
+#             xlimDict,
+#             snapNumber = snapNumber,
+#             yParams = HYPARAMS["phasesyParams"],
+#             xParams = HYPARAMS["phasesxParams"],
+#             colourBarKeys = HYPARAMS["phasesColourbarParams"],
+#             weightKeys = HYPARAMS["nonMassWeightDict"],
+#             titleBool=HYPARAMS["titleBool"],
+#             DPI=HYPARAMS["DPI"],
+#             xsize=HYPARAMS["xsize"],
+#             ysize=HYPARAMS["ysize"],
+#             fontsize=HYPARAMS["fontsize"],
+#             fontsizeTitle=HYPARAMS["fontsizeTitle"],
+#             colourmapMain= HYPARAMS["colourmapMain"],
+#             Nbins=HYPARAMS["Nbins"],
+#             savePathBase = HYPARAMS["savepathfigures"],
+#             savePathBaseFigureData = HYPARAMS["savepathdata"],
+#             saveFigureData = True,
+#             verbose = DEBUG,
+#             inplace = inplace,
+#             replotFromData = True,
+#             allowPlotsWithoutxlimits = False,
+#         )
+
+#       phase_plot(
+#     dataDict,
+#     ylabel,
+#     xlimDict,
+#     logParameters,
+#     snapNumber = None,
+#     yParams = ["T"],
+#     xParams = ["rho_rhomean","R"],
+#     colourBarKeys = ["mass","vol"],
+#     weightKeys = None,
+#     fontsize=13,
+#     fontsizeTitle=14,
+#     titleBool=True,
+#     DPI=200,
+#     xsize=8.0,
+#     ysize=8.0,
+#     colourmapMain="plasma",
+#     Nbins=250,
+#     saveFigureData = False,
+#     savePathBase = "./",
+#     savePathBaseFigureData = "./",
+#     allowPlotsWithoutxlimits = False,
+#     subfigures = False,
+#     inplace = False,
+#     replotFromData = False,
+#     verbose = False,
+#     hush = False,
+# )  
         # # print(
         # #     f"Phase plot"
         # # )
