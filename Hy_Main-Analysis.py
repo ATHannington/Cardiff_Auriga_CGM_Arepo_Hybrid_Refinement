@@ -46,24 +46,23 @@ if HYPARAMS["ageWindow"] is not None:
 else:
     HYPARAMS["SFRBins"]  = HYPARAMS["Nbins"] 
 
-loadPathBase = "/home/cosmos/" # "/home/tango/" #
+loadPathBase = "/home/cosmos/" #  "/home/tango/" # 
 loadDirectories = [
     # "c1838736/Auriga/level5_cgm/h5_standard",
     # "c1838736/Auriga/level5_cgm/h5_2kpc",
     # "c1838736/Auriga/level5_cgm/h5_1kpc",
-    # "c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc",
-    # "c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc",
-    # "c1838736/Auriga/level5_cgm/h5_hy-v1/",
-    # "c1838736/Auriga/level5_cgm/h5_hy-v2",
+    "c1838736/Auriga/level5_cgm/h5_hy-v1",
+    "c1838736/Auriga/level5_cgm/h5_hy-v2",
+    "c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc",
+    "c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc",
     "spxfv/Auriga/level4_cgm/h5_standard",
-    "c1838736/Auriga/level3_cgm_almost/h5_standard",
-    "spxfv/Auriga/level4_cgm/h5_1kpc",
-    "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
-    "spxfv/surge/level4_cgm/h5_500pc",
-    "spxfv/surge/level4_cgm/h5_500pc",
-    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
-    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
-    "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
+    # "c1838736/Auriga/level3_cgm_almost/h5_standard",
+    # "spxfv/Auriga/level4_cgm/h5_1kpc",
+    # "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
+    # "spxfv/surge/level4_cgm/h5_500pc",
+    # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
+    # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
+    # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
     ]
 
 simulations = []
@@ -517,7 +516,7 @@ if __name__ == "__main__":
                                 selectKeyLen=1,
                                 delimiter="-",
                                 stack = None,
-                                allowFindOtherAxesData = True,#False,
+                                allowFindOtherAxesData = False,
                                 verbose = DEBUG,
                                 hush = not DEBUG
                             )
@@ -699,7 +698,7 @@ if __name__ == "__main__":
                     _ = apt.plot_slices(
                         snap,
                         ylabel=ylabel,
-                        xlimDict=tmpxlimDict,
+                        xlimDict=xlimDict,
                         logParameters = HYPARAMS["logParameters"],
                         snapNumber=snapNumber,
                         sliceParam = param,
@@ -971,8 +970,6 @@ if __name__ == "__main__":
             #
             #-----------------------------------------------#
 
-
-
             print(
                 f"[@{int(snapNumber)}]: Convert from SnapShot to Dictionary..."
             )
@@ -982,16 +979,12 @@ if __name__ == "__main__":
                 if value is not None:
                     out.update({key: copy.deepcopy(value)})
 
-            print(
-                f"[@{int(snapNumber)}]: Remove <30 Kpc..."
-            )
-
-            whereInnerRadius = out["R"]*rvir<=30.0
+            whereAboveCritDens = (out["ndens"] >= 1.1e-1)
 
             out = cr.remove_selection(
                 out,
-                removalConditionMask = whereInnerRadius,
-                errorString = "Remove <30 Kpc",
+                removalConditionMask = whereAboveCritDens,
+                errorString = f"Remove ISM gas",
                 verbose = DEBUG,
                 )
 
@@ -1066,68 +1059,6 @@ if __name__ == "__main__":
                 inplace = inplace,
                 allowPlotsWithoutxlimits = determineXlimits,
             )
-
-            # -----------------------------------------------#
-            #           
-            #           CGM column density PDFs
-            #
-            # -----------------------------------------------#
-
-            if bool(colout) is True:
-
-                print(
-                    f"[@{int(snapNumber)}]: Remove <30 Kpc..."
-                )
-
-                whereInnerRadius = colout["R"]*rvir<=30.0
-                cgmcolout = copy.deepcopy(colout)
-                cgmcolout = cr.remove_selection(
-                    cgmcolout,
-                    removalConditionMask = whereInnerRadius,
-                    errorString = "Remove <30 Kpc",
-                    verbose = DEBUG,
-                    )
-    
-
-                # -----------------------------------------------#
-                #           
-                #             column density PDFs
-                #
-                # -----------------------------------------------#
-
-                print(
-                f"[@{int(snapNumber)}]: PDF of col dens gas plot"
-                )
-
-                apt.pdf_versus_plot(
-                    copy.deepcopy(cgmcolout),
-                    ylabel,
-                    xlimDict,
-                    HYPARAMS["logParameters"],
-                    snapNumber,
-                    weightKeys = HYPARAMS['nonMassWeightDict'], #<<<< Need to rerun these with vol weights
-                    xParams = HYPARAMS["colParams"],
-                    titleBool=HYPARAMS["titleBool"],
-                    DPI=HYPARAMS["DPI"],
-                    xsize=HYPARAMS["xsize"],
-                    ysize=HYPARAMS["ysize"],
-                    fontsize=HYPARAMS["fontsize"],
-                    fontsizeTitle=HYPARAMS["fontsizeTitle"],
-                    Nbins=HYPARAMS["Nbins"],
-                    ageWindow=None,
-                    cumulative = False,
-                    savePathBase = savePathBase+ "CGM_only/",
-                    savePathBaseFigureData = savePathBaseFigureData+ "CGM_only/",
-                    saveFigureData = True,
-                    SFR = False,
-                    
-                    forceLogPDF = HYPARAMS["forceLogPDF"],
-                    normalise = False,
-                    verbose = DEBUG,
-                    inplace = inplace,
-                    allowPlotsWithoutxlimits = determineXlimits,
-                )
-
 
             # -----------------------------------------------#
             #           
@@ -1220,7 +1151,7 @@ if __name__ == "__main__":
                     xlimDict=xlimDict,
                     printpercent=2.5,
                     exclusions = exclusions,
-                    weightedStatsBool = False,
+                    weightedStatsBool = True,
                 )
                 ## Empty data checks ## 
                 if bool(colstatsDict) is False:
