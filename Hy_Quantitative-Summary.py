@@ -41,14 +41,13 @@ if HYPARAMS["ageWindow"] is not None:
 else:
     HYPARAMS["SFRBins"]  = HYPARAMS["Nbins"] 
 
-loadPathBase = "/home/cosmos/" # "/home/tango/" #
+loadPathBase = "/home/tango/" # "/home/cosmos/" # 
 loadDirectories = [
     # "spxfv/Auriga/level4_cgm/h5_standard",
     # "c1838736/Auriga/level3_cgm_almost/h5_standard",
     # "spxfv/Auriga/level4_cgm/h5_1kpc",
     # "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
-    # "spxfv/surge/level4_cgm/h5_500pc",
-    # "spxfv/surge/level4_cgm/h5_500pc",
+    "spxfv/surge/level4_cgm/h5_500pc",
     # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
     # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
     # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
@@ -57,7 +56,7 @@ loadDirectories = [
     # "c1838736/Auriga/level5_cgm/h5_1kpc",
     # "c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc",
     # "c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc",
-    "c1838736/Auriga/level5_cgm/h5_hy-v1/",
+    # "c1838736/Auriga/level5_cgm/h5_hy-v1/",
     # "c1838736/Auriga/level5_cgm/h5_hy-v2",
     ]
 
@@ -561,15 +560,23 @@ if __name__ == "__main__":
                 verbose = DEBUG
                 )
             
-            whereNotCGM = (out["R"]<30.0)
+            # whereNotCGM = (out["R"]<30.0)
+            # out = cr.remove_selection(
+            #     out,
+            #     removalConditionMask = whereNotCGM,
+            #     errorString = "Remove all gas within 30.0 kpc",
+            #     verbose = DEBUG
+            #     )
+            
+            whereAboveCritDens = (out["ndens"] >= 1.1e-1)
 
             out = cr.remove_selection(
                 out,
-                removalConditionMask = whereNotCGM,
-                errorString = "Remove all gas within 30.0 kpc",
-                verbose = DEBUG
+                removalConditionMask = whereAboveCritDens,
+                errorString = f"Remove ISM gas",
+                verbose = DEBUG,
                 )
-
+            
             selectKey = (baseResLevel, auHalo, resLabel, snapNumber)
 
             out["Redshift"] = np.array([redshift])
@@ -683,8 +690,8 @@ if __name__ == "__main__":
                 tmpDat = copy.deepcopy(snapDat)
 
                 toCombine.update({"Ncells" : np.shape(tmpDat["type"][np.where(tmpDat["type"]==0)[0]])[0]})
-                toCombine.update({"MeanCellVol" : np.nanmean(tmpDat["vol"],axis=-1)})
-                toCombine.update({"MeanCellMass" : np.nanmean(tmpDat["mass"],axis=-1)})
+                toCombine.update({"MedianCellVol" : np.nanmedian(tmpDat["vol"],axis=-1)})
+                toCombine.update({"MedianCellMass" : np.nanmedian(tmpDat["mass"],axis=-1)})
                 toCombine.update({"MinCellVol" : np.nanmin(tmpDat["vol"],axis=-1)})
                 toCombine.update({"MinCellMass" : np.nanmin(tmpDat["mass"],axis=-1)})
                 toCombine.update({"MaxCellVol" : np.nanmax(tmpDat["vol"],axis=-1)})
