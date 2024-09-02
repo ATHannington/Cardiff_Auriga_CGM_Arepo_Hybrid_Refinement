@@ -1,14 +1,14 @@
 {
-  "restartFlag": true,
+  "restartFlag": false,
 
   "savepathfigures": "./",
   
-  "savepathdata": "/home/universe/c1838736/Hybrid_Refinement/",
+  "savepathdata": "/home/universe/c1838736/Hybrid_Refinement/level4/level4_cgm/apt-figures/V2-0/",
   
   "loadRotationMatrix" : false,
   
   "constantRotationMatrix" : false,
-  
+
   "saveParams": [ "T", "R", "n_H", "n_HI", "nh", "ndens", "rho_rhomean", "B", "vrad", "vrad_in", "vrad_out", "gz", "L", "P_kinetic", "P_thermal", "P_magnetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic", "tcool", "tff", "tcool_tff"],
   
   "saveEssentials": [ "halo", "subhalo", "Redshift", "Lookback", "Snap", "type", "mass", "pos", "vol", "hrgm", "sfr", "Rvir", "gima", "age" , "boxsize", "gmet", "ne", "Tdens", "u", "bfld", "vel", "gcol", "cren", "rho"],
@@ -21,7 +21,7 @@
   
   "Rinner": 0.0,
   
-  "Router": 200.0,
+  "Router": 1.0,
   
   "rvirFrac" : 1.5,
   
@@ -37,10 +37,11 @@
   
   "phasesyParams": [ "T", "B", "gz", "ndens", "vol"],
   
-  "phasesColourbarParams": [ "mass", "vrad", "L", "n_HI","n_H"],
+  "phasesColourbarParams": [ "mass", "vol"],
   
   "mediansParams": [ "T", "R", "n_H", "n_HI", "nh", "rho_rhomean", "vol", "ndens", "B", "vrad", "vrad_in", "vrad_out", "gz", "L", "P_kinetic", "P_thermal", "P_magnetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic", "tcool", "tff", "tcool_tff"],
-  
+
+
   "NStatsBins": 100,
   
   "Nbins": 250,
@@ -60,8 +61,12 @@
   "saveAllAxesImages" : false,
   
   "forceLogPDF": false,
-  
-  "numthreads": 28,
+
+  "separateLegend": true,
+
+  "compareSelectKeysOn": "horizontal",  
+
+  "numthreads": 16,
   
   "boxsize": 400.0,
   
@@ -77,7 +82,7 @@
   
   "DPI": 200,
   
-  "DPIimages" : 250,
+  "DPIimages" : 500,
   
   "xsizeImages": 5.5,
   

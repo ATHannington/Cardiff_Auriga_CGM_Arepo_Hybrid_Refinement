@@ -27,17 +27,17 @@
   
   "colParams": [ "n_H_col", "n_HI_col" ],
   
-  "imageParams": [ "T", "vol", "B", "vrad", "gz", "nh", "n_H", "n_HI", "P_thermal", "P_magnetic", "Pthermal_Pmagnetic"],
+  "imageParams": [ "T", "vol", "B", "vrad", "gz", "nh", "n_H", "n_HI", "P_kinetic", "P_thermal", "P_magnetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic"],
   
   "pdfParams": [  "T", "R", "vol", "B", "vrad", "vrad_in", "vrad_out", "gz", "L", "nh", "ndens", "n_H", "n_HI", "rho_rhomean", "P_kinetic", "P_thermal", "P_magnetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic"],
   
-  "phasesxParams": [ "R",  "vol", "ndens", "rho_rhomean" ],
+  "phasesxParams": [ "R",  "vol", "ndens" ],
   
-  "phasesyParams": [ "T", "B", "gz", "ndens", "vol", "n_HI", "n_H", "nh"],
+  "phasesyParams": [ "T", "B", "gz", "ndens", "vol"],
   
-  "phasesColourbarParams": [ "mass", "vrad", "L", "n_HI", "n_H", "nh", "ndens"],
+  "phasesColourbarParams": [ "mass", "vol"],
   
-  "mediansParams": [ "T", "R", "n_H", "n_HI", "nh", "rho_rhomean", "vol", "ndens", "B", "vrad", "vrad_in", "vrad_out", "gz", "L", "P_kinetic", "P_thermal", "P_magnetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic", "tcool", "tff", "tcool_tff"],
+  "mediansParams": [ "T", "R", "n_H", "n_HI", "nh", "rho_rhomean", "vol", "ndens", "B", "vrad", "vrad_in", "vrad_out", "gz", "L", "P_kinetic", "P_thermal", "P_magnetic", "P_tot+k" ,"P_tot", "Pthermal_Pmagnetic", "tcool", "tff", "tcool_tff"],  
   
   "NStatsBins": 100,
   
@@ -58,8 +58,12 @@
   "saveAllAxesImages" : false,
   
   "forceLogPDF": false,
-  
-  "numthreads": 24,
+
+  "separateLegend": true,
+
+  "compareSelectKeysOn": "vertical",  
+
+  "numthreads": 16,
   
   "boxsize": 400.0,
   
@@ -67,15 +71,15 @@
   
   "coldenslos": 600.0,
   
-  "pixres": 0.50,
+  "pixres": 0.1250,
   
-  "pixreslos": 0.50,
+  "pixreslos": 0.1250,
     
   "HaloID": 0,
   
   "DPI": 200,
   
-  "DPIimages" : 250,
+  "DPIimages" : 500,
   
   "xsizeImages": 5.5,
   
