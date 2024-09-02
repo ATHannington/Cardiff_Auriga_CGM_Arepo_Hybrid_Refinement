@@ -33,6 +33,7 @@ DEBUG = False
 HYPARAMSPATH = "HYParams.json"
 HYPARAMS = json.load(open(HYPARAMSPATH, "r"))
 
+medianString = "50.00%"
 
 #if "mass" not in HYPARAMS["colParams"]:
 #    HYPARAMS["colParams"]+=["mass"]
@@ -49,17 +50,17 @@ loadDirectories = [
     # "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/",
     # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/",
     # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/",
-    # "/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/",
-    # "/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/",
+    # # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/",
+    # # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/",
     # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/",
     # "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/",
-    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/",
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/",
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/",
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc/",
-    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/",
-    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/",
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/",
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/",
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v1/",
-    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v2/",
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v2/",
     ]
 
 styleDictGroupingKeys = {
@@ -71,18 +72,37 @@ styleDictGroupingKeys = {
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v1/" : ("hy","2kpc","V1","L5"),
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v2/" : ("hy","2kpc","V2","L5"),
     "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/" : ("std","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/" : ("std","L3"),
     "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/" : ("surge","500pc","L4"),
     "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/" : ("surge","1kpc","L4"),
     "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/" : ("hy","1kpc","final","L4"),
     "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/" : ("hy","1kpc","hard","L4"),
     "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/" : ("hy","1kpc","l3-mass","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/" : ("hy","500pc","final","L4"),
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/" : ("std","L3")
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/" : ("hy","500pc","final","L4")
 }
 
 ordering = [
-    ("std","L5"), ("surge","2kpc","L5"), ("surge","1kpc","L5"), ("hy","2kpc","final","L5"), ("hy","1kpc","final","L5"), ("hy","2kpc","V1","L5"), ("hy","2kpc","V2","L5"), ("std","L4"), ("surge","500pc","L4"), ("surge","1kpc","L4"), ("hy","1kpc","final","L4"), ("hy","1kpc","hard","L4"), ("hy","1kpc","l3-mass","L4"), ("hy","500pc","final","L4"), ("std","L3")
+    ("L5","standard"), ("L5","2kpc"), ("L5","1kpc"), ("L5","hy_v1"), ("L5","hy_v2"), ("L5","2kpc_hy_1kpc"),  ("L5","1kpc_hy_500pc"), ("L4","standard"), ("L4","1kpc"), ("L4","500pc"), ("L4","1kpc_hy_500pc"),  ("L4","1kpc_hy_500pc_l3_mass"),  ("L4","1kpc_hy_500pc_hard"), ("L4","500pc_hy_250pc"), ("L3","standard")
 ]
+
+customLegendLabels = {
+    ("L5","standard"):"Std. L5",
+    ("L5","2kpc"):"Surge L5 +2kpc",
+    ("L5","1kpc"):"Surge L5 +1kpc",
+    ("L5","2kpc_hy_1kpc"):"Hy(Final) L5 +2kpc +1kpc",
+    ("L5","1kpc_hy_500pc"):"Hy(Final) L5 +1kpc +500pc",
+    ("L5","hy_v1"):"Hy(V1) L5 +2kpc +1kpc",
+    ("L5","hy_v2"):"Hy(V2) L5 +2kpc +1kpc",
+    ("L4","standard"):"Std. L4",
+    ("L3","standard"):"Std. L3",
+    ("L4","500pc"):"Surge L4 +500pc",
+    ("L4","1kpc"):"Surge L4 +1kpc",
+    ("L4","1kpc_hy_500pc"):"Hy(Final) L4 +1kpc +500pc",
+    ("L4","1kpc_hy_500pc_hard"):"Hy(No Res. Transition)"+"\n"+"L4 +1kpc +500pc",
+    ("L4","1kpc_hy_500pc_l3_mass"):"Hy(L3 Transition)"+"\n"+"L4 +1kpc +500pc",
+    ("L4","500pc_hy_250pc"):"Hy(Final) L4 +500pc +250pc",
+ }
+
 keepPercentiles = []
 
 simulations = []
@@ -110,7 +130,7 @@ snapRange = [
 
 ylabel = {
     "T": r"T (K)",
-    "R": r"R (kpc)",
+    "R": r"R/R$_{\mathrm{200c}}$",
     "n_H": r"n$_{\mathrm{H}}$ (cm$^{-3}$)",
     "n_H_col": r"N$_{\mathrm{H}}$ (cm$^{-2}$)",
     "n_HI": r"n$_{\mathrm{HI}}$ (cm$^{-3}$)",
@@ -121,7 +141,7 @@ ylabel = {
     "vrad_in": r"$v_{\mathrm{r}}$ (km s$^{-1}$)",
     "vrad_out": r"$v_{\mathrm{r}}$ (km s$^{-1}$)",
     "gz": r"Z/Z$_{\odot}$",
-    "L": r"L" + "\n" + r"(kpc km s$^{-1}$)",
+    "L": r"L (kpc km s$^{-1}$)",
     "Pressure": r"P (erg cm$^{-3}$)",
     "P_thermal": r"P$_{\mathrm{Th}}$ (erg cm$^{-3}$)",
     "P_magnetic": r"P$_{\mathrm{B}}$ (erg cm$^{-3}$)",
@@ -179,12 +199,21 @@ imageCmapDict = {
     "n_H_col": (HYPARAMS["colourmapMain"].split("_"))[0],
     "n_HI_col": (HYPARAMS["colourmapMain"].split("_"))[0],
 }
+
+yaxisZeroLineDict = {
+    "gz": True,
+    "vrad": True,
+    "Pthermal_Pmagnetic": True,
+    "PCR_Pthermal": True,
+    "PCR_Pmagnetic": True,
+}
+
 xlimDict = {
     "R": {"xmin": 0.0, "xmax": HYPARAMS["Router"]},
     "mass": {"xmin": 4.0, "xmax": 9.0},
     "L": {"xmin": 1.5, "xmax": 4.5},
     "T": {"xmin": 3.5, "xmax": 7.0},
-    "n_H": {"xmin": -6.0, "xmax": 1.0},
+    "n_H": {"xmin": -6.0, "xmax": 0.0},
     "n_HI" : {"xmin": -13.0, "xmax": 0.0},
     "n_H_col": {"xmin": 19.0, "xmax": 21.5},
     "n_HI_col" : {"xmin": 12.0, "xmax": 21.5},
@@ -192,23 +221,23 @@ xlimDict = {
     "vrad": {"xmin": -200.0, "xmax": 200.0},
     "vrad_in": {"xmin": -200.0, "xmax": 200.0},
     "vrad_out": {"xmin": -200.0, "xmax": 200.0},
-    "gz": {"xmin": -2.0, "xmax": 1.0},
-    "P_thermal": {"xmin": -19.5, "xmax": -10.0},
-    "P_CR": {"xmin": -19.5, "xmax": -10.0},
+    "gz": {"xmin": -1.0, "xmax": 2.0},
+    "P_thermal": {"xmin": -17.0, "xmax": -10.0},
+    "P_CR": {"xmin": -17.0, "xmax": -10.0},
     "PCR_Pthermal": {"xmin": -4.0, "xmax": 1.0},
     "PCR_Pmagnetic": {"xmin": -3.0, "xmax": 3.0},
     "Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 4.0},
-    "P_magnetic": {"xmin": -19.5, "xmax": -10.0},
-    "P_kinetic": {"xmin": -19.5, "xmax": -10.0},
-    "P_tot": {"xmin": -19.5, "xmax": -10.0},
-    "P_tot+k": {"xmin": -19.5, "xmax": -10.0},
+    "P_magnetic": {"xmin": -17.0, "xmax": -10.0},
+    "P_kinetic": {"xmin": -17.0, "xmax": -10.0},
+    "P_tot": {"xmin": -17.0, "xmax": -10.0},
+    "P_tot+k": {"xmin": -17.0, "xmax": -10.0},
     "tcool": {"xmin": -4.0, "xmax": 4.0},
     "theat": {"xmin": -4.0, "xmax": 4.0},
     "tff": {"xmin": -1.5, "xmax": 0.75},
     "tcool_tff": {"xmin": -2.5, "xmax": 2.0},
     "rho_rhomean": {"xmin": 1.5, "xmax": 6.0},
     "dens": {"xmin": -30.0, "xmax": -22.0},
-    "ndens": {"xmin": -6.0, "xmax": 2.0},
+    "ndens": {"xmin": -6.0, "xmax": 0.0},
     "rho_rhomean": {"xmin": 0.25, "xmax": 6.5},
     "rho" : {"xmin": 2.0, "xmax": 7.0},
     "vol": {"xmin": -2.0, "xmax" : 3.0},
@@ -267,6 +296,7 @@ if __name__ == "__main__":
     selectKeysList = []
     HYPARAMSHALO = {}
     styleKeys = []
+    selectToStyle ={} 
     for (loadpath,savePathBase,savePathBaseFigureData) in zip(loadDirectories,savePaths,savePathsData):
         print(loadpath)
         # we need to nest the
@@ -287,18 +317,24 @@ if __name__ == "__main__":
         selectKeysList.append(selectKey)
         HYPARAMSHALO.update({selectKey: HYPARAMS})
         styleKeys.append(styleDictGroupingKeys[loadpath])
-
+        selectToStyle.update({selectKey: styleDictGroupingKeys[loadpath]})
     # ----------------------------------------------------------------------#
     #  Plots...
     # ----------------------------------------------------------------------#
     
 
+    orderedStyleKeys = []
+    orderedSelectKeys = []
+    for sKey in ordering:
+        if sKey in list(selectToStyle.keys()):
+            orderedStyleKeys.append(selectToStyle[sKey])
+            orderedSelectKeys.append(sKey)
 
-    tmpstyleDict = apt.get_linestyles_and_colours(styleKeys,colourmapMain="tab10",colourGroupBy=[],linestyleGroupBy=["hy","surge","std"],lastColourOffset = 0.0)
+    tmpstyleDict = apt.get_linestyles_and_colours(orderedStyleKeys,colourmapMain="plasma",colourGroupBy=["hy","surge","std"],linestyleGroupBy=[],lastColourOffset = 0.0)
     
     styleDict = {}
 
-    for selectKey,dd in zip(selectKeysList,tmpstyleDict.values()):
+    for selectKey,dd in zip(orderedSelectKeys,tmpstyleDict.values()):
         styleDict.update({selectKey : dd})
 
 
@@ -306,8 +342,8 @@ if __name__ == "__main__":
 
 
 
-    # sliceAndProjComparisonKey = [("std","L4")]
-    # sliceAndProjComparisonPath = ["/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/" ]
+    # sliceAndProjComparisonKey = [("surge","1kpc","L4")]
+    # sliceAndProjComparisonPath = ["/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/" ]
     # # loadpath = HYPARAMS["savepathdata"]
     
     # tmp = apt.hy_load_slice_plot_data(
@@ -325,7 +361,7 @@ if __name__ == "__main__":
     #     stack = None,
     #     allowFindOtherAxesData = True,
     #     verbose = DEBUG,
-    #     hush = not DEBUG,
+    #     hush = ~ DEBUG,
     #     )
 
     # # orderedData = {}
@@ -334,8 +370,8 @@ if __name__ == "__main__":
     # #         orderedData.update({key : copy.deepcopy(tmp[key])})
 
 
-    # sliceAndProjComparisonKey = [("std","L5")]
-    # sliceAndProjComparisonPath = ["/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/"]
+    # sliceAndProjComparisonKey = [("surge","2kpc","L5")]
+    # sliceAndProjComparisonPath = ["/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/"]
     # # loadpath = HYPARAMS["savepathdata"]
     
     # tmp2 = apt.hy_load_slice_plot_data(
@@ -353,7 +389,7 @@ if __name__ == "__main__":
     #     stack = None,
     #     allowFindOtherAxesData = True,
     #     verbose = DEBUG,
-    #     hush = not DEBUG,
+    #     hush = ~ DEBUG,
     #     )
     
     # # # orderedData2 = {}
@@ -406,7 +442,7 @@ if __name__ == "__main__":
     #     compareSelectKeysOn = "vertical",
     #     subfigures = True,
     #     subfigureDatasetLabelsBool = True,
-    #     subfigureDatasetLabelsDict = {("std","L5"): "L5 Std. Slice", ("std","L4"): "L4 Std. Slice"},
+    #     subfigureDatasetLabelsDict = {("surge","2kpc","L5"): "Surge L5 +2kpc Slice", ("surge","1kpc","L4"): "Surge L4 +1kpc Slice"},
     #     subfigureOffAlignmentAxisLabels = False,
     #     offAlignmentAxisLabels = None,
     #     inplace = False,
@@ -445,8 +481,31 @@ if __name__ == "__main__":
             statsOut[sKey].update(dataCopy)
 
 
+        loadPercentilesTypes = [
+                str(percentile) + "%"
+            for percentile in HYPARAMS["percentiles"]
+        ]
+
+    fullStatsOut = copy.deepcopy(statsOut)
+    for sKey, data in statsOut.items():
+        if sKey not in keepPercentiles:
+            dataCopy = copy.deepcopy(data)
+            for key,dd in data.items():
+                if key not in keepPercentiles:
+                    for kk, value in dd.items():
+                        splitkk = kk.split("_")
+                        perc = splitkk[-1]
+                        if (medianString not in splitkk)&(perc in loadPercentilesTypes):
+                            dataCopy[key].pop(kk)
+            statsOut[sKey].update(dataCopy)
+
+    orderedData = {}
+    for key in ordering[-1::-1]:
+        if key in list(statsOut.keys()):
+            orderedData.update({key : copy.deepcopy(statsOut[key])})
+
     apt.medians_versus_plot(
-        statsOut,
+        orderedData,
         HYPARAMSHALO,
         ylabel=ylabel,
         xlimDict=xlimDict,
@@ -454,6 +513,10 @@ if __name__ == "__main__":
         yParam=HYPARAMS["mediansParams"],
         xParam=HYPARAMS["xParam"],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        yaxisZeroLine = yaxisZeroLineDict,
+        labels=customLegendLabels,
+        separateLegend = HYPARAMS["separateLegend"],
         DPI = HYPARAMS["DPI"],
         xsize = HYPARAMS["xsize"],
         ysize = HYPARAMS["ysize"],
@@ -470,6 +533,137 @@ if __name__ == "__main__":
         styleDict = styleDict,
         )
 
+    apt.medians_versus_plot(
+        orderedData,
+        HYPARAMSHALO,
+        ylabel=ylabel,
+        xlimDict=xlimDict,
+        snapNumber=snapNumber,
+        yParam=[["n_H"],["n_HI"],["T"]],
+        xParam=HYPARAMS["xParam"],
+        titleBool=HYPARAMS["titleBool"],
+        legendBool=False,
+        yaxisZeroLine = yaxisZeroLineDict,
+        labels=customLegendLabels,
+        separateLegend = HYPARAMS["separateLegend"],
+        DPI = HYPARAMS["DPI"],
+        xsize = HYPARAMS["xsize"]*0.60*0.85*2.0,
+        ysize = HYPARAMS["ysize"]*0.60*0.85,
+        fontsize = HYPARAMS["fontsize"],
+        fontsizeTitle = HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
+        opacityPercentiles = HYPARAMS["opacityPercentiles"],
+        savePathBase = HYPARAMS["savepathfigures"]+"/Figure-A/",
+        savePathBaseFigureData = HYPARAMS["savepathdata"],
+        subfigures = True,
+        sharex = True,
+        sharey = False,
+        inplace = inplace,
+        saveFigureData = False,
+        replotFromData = True,
+        combineMultipleOntoAxis = True,
+        selectKeysList = None,
+        styleDict = styleDict,
+        )
+    
+    # # # # apt.medians_versus_plot(
+    # # # #     orderedData,
+    # # # #     HYPARAMSHALO,
+    # # # #     ylabel=ylabel,
+    # # # #     xlimDict=xlimDict,
+    # # # #     snapNumber=snapNumber,
+    # # # #     yParam=[["T","n_H"]],
+    # # # #     xParam=HYPARAMS["xParam"],
+    # # # #     titleBool=HYPARAMS["titleBool"],
+    # # # #     legendBool=False,
+    # # # #     yaxisZeroLine = yaxisZeroLineDict,
+    # # # #     labels=customLegendLabels,
+    # # # #     separateLegend = HYPARAMS["separateLegend"],
+    # # # #     DPI = HYPARAMS["DPI"],
+    # # # #     xsize = HYPARAMS["xsize"]*0.60*0.85*2.0,
+    # # # #     ysize = HYPARAMS["ysize"]*0.60*0.85,
+    # # # #     fontsize = HYPARAMS["fontsize"],
+    # # # #     fontsizeTitle = HYPARAMS["fontsizeTitle"],
+    # # # #     linewidth=HYPARAMS["linewidth"],
+    # # # #     opacityPercentiles = HYPARAMS["opacityPercentiles"],
+    # # # #     savePathBase = HYPARAMS["savepathfigures"]+"/Figure-L5-Ap/",
+    # # # #     savePathBaseFigureData = HYPARAMS["savepathdata"],
+    # # # #     subfigures = True,
+    # # # #     sharex = False,
+    # # # #     sharey = False,
+    # # # #     inplace = inplace,
+    # # # #     saveFigureData = False,
+    # # # #     replotFromData = True,
+    # # # #     combineMultipleOntoAxis = True,
+    # # # #     selectKeysList = None,
+    # # # #     styleDict = styleDict,
+    # # # #     )    
+
+    apt.medians_versus_plot(
+        orderedData,
+        HYPARAMSHALO,
+        ylabel=ylabel,
+        xlimDict=xlimDict,
+        snapNumber=snapNumber,
+        yParam=[["B"],["gz"],{"vrad": ["vrad_in","vrad_out"]}],
+        xParam=HYPARAMS["xParam"],
+        titleBool=HYPARAMS["titleBool"],
+        legendBool=False,
+        yaxisZeroLine = yaxisZeroLineDict,
+        labels=customLegendLabels,
+        separateLegend = HYPARAMS["separateLegend"],
+        DPI = HYPARAMS["DPI"],
+        xsize = HYPARAMS["xsize"]*0.60*0.85*2.0,
+        ysize = HYPARAMS["ysize"]*0.60*0.85,
+        fontsize = HYPARAMS["fontsize"],
+        fontsizeTitle = HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
+        opacityPercentiles = HYPARAMS["opacityPercentiles"],
+        savePathBase = HYPARAMS["savepathfigures"]+"/Figure-B/",
+        savePathBaseFigureData = HYPARAMS["savepathdata"],
+        subfigures = True,
+        sharex = True,
+        sharey = False,
+        inplace = inplace,
+        saveFigureData = False,
+        replotFromData = True,
+        combineMultipleOntoAxis = True,
+        selectKeysList = None,
+        styleDict = styleDict,
+        ) 
+    
+    apt.medians_versus_plot(
+        orderedData,
+        HYPARAMSHALO,
+        ylabel=ylabel,
+        xlimDict=xlimDict,
+        snapNumber=snapNumber,
+        yParam=[["P_tot+k"],["P_thermal"],["P_magnetic"],["P_kinetic"],["Pthermal_Pmagnetic"]],
+        xParam=HYPARAMS["xParam"],
+        titleBool=HYPARAMS["titleBool"],
+        legendBool=False,
+        yaxisZeroLine = yaxisZeroLineDict,
+        labels=customLegendLabels,
+        separateLegend = HYPARAMS["separateLegend"],
+        DPI = HYPARAMS["DPI"],
+        xsize = HYPARAMS["xsize"]*0.60*0.85*2.0,
+        ysize = HYPARAMS["ysize"]*0.60*0.85,
+        fontsize = HYPARAMS["fontsize"],
+        fontsizeTitle = HYPARAMS["fontsizeTitle"],
+        linewidth=HYPARAMS["linewidth"],
+        opacityPercentiles = HYPARAMS["opacityPercentiles"],
+        savePathBase = HYPARAMS["savepathfigures"]+"/Figure-C/",
+        savePathBaseFigureData = HYPARAMS["savepathdata"],
+        subfigures = True,
+        sharex = True,
+        sharey = False,
+        inplace = inplace,
+        saveFigureData = False,
+        replotFromData = True,
+        combineMultipleOntoAxis = True,
+        selectKeysList = None,
+        styleDict = styleDict,
+        )
 
     print(
         f"Time averaged Gas PDF plots..."
@@ -502,6 +696,12 @@ if __name__ == "__main__":
                     dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
             pdfOut[sKey].update(dataCopy)
 
+
+    orderedData = {}
+    for key in ordering:
+        if key in list(pdfOut.keys()):
+            orderedData.update({key : copy.deepcopy(pdfOut[key])})
+
     print(
         f"PDF of gas mass plot"
     )
@@ -509,7 +709,7 @@ if __name__ == "__main__":
     plt.close("all")   
     
     apt.pdf_versus_plot(
-        pdfOut,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -517,6 +717,9 @@ if __name__ == "__main__":
         weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -546,7 +749,7 @@ if __name__ == "__main__":
     matplotlib.rc_file_defaults()
     plt.close("all")  
     apt.pdf_versus_plot(
-        pdfOut,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -554,6 +757,9 @@ if __name__ == "__main__":
         weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -582,7 +788,7 @@ if __name__ == "__main__":
     matplotlib.rc_file_defaults()
     plt.close("all")  
     apt.pdf_versus_plot(
-        pdfOut,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -590,6 +796,9 @@ if __name__ == "__main__":
         weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = HYPARAMS["pdfParams"] + [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -618,7 +827,7 @@ if __name__ == "__main__":
     matplotlib.rc_file_defaults()
     plt.close("all")  
     apt.pdf_versus_plot(
-        pdfOut,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -626,6 +835,9 @@ if __name__ == "__main__":
         weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = HYPARAMS["pdfParams"] + [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -764,6 +976,10 @@ if __name__ == "__main__":
                     dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
             pdfOutStars[sKey].update(dataCopy)
 
+    orderedData = {}
+    for key in ordering:
+        if key in list(pdfOutStars.keys()):
+            orderedData.update({key : copy.deepcopy(pdfOutStars[key])})
 
     print(
         f"SFR plot..."
@@ -771,7 +987,7 @@ if __name__ == "__main__":
     matplotlib.rc_file_defaults()
     plt.close("all")  
     apt.pdf_versus_plot(
-        pdfOutStars,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -779,6 +995,9 @@ if __name__ == "__main__":
         weightKeys = ['gima'],
         xParams = ["age"],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -808,7 +1027,7 @@ if __name__ == "__main__":
     )
 
     apt.pdf_versus_plot(
-        pdfOutStars,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -816,6 +1035,9 @@ if __name__ == "__main__":
         weightKeys = ['gima'],
         xParams = ["age"],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -845,7 +1067,7 @@ if __name__ == "__main__":
     )
 
     apt.pdf_versus_plot(
-        pdfOutStars,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -853,6 +1075,9 @@ if __name__ == "__main__":
         weightKeys = ['gima'],
         xParams = ["age"],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -911,10 +1136,15 @@ if __name__ == "__main__":
                     dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
             pdfOutCGM[sKey].update(dataCopy)
 
+    orderedData = {}
+    for key in ordering:
+        if key in list(pdfOutCGM.keys()):
+            orderedData.update({key : copy.deepcopy(pdfOutCGM[key])})
+
     matplotlib.rc_file_defaults()
     plt.close("all")  
     apt.pdf_versus_plot(
-        pdfOutCGM,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -922,6 +1152,9 @@ if __name__ == "__main__":
         weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -946,7 +1179,7 @@ if __name__ == "__main__":
     matplotlib.rc_file_defaults()
     plt.close("all")  
     apt.pdf_versus_plot(
-        pdfOutCGM,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -954,6 +1187,9 @@ if __name__ == "__main__":
         weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -982,7 +1218,7 @@ if __name__ == "__main__":
     matplotlib.rc_file_defaults()
     plt.close("all")  
     apt.pdf_versus_plot(
-        pdfOutCGM,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -990,6 +1226,9 @@ if __name__ == "__main__":
         weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = HYPARAMS["pdfParams"] + [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -1018,7 +1257,7 @@ if __name__ == "__main__":
     matplotlib.rc_file_defaults()
     plt.close("all")  
     apt.pdf_versus_plot(
-        pdfOutCGM,
+        orderedData,
         ylabel,
         xlimDict,
         HYPARAMS["logParameters"],
@@ -1026,6 +1265,9 @@ if __name__ == "__main__":
         weightKeys = HYPARAMS['nonMassWeightDict'],
         xParams = HYPARAMS["pdfParams"] + [HYPARAMS["xParam"]],
         titleBool=HYPARAMS["titleBool"],
+        legendBool=HYPARAMS["legendBool"],
+        separateLegend = HYPARAMS["separateLegend"],
+        labels=customLegendLabels,
         DPI=HYPARAMS["DPI"],
         xsize=HYPARAMS["xsize"],
         ysize=HYPARAMS["ysize"],
@@ -1054,7 +1296,7 @@ if __name__ == "__main__":
         )
 
         selectKeysListCol = [tuple(list(sKey)+["col"]) for sKey in selectKeysList]
-
+        customLegendLabelsCol = {tuple(list(sKey)+["col"]):val for sKey, val in customLegendLabels.items()}
         # # # Create variant of xlimDict specifically for images of col params
         # # tmpxlimDict = copy.deepcopy(xlimDict)
 
@@ -1127,6 +1369,52 @@ if __name__ == "__main__":
                         dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
                 statsOutCol[sKey].update(dataCopy)
 
+        fullStatsOutCol = copy.deepcopy(statsOutCol)
+        for sKey, data in statsOutCol.items():
+            if sKey not in keepPercentiles:
+                dataCopy = copy.deepcopy(data)
+                for key,dd in data.items():
+                    if key not in keepPercentiles:
+                        for kk, value in dd.items():
+                            splitkk = kk.split("_")
+                            perc = splitkk[-1]
+                            if (medianString not in splitkk)&(perc in loadPercentilesTypes):
+                                dataCopy[key].pop(kk)
+                statsOutCol[sKey].update(dataCopy)
+
+        matplotlib.rc_file_defaults()
+        plt.close("all")  
+        apt.medians_versus_plot(
+            statsOutCol,
+            COLHYPARAMSHALO,
+            ylabel=ylabel,
+            xlimDict=xlimDict,
+            snapNumber=snapNumber,
+            yParam=[["n_H_col"],[ "n_HI_col" ]],
+            xParam=HYPARAMS["xParam"],
+            titleBool=HYPARAMS["titleBool"],
+            legendBool= False,#HYPARAMS["legendBool"],
+            labels=customLegendLabelsCol,
+            separateLegend = HYPARAMS["separateLegend"],
+            DPI = HYPARAMS["DPI"],
+            xsize = HYPARAMS["xsize"],
+            ysize = HYPARAMS["ysize"]*0.5,
+            fontsize = HYPARAMS["fontsize"],
+            fontsizeTitle = HYPARAMS["fontsizeTitle"],
+            linewidth=HYPARAMS["linewidth"],
+            opacityPercentiles = HYPARAMS["opacityPercentiles"],
+            savePathBase = HYPARAMS["savepathfigures"],
+            savePathBaseFigureData = HYPARAMS["savepathdata"],
+            subfigures = True,
+            sharex = True,
+            sharey = False,
+            saveFigureData = False,
+            replotFromData = True,
+            combineMultipleOntoAxis = True,
+            selectKeysList = None,
+            styleDict = styleDict,
+            )
+        
         matplotlib.rc_file_defaults()
         plt.close("all")  
         apt.medians_versus_plot(
@@ -1138,6 +1426,9 @@ if __name__ == "__main__":
             yParam=COLHYPARAMS["colParams"],
             xParam=HYPARAMS["xParam"],
             titleBool=HYPARAMS["titleBool"],
+            legendBool=HYPARAMS["legendBool"],
+            labels=customLegendLabelsCol,
+            separateLegend = HYPARAMS["separateLegend"],
             DPI = HYPARAMS["DPI"],
             xsize = HYPARAMS["xsize"],
             ysize = HYPARAMS["ysize"],
@@ -1153,8 +1444,6 @@ if __name__ == "__main__":
             selectKeysList = None,
             styleDict = styleDict,
             )
-        
-
         print(
             f"Time averaged column density gas PDF plots..."
         )
@@ -1186,13 +1475,20 @@ if __name__ == "__main__":
                         dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
                 pdfOutCol[sKey].update(dataCopy)
 
+        orderingCol = [tuple(list(sKey)+["col"]) for sKey in ordering]
+
+        orderedData = {}
+        for key in orderingCol:
+            if key in list(pdfOutCol.keys()):
+                orderedData.update({key : copy.deepcopy(pdfOutCol[key])})
+
         print(
             f"PDF of column density gas mass plot"
         )
         matplotlib.rc_file_defaults()
         plt.close("all") 
         apt.pdf_versus_plot(
-            pdfOutCol,
+            orderedData,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
@@ -1200,6 +1496,9 @@ if __name__ == "__main__":
             weightKeys = HYPARAMS['nonMassWeightDict'],
             xParams = HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
+            legendBool=HYPARAMS["legendBool"],
+            separateLegend = HYPARAMS["separateLegend"],
+            labels=customLegendLabelsCol,
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
@@ -1224,7 +1523,7 @@ if __name__ == "__main__":
         matplotlib.rc_file_defaults()
         plt.close("all") 
         apt.pdf_versus_plot(
-            pdfOutCol,
+            orderedData,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
@@ -1232,6 +1531,9 @@ if __name__ == "__main__":
             weightKeys = HYPARAMS['nonMassWeightDict'],
             xParams =HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
+            legendBool=HYPARAMS["legendBool"],
+            separateLegend = HYPARAMS["separateLegend"],
+            labels=customLegendLabelsCol,
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
@@ -1260,7 +1562,7 @@ if __name__ == "__main__":
         matplotlib.rc_file_defaults()
         plt.close("all") 
         apt.pdf_versus_plot(
-            pdfOutCol,
+            orderedData,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
@@ -1268,6 +1570,9 @@ if __name__ == "__main__":
             weightKeys = HYPARAMS['nonMassWeightDict'],
             xParams =HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
+            legendBool=HYPARAMS["legendBool"],
+            separateLegend = HYPARAMS["separateLegend"],
+            labels=customLegendLabelsCol,
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
@@ -1296,7 +1601,7 @@ if __name__ == "__main__":
         matplotlib.rc_file_defaults()
         plt.close("all") 
         apt.pdf_versus_plot(
-            pdfOutCol,
+            orderedData,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
@@ -1304,6 +1609,9 @@ if __name__ == "__main__":
             weightKeys = HYPARAMS['nonMassWeightDict'],
             xParams =HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
+            legendBool=HYPARAMS["legendBool"],
+            separateLegend = HYPARAMS["separateLegend"],
+            labels=customLegendLabelsCol,
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
@@ -1357,13 +1665,18 @@ if __name__ == "__main__":
                         dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
                 pdfOutColCGM[sKey].update(dataCopy)
 
+        orderedData = {}
+        for key in orderingCol:
+            if key in list(pdfOutColCGM.keys()):
+                orderedData.update({key : copy.deepcopy(pdfOutColCGM[key])})
+
         print(
             f"PDF of column density gas mass plot"
         )
         matplotlib.rc_file_defaults()
         plt.close("all") 
         apt.pdf_versus_plot(
-            pdfOutColCGM,
+            orderedData,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
@@ -1371,6 +1684,9 @@ if __name__ == "__main__":
             weightKeys = HYPARAMS['nonMassWeightDict'],
             xParams = HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
+            legendBool=HYPARAMS["legendBool"],
+            separateLegend = HYPARAMS["separateLegend"],
+            labels=customLegendLabelsCol,
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
@@ -1395,7 +1711,7 @@ if __name__ == "__main__":
         matplotlib.rc_file_defaults()
         plt.close("all") 
         apt.pdf_versus_plot(
-            pdfOutColCGM,
+            orderedData,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
@@ -1403,6 +1719,9 @@ if __name__ == "__main__":
             weightKeys = HYPARAMS['nonMassWeightDict'],
             xParams =HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
+            legendBool=HYPARAMS["legendBool"],
+            separateLegend = HYPARAMS["separateLegend"],
+            labels=customLegendLabelsCol,
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
@@ -1431,7 +1750,7 @@ if __name__ == "__main__":
         matplotlib.rc_file_defaults()
         plt.close("all") 
         apt.pdf_versus_plot(
-            pdfOutColCGM,
+            orderedData,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
@@ -1439,6 +1758,9 @@ if __name__ == "__main__":
             weightKeys = HYPARAMS['nonMassWeightDict'],
             xParams =HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
+            legendBool=HYPARAMS["legendBool"],
+            separateLegend = HYPARAMS["separateLegend"],
+            labels=customLegendLabelsCol,
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
@@ -1467,7 +1789,7 @@ if __name__ == "__main__":
         matplotlib.rc_file_defaults()
         plt.close("all") 
         apt.pdf_versus_plot(
-            pdfOutColCGM,
+            orderedData,
             ylabel,
             xlimDict,
             HYPARAMS["logParameters"],
@@ -1475,6 +1797,9 @@ if __name__ == "__main__":
             weightKeys = HYPARAMS['nonMassWeightDict'],
             xParams =HYPARAMS["colParams"],
             titleBool=HYPARAMS["titleBool"],
+            legendBool=HYPARAMS["legendBool"],
+            separateLegend = HYPARAMS["separateLegend"],
+            labels=customLegendLabelsCol,
             DPI=HYPARAMS["DPI"],
             xsize=HYPARAMS["xsize"],
             ysize=HYPARAMS["ysize"],
@@ -1496,181 +1821,68 @@ if __name__ == "__main__":
             normalise = True,
             verbose = DEBUG,
         )
-#         print(
-#             "\n" + f"Time averaged gas phases plots"
-#         )
-#         matplotlib.rc_file_defaults()
-#         plt.close("all")     
 
-#         tmp = apt.hy_load_phase_plot_data(
-#             selectKeysList,
-#             HYPARAMSHALO,
-#             snapRange,
-#             yParams = HYPARAMS["phasesyParams"],
-#             xParams = HYPARAMS["phasesxParams"],
-#             weightKeys = HYPARAMS["phasesColourbarParams"],
-#             loadPathBase = HYPARAMS["savepathdata"],
-#             stack = True,
-#             verbose = DEBUG,
-#             )
-#  hy_load_phase_plot_data(
-#     selectKeysList,
-#     loadPathList,
-#     snapRange,
-#     yParams = ["T"],
-#     xParams = ["rho_rhomean","R"],
-#     weightKeys = None,
-#     loadPathBase = "./",
-#     stack = True,
-#     verbose = False,
-#     )
-#         phaseOut = copy.deepcopy(tmp)    
+    # # # print(
+    # # #     "\n" + f"Time averaged gas phases plots"
+    # # # )
+    # # # matplotlib.rc_file_defaults()
+    # # # plt.close("all")     
 
-#         if (len(snapRange)>1)&(stack is True):
-#             for sKey, data in phaseOut.items():
-#                 dataCopy = copy.deepcopy(data)
-#                 for key,dd in data.items():
-#                     for kk, value in dd.items():
-#                         dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
-#                 phaseOut[sKey].update(dataCopy)
+    # # # tmp =apt.hy_load_phase_plot_data(
+    # # #     selectKeysList,
+    # # #     loadDirectories,
+    # # #     snapRange,
+    # # #     yParams = HYPARAMS["phasesyParams"],
+    # # #     xParams = HYPARAMS["phasesxParams"],
+    # # #     weightKeys = HYPARAMS["phasesColourbarParams"],
+    # # #     loadPathBase = loadPathBase,
+    # # #     stack = True,
+    # # #     verbose = DEBUG,
+    # # #     )
 
-#         matplotlib.rc_file_defaults()
-#         plt.close("all")
-#         apt.phase_plot(
-#             phaseOut,
-#             ylabel,
-#             xlimDict,
-#             snapNumber = snapNumber,
-#             yParams = HYPARAMS["phasesyParams"],
-#             xParams = HYPARAMS["phasesxParams"],
-#             colourBarKeys = HYPARAMS["phasesColourbarParams"],
-#             weightKeys = HYPARAMS["nonMassWeightDict"],
-#             titleBool=HYPARAMS["titleBool"],
-#             DPI=HYPARAMS["DPI"],
-#             xsize=HYPARAMS["xsize"],
-#             ysize=HYPARAMS["ysize"],
-#             fontsize=HYPARAMS["fontsize"],
-#             fontsizeTitle=HYPARAMS["fontsizeTitle"],
-#             colourmapMain= HYPARAMS["colourmapMain"],
-#             Nbins=HYPARAMS["Nbins"],
-#             savePathBase = HYPARAMS["savepathfigures"],
-#             savePathBaseFigureData = HYPARAMS["savepathdata"],
-#             saveFigureData = True,
-#             verbose = DEBUG,
-#             inplace = inplace,
-#             replotFromData = True,
-#             allowPlotsWithoutxlimits = False,
-#         )
+    # # # phaseOut = copy.deepcopy(tmp)    
 
-#       phase_plot(
-#     dataDict,
-#     ylabel,
-#     xlimDict,
-#     logParameters,
-#     snapNumber = None,
-#     yParams = ["T"],
-#     xParams = ["rho_rhomean","R"],
-#     colourBarKeys = ["mass","vol"],
-#     weightKeys = None,
-#     fontsize=13,
-#     fontsizeTitle=14,
-#     titleBool=True,
-#     DPI=200,
-#     xsize=8.0,
-#     ysize=8.0,
-#     colourmapMain="plasma",
-#     Nbins=250,
-#     saveFigureData = False,
-#     savePathBase = "./",
-#     savePathBaseFigureData = "./",
-#     allowPlotsWithoutxlimits = False,
-#     subfigures = False,
-#     inplace = False,
-#     replotFromData = False,
-#     verbose = False,
-#     hush = False,
-# )  
-        # # print(
-        # #     f"Phase plot"
-        # # )
+    # # # if (len(snapRange)>1)&(stack is True):
+    # # #     for sKey, data in phaseOut.items():
+    # # #         dataCopy = copy.deepcopy(data)
+    # # #         for key,dd in data.items():
+    # # #             for kk, value in dd.items():
+    # # #                 dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
+    # # #         phaseOut[sKey].update(dataCopy)
 
+    # # # # phaseOutNew = {key:val for ((_,val),key) in zip(phaseOut.items(),styleKeys)}
 
-        # # tmp = apt.hy_load_phase_plot_data(
-        # #     selectKeysList,
-        # #     loadDirectories,
-        # #     snapRange,
-        # #     yParams = HYPARAMS["phasesyParams"],
-        # #     xParams = HYPARAMS["phasesxParams"],
-        # #     weightKeys = HYPARAMS["phasesColourbarParams"],
-        # #     loadPathBase = loadPathBase,
-        # #     stack = True,
-        # #     verbose = DEBUG,
-        # #     )
+    # # # for simDir,sKey in styleDictGroupingKeys.items():
+    # # #     if sKey in list(phaseOut.keys()):
+    # # #         matplotlib.rc_file_defaults()
+    # # #         plt.close("all")
+    # # #         apt.phase_plot(
+    # # #             phaseOut[sKey],
+    # # #             ylabel,
+    # # #             xlimDict,
+    # # #             HYPARAMS["logParameters"],
+    # # #             snapNumber = snapNumber,
+    # # #             yParams = HYPARAMS["phasesyParams"],
+    # # #             xParams = HYPARAMS["phasesxParams"],
+    # # #             colourBarKeys = HYPARAMS["phasesColourbarParams"],
+    # # #             weightKeys = HYPARAMS["nonMassWeightDict"],
+    # # #             titleBool=HYPARAMS["titleBool"],
+    # # #             legendBool=HYPARAMS["legendBool"],
+    # # #             separateLegend = HYPARAMS["separateLegend"],
+    # # #             DPI=HYPARAMS["DPI"],
+    # # #             xsize=HYPARAMS["xsize"],
+    # # #             ysize=HYPARAMS["ysize"],
+    # # #             fontsize=HYPARAMS["fontsize"],
+    # # #             fontsizeTitle=HYPARAMS["fontsizeTitle"],
+    # # #             colourmapMain= HYPARAMS["colourmapMain"],
+    # # #             Nbins=HYPARAMS["Nbins"],
+    # # #             savePathBase = HYPARAMS["savepathfigures"]+simDir+"/",
+    # # #             savePathBaseFigureData = HYPARAMS["savepathdata"]+simDir+"/",
+    # # #             saveFigureData = False,
+    # # #             verbose = DEBUG,
+    # # #             inplace = inplace,
+    # # #             replotFromData = True,
+    # # #             allowPlotsWithoutxlimits = False,
+    # # #         )
 
-        # # phaseOut = copy.deepcopy(tmp)    
-
-        # # if (len(snapRange)>1)&(stack is True):
-        # #     for sKey, data in phaseOut.items():
-        # #         dataCopy = copy.deepcopy(data)
-        # #         for key,dd in data.items():
-        # #             for kk, value in dd.items():
-        # #                 dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
-        # #         phaseOut[sKey].update(dataCopy)
-
-        # # matplotlib.rc_file_defaults()
-        # # plt.close("all")
-        # # apt.phase_plot(
-        # #     phaseOut,
-        # #     ylabel,
-        # #     xlimDict,
-        # #     logParameters=HYPARAMS["logParameters"],
-        # #     snapNumber = snapNumber,
-        # #     yParams = HYPARAMS["phasesyParams"],
-        # #     xParams = HYPARAMS["phasesxParams"],
-        # #     colourBarKeys = HYPARAMS["phasesColourbarParams"],
-        # #     weightKeys = HYPARAMS["nonMassWeightDict"],
-        # #     titleBool=HYPARAMS["titleBool"],
-        # #     DPI=HYPARAMS["DPI"],
-        # #     xsize=HYPARAMS["xsize"],
-        # #     ysize=HYPARAMS["ysize"],
-        # #     fontsize=HYPARAMS["fontsize"],
-        # #     fontsizeTitle=HYPARAMS["fontsizeTitle"],
-        # #     colourmapMain= HYPARAMS["colourmapMain"],
-        # #     Nbins=HYPARAMS["Nbins"],
-        # #     savePathBase = HYPARAMS["savepathfigures"],
-        # #     savePathBaseFigureData = HYPARAMS["savepathdata"],
-        # #     saveFigureData = True,
-        # #     verbose = DEBUG,
-        # #     inplace = inplace,
-        # #     replotFromData = True,
-        # #     allowPlotsWithoutxlimits = False,
-        # # )
-
-        #     apt.phase_plot(
-        #         out,
-        #         ylabel,
-        #         xlimDict,
-        #         HYPARAMS["logParameters"],
-        #         snapNumber = snapNumber,
-        #         yParams = HYPARAMS["phasesyParams"],
-        #         xParams = HYPARAMS["phasesxParams"],
-        #         colourBarKeys = HYPARAMS["phasesColourbarParams"],
-        #         weightKeys = HYPARAMS["nonMassWeightDict"],
-        #         titleBool=HYPARAMS["titleBool"],
-        #         DPI=HYPARAMS["DPI"],
-        #         xsize=HYPARAMS["xsize"],
-        #         ysize=HYPARAMS["ysize"],
-        #         fontsize=HYPARAMS["fontsize"],
-        #         fontsizeTitle=HYPARAMS["fontsizeTitle"],
-        #         Nbins=HYPARAMS["Nbins"],
-        #         savePathBase = HYPARAMS["savepathfigures"],
-        #         savePathBaseFigureData = HYPARAMS["savepathdata"],
-        #         saveFigureData = False,
-        # replotFromData = True,
-        # combineMultipleOntoAxis = True,
-        # selectKeysList = None,
-        # styleDict = styleDict,
-        #         verbose = DEBUG,
-        #       )
-     
     print("Finished fully! :)")
