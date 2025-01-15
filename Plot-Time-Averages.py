@@ -30,6 +30,7 @@ inplace = False
 stack = True
 DEBUG = False
 
+singleValueKeys = ["Redshift", "Lookback", "Snap", "Rvir", "Rdisc"]
 HYPARAMSPATH = "HYParams.json"
 HYPARAMS = json.load(open(HYPARAMSPATH, "r"))
 
@@ -46,21 +47,21 @@ else:
 loadPathBase = "/home/universe/c1838736/Hybrid_Refinement/"
 loadDirectories = [
 
-    # "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/",
-    # "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/",
-    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/",
-    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/",
-    # # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/",
-    # # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/",
-    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/",
-    # "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/",
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/",
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/",
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/",
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/",
+    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/",
+    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/",
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/",
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/",
     "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/",
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/",
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc/",
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/",
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/",
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v1/",
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v2/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v1/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v2/",
     ]
 
 styleDictGroupingKeys = {
@@ -113,7 +114,7 @@ for dir in loadDirectories:
     loadpath = loadPathBase+dir+"/output/"
     simulations.append(loadpath)
     savepath = HYPARAMS["savepathfigures"] + dir + "/"
-    savepathdata = HYPARAMS["savepathdata"] + dir + "/"
+    savepathdata = loadPathBase + dir + "/"
     savePaths.append(savepath)
     savePathsData.append(savepathdata)
 
@@ -297,7 +298,7 @@ if __name__ == "__main__":
     HYPARAMSHALO = {}
     styleKeys = []
     selectToStyle ={} 
-    for (loadpath,savePathBase,savePathBaseFigureData) in zip(loadDirectories,savePaths,savePathsData):
+    for (loadpath,savePathBase,_) in zip(loadDirectories,savePaths,savePathsData):
         print(loadpath)
         # we need to nest the
         # statistics dictionaries in an outer dicitionary with some simulation descriptors, such as resolution and
@@ -1297,6 +1298,8 @@ if __name__ == "__main__":
 
         selectKeysListCol = [tuple(list(sKey)+["col"]) for sKey in selectKeysList]
         customLegendLabelsCol = {tuple(list(sKey)+["col"]):val for sKey, val in customLegendLabels.items()}
+        keepPercentilesCol = [tuple(list(sKey)+["col"]) for sKey in keepPercentiles]
+        orderingCol = [tuple(list(sKey)+["col"]) for sKey in ordering]
         # # # Create variant of xlimDict specifically for images of col params
         # # tmpxlimDict = copy.deepcopy(xlimDict)
 
@@ -1318,6 +1321,18 @@ if __name__ == "__main__":
             if (np.any(np.isin(np.asarray([additionalParam]),np.asarray(additionalColParams))) == False) \
             & (additionalParam is not None) & (additionalParam != "count"):
                 additionalColParams.append(additionalParam)
+
+
+        tmp = np.asarray(list(HYPARAMS["nonMassWeightDict"].values()))
+        whereNone = np.where(tmp==None)[0]
+        whereNOTNone = np.where(tmp!=None)[0]
+
+        statsWeightkeys = ["mass"] + np.unique(tmp[whereNOTNone]).tolist()
+        exclusions = [] 
+        
+        for param in HYPARAMS["saveEssentials"]:
+            if param not in statsWeightkeys:
+                exclusions.append(param)
         #---------------#
 
         # If there are other params to be tracked for col params, we need to create a projection
@@ -1348,44 +1363,69 @@ if __name__ == "__main__":
 
         selectKeysListCol = [tuple(list(sKey)+["col"]) for sKey in selectKeysList]
 
-        tmp = apt.hy_load_statistics_data(
+        # tmp = apt.hy_load_statistics_data(
+        #     selectKeysListCol,
+        #     loadDirectories,
+        #     snapRange,
+        #     loadPathBase = loadPathBase,
+        #     loadFile = "colStatsDict",
+        #     fileType = ".h5",
+        #     stack = True,
+        #     verbose = DEBUG,
+        #     )
+
+        colDict = apt.hy_load_column_density_data(
             selectKeysListCol,
             loadDirectories,
             snapRange,
             loadPathBase = loadPathBase,
-            loadFile = "colStatsDict",
+            loadFile = "colDict",
             fileType = ".h5",
-            stack = True,
+            stack = False,
+            selectKeyLen=4,
+            delimiter="-",
             verbose = DEBUG,
+            hush = False,
+            )
+        
+        colStatsDict = {}
+        for selectKeyCol in colDict.keys():
+            innerColStatsDict = cr.cr_calculate_statistics(
+                dataDict=colDict[selectKeyCol],
+                CRPARAMS=COLHYPARAMS,
+                xParam=COLHYPARAMS["xParam"],
+                Nbins=COLHYPARAMS["NStatsBins"],
+                xlimDict=xlimDict,
+                exclusions=exclusions,
+                weightedStatsBool = False,
             )
 
-        statsOutCol = copy.deepcopy(tmp)    
+            colStatsDict.update({selectKeyCol: {selectKeyCol:innerColStatsDict}})
+        
+        fullStatsOutCol = copy.deepcopy(colStatsDict)
 
-        if (len(snapRange)>1)&(stack is True):
-            for sKey, data in statsOutCol.items():
+        for sKey, data in colStatsDict.items():
+            if sKey not in keepPercentilesCol:
                 dataCopy = copy.deepcopy(data)
                 for key,dd in data.items():
-                    for kk, value in dd.items():
-                        dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
-                statsOutCol[sKey].update(dataCopy)
-
-        fullStatsOutCol = copy.deepcopy(statsOutCol)
-        for sKey, data in statsOutCol.items():
-            if sKey not in keepPercentiles:
-                dataCopy = copy.deepcopy(data)
-                for key,dd in data.items():
-                    if key not in keepPercentiles:
+                    if key not in keepPercentilesCol:
                         for kk, value in dd.items():
                             splitkk = kk.split("_")
                             perc = splitkk[-1]
                             if (medianString not in splitkk)&(perc in loadPercentilesTypes):
                                 dataCopy[key].pop(kk)
-                statsOutCol[sKey].update(dataCopy)
+                colStatsDict[sKey].update(dataCopy)
+
+
+        orderedData = {}
+        for key in orderingCol:
+            if key in list(colStatsDict.keys()):
+                orderedData.update({key : colStatsDict[key]})
 
         matplotlib.rc_file_defaults()
         plt.close("all")  
         apt.medians_versus_plot(
-            statsOutCol,
+            orderedData,
             COLHYPARAMSHALO,
             ylabel=ylabel,
             xlimDict=xlimDict,
@@ -1405,20 +1445,21 @@ if __name__ == "__main__":
             opacityPercentiles = HYPARAMS["opacityPercentiles"],
             savePathBase = HYPARAMS["savepathfigures"],
             savePathBaseFigureData = HYPARAMS["savepathdata"],
+            inplace = inplace,
             subfigures = True,
             sharex = True,
             sharey = False,
             saveFigureData = False,
             replotFromData = True,
             combineMultipleOntoAxis = True,
-            selectKeysList = None,
+            selectKeysList = selectKeysListCol,
             styleDict = styleDict,
             )
         
         matplotlib.rc_file_defaults()
         plt.close("all")  
         apt.medians_versus_plot(
-            statsOutCol,
+            orderedData,
             COLHYPARAMSHALO,
             ylabel=ylabel,
             xlimDict=xlimDict,
@@ -1441,7 +1482,7 @@ if __name__ == "__main__":
             saveFigureData = False,
             replotFromData = True,
             combineMultipleOntoAxis = True,
-            selectKeysList = None,
+            selectKeysList = selectKeysListCol,
             styleDict = styleDict,
             )
         print(
@@ -1450,37 +1491,47 @@ if __name__ == "__main__":
         matplotlib.rc_file_defaults()
         plt.close("all")     
 
-        tmp = apt.hy_load_pdf_versus_plot_data(
-            selectKeysListCol,
-            loadDirectories,
-            snapRange,
-            weightKeys = HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"] + [HYPARAMS["xParam"]],
-            cumulative = False,
-            loadPathBase = loadPathBase,
-            loadPathSuffix = "",
-            SFR = False,
-            normalise = False,
-            stack = True,
-            verbose = DEBUG,
-            )
+        # tmp = apt.hy_load_pdf_versus_plot_data(
+        #     selectKeysListCol,
+        #     loadDirectories,
+        #     snapRange,
+        #     weightKeys = HYPARAMS['nonMassWeightDict'],
+        #     xParams = HYPARAMS["colParams"] + [HYPARAMS["xParam"]],
+        #     cumulative = False,
+        #     loadPathBase = loadPathBase,
+        #     loadPathSuffix = "",
+        #     SFR = False,
+        #     normalise = False,
+        #     stack = True,
+        #     verbose = DEBUG,
+        #     )
 
-        pdfOutCol = copy.deepcopy(tmp)    
+        # pdfOutCol = copy.deepcopy(tmp)    
 
-        if (len(snapRange)>1)&(stack is True):
-            for sKey, data in pdfOutCol.items():
-                dataCopy = copy.deepcopy(data)
-                for key,dd in data.items():
-                    for kk, value in dd.items():
-                        dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
-                pdfOutCol[sKey].update(dataCopy)
+        # if (len(snapRange)>1)&(stack is True):
+        #     for sKey, data in pdfOutCol.items():
+        #         dataCopy = copy.deepcopy(data)
+        #         for key,dd in data.items():
+        #             for kk, value in dd.items():
+        #                 dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
+        #         pdfOutCol[sKey].update(dataCopy)
 
         orderingCol = [tuple(list(sKey)+["col"]) for sKey in ordering]
 
         orderedData = {}
         for key in orderingCol:
-            if key in list(pdfOutCol.keys()):
-                orderedData.update({key : copy.deepcopy(pdfOutCol[key])})
+            if key in list(colDict.keys()):
+                orderedData.update({key : colDict[key]})
+        
+        tmp = {}
+        for key, val in orderedData.items():
+            valcopy = copy.deepcopy(val)
+            for excl in singleValueKeys:
+                if excl in list(valcopy.keys()):
+                    valcopy.pop(excl)
+            tmp.update({key : valcopy})
+        
+        orderedData = copy.deepcopy(tmp)
 
         print(
             f"PDF of column density gas mass plot"
@@ -1511,9 +1562,9 @@ if __name__ == "__main__":
             savePathBase = HYPARAMS["savepathfigures"],
             savePathBaseFigureData = HYPARAMS["savepathdata"],
             saveFigureData = False,
-            replotFromData = True,
+            replotFromData = False,
             combineMultipleOntoAxis = True,
-            selectKeysList = None,
+            selectKeysList = selectKeysListCol,
             styleDict = styleDict,
             SFR = False,
             forceLogPDF = HYPARAMS["forceLogPDF"],
@@ -1546,9 +1597,9 @@ if __name__ == "__main__":
             savePathBase = HYPARAMS["savepathfigures"],
             savePathBaseFigureData = HYPARAMS["savepathdata"],
             saveFigureData = False,
-            replotFromData = True,
+            replotFromData = False,
             combineMultipleOntoAxis = True,
-            selectKeysList = None,
+            selectKeysList = selectKeysListCol,
             styleDict = styleDict,
             SFR = False,
             forceLogPDF = HYPARAMS["forceLogPDF"],
@@ -1585,9 +1636,9 @@ if __name__ == "__main__":
             savePathBase = HYPARAMS["savepathfigures"],
             savePathBaseFigureData = HYPARAMS["savepathdata"],
             saveFigureData = False,
-            replotFromData = True,
+            replotFromData = False,
             combineMultipleOntoAxis = True,
-            selectKeysList = None,
+            selectKeysList = selectKeysListCol,
             styleDict = styleDict,
             SFR = False,
             forceLogPDF = HYPARAMS["forceLogPDF"],
@@ -1624,197 +1675,9 @@ if __name__ == "__main__":
             savePathBase = HYPARAMS["savepathfigures"],
             savePathBaseFigureData = HYPARAMS["savepathdata"],
             saveFigureData = False,
-            replotFromData = True,
+            replotFromData = False,
             combineMultipleOntoAxis = True,
-            selectKeysList = None,
-            styleDict = styleDict,
-            SFR = False,
-            forceLogPDF = HYPARAMS["forceLogPDF"],
-            normalise = True,
-            verbose = DEBUG,
-        )
-
-        print(
-            f"Time averaged column density gas PDF plots..."
-        )
-        matplotlib.rc_file_defaults()
-        plt.close("all")     
-
-        tmp = apt.hy_load_pdf_versus_plot_data(
-            selectKeysListCol,
-            loadDirectories,
-            snapRange,
-            weightKeys = HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"] + [HYPARAMS["xParam"]],
-            cumulative = False,
-            loadPathBase = loadPathBase,
-            loadPathSuffix = "CGM_only/",
-            SFR = False,
-            normalise = False,
-            stack = True,
-            verbose = DEBUG,
-            )
-
-        pdfOutColCGM = copy.deepcopy(tmp)    
-
-        if (len(snapRange)>1)&(stack is True):
-            for sKey, data in pdfOutColCGM.items():
-                dataCopy = copy.deepcopy(data)
-                for key,dd in data.items():
-                    for kk, value in dd.items():
-                        dataCopy[key].update({kk: np.nanmedian(value,axis=-1)})
-                pdfOutColCGM[sKey].update(dataCopy)
-
-        orderedData = {}
-        for key in orderingCol:
-            if key in list(pdfOutColCGM.keys()):
-                orderedData.update({key : copy.deepcopy(pdfOutColCGM[key])})
-
-        print(
-            f"PDF of column density gas mass plot"
-        )
-        matplotlib.rc_file_defaults()
-        plt.close("all") 
-        apt.pdf_versus_plot(
-            orderedData,
-            ylabel,
-            xlimDict,
-            HYPARAMS["logParameters"],
-            snapNumber,
-            weightKeys = HYPARAMS['nonMassWeightDict'],
-            xParams = HYPARAMS["colParams"],
-            titleBool=HYPARAMS["titleBool"],
-            legendBool=HYPARAMS["legendBool"],
-            separateLegend = HYPARAMS["separateLegend"],
-            labels=customLegendLabelsCol,
-            DPI=HYPARAMS["DPI"],
-            xsize=HYPARAMS["xsize"],
-            ysize=HYPARAMS["ysize"],
-            fontsize=HYPARAMS["fontsize"],
-            fontsizeTitle=HYPARAMS["fontsizeTitle"],
-            linewidth=HYPARAMS["linewidth"],
-            Nbins=HYPARAMS["Nbins"],
-            ageWindow=None,
-            cumulative = False,
-            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
-            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
-            saveFigureData = False,
-            replotFromData = True,
-            combineMultipleOntoAxis = True,
-            selectKeysList = None,
-            styleDict = styleDict,
-            SFR = False,
-            forceLogPDF = HYPARAMS["forceLogPDF"],
-            normalise = False,
-            verbose = DEBUG,
-        )
-        matplotlib.rc_file_defaults()
-        plt.close("all") 
-        apt.pdf_versus_plot(
-            orderedData,
-            ylabel,
-            xlimDict,
-            HYPARAMS["logParameters"],
-            snapNumber,
-            weightKeys = HYPARAMS['nonMassWeightDict'],
-            xParams =HYPARAMS["colParams"],
-            titleBool=HYPARAMS["titleBool"],
-            legendBool=HYPARAMS["legendBool"],
-            separateLegend = HYPARAMS["separateLegend"],
-            labels=customLegendLabelsCol,
-            DPI=HYPARAMS["DPI"],
-            xsize=HYPARAMS["xsize"],
-            ysize=HYPARAMS["ysize"],
-            fontsize=HYPARAMS["fontsize"],
-            fontsizeTitle=HYPARAMS["fontsizeTitle"],
-            linewidth=HYPARAMS["linewidth"],
-            Nbins=HYPARAMS["Nbins"],
-            ageWindow=None,
-            cumulative = True,
-            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
-            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
-            saveFigureData = False,
-            replotFromData = True,
-            combineMultipleOntoAxis = True,
-            selectKeysList = None,
-            styleDict = styleDict,
-            SFR = False,
-            forceLogPDF = HYPARAMS["forceLogPDF"],
-            normalise = False,
-            verbose = DEBUG,
-        )
-
-        print(
-            f"Normalised PDF of column density gas plot"
-        )
-        matplotlib.rc_file_defaults()
-        plt.close("all") 
-        apt.pdf_versus_plot(
-            orderedData,
-            ylabel,
-            xlimDict,
-            HYPARAMS["logParameters"],
-            snapNumber,
-            weightKeys = HYPARAMS['nonMassWeightDict'],
-            xParams =HYPARAMS["colParams"],
-            titleBool=HYPARAMS["titleBool"],
-            legendBool=HYPARAMS["legendBool"],
-            separateLegend = HYPARAMS["separateLegend"],
-            labels=customLegendLabelsCol,
-            DPI=HYPARAMS["DPI"],
-            xsize=HYPARAMS["xsize"],
-            ysize=HYPARAMS["ysize"],
-            fontsize=HYPARAMS["fontsize"],
-            fontsizeTitle=HYPARAMS["fontsizeTitle"],
-            linewidth=HYPARAMS["linewidth"],
-            Nbins=HYPARAMS["Nbins"],
-            ageWindow=None,
-            cumulative = False,
-            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
-            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
-            saveFigureData = False,
-            replotFromData = True,
-            combineMultipleOntoAxis = True,
-            selectKeysList = None,
-            styleDict = styleDict,
-            SFR = False,
-            forceLogPDF = HYPARAMS["forceLogPDF"],
-            normalise = True,
-            verbose = DEBUG,        
-        )
-
-        print(
-            f"Normalised Cumulative PDF of column density gas plot"
-        )
-        matplotlib.rc_file_defaults()
-        plt.close("all") 
-        apt.pdf_versus_plot(
-            orderedData,
-            ylabel,
-            xlimDict,
-            HYPARAMS["logParameters"],
-            snapNumber,
-            weightKeys = HYPARAMS['nonMassWeightDict'],
-            xParams =HYPARAMS["colParams"],
-            titleBool=HYPARAMS["titleBool"],
-            legendBool=HYPARAMS["legendBool"],
-            separateLegend = HYPARAMS["separateLegend"],
-            labels=customLegendLabelsCol,
-            DPI=HYPARAMS["DPI"],
-            xsize=HYPARAMS["xsize"],
-            ysize=HYPARAMS["ysize"],
-            fontsize=HYPARAMS["fontsize"],
-            fontsizeTitle=HYPARAMS["fontsizeTitle"],
-            linewidth=HYPARAMS["linewidth"],
-            Nbins=HYPARAMS["Nbins"],
-            ageWindow=None,
-            cumulative = True,
-            savePathBase = HYPARAMS["savepathfigures"] + "CGM_only/",
-            savePathBaseFigureData = HYPARAMS["savepathdata"] + "CGM_only/",
-            saveFigureData = False,
-            replotFromData = True,
-            combineMultipleOntoAxis = True,
-            selectKeysList = None,
+            selectKeysList = selectKeysListCol,
             styleDict = styleDict,
             SFR = False,
             forceLogPDF = HYPARAMS["forceLogPDF"],
