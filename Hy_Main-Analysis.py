@@ -35,6 +35,8 @@ DEBUG = False
 determineXlimits = False     #Intended for use when first configuring xlimits in xlimDict. Use this and "param" : {} in xlimDict for each param to explore axis limits needed for time averaging
 allowPlotsWithoutxlimits = determineXlimits,
 
+singleValueKeys = ["Redshift", "Lookback", "Snap", "Rvir", "Rdisc"]
+
 HYPARAMSPATH = "HYParams.json"
 HYPARAMS = json.load(open(HYPARAMSPATH, "r"))
 
@@ -51,14 +53,14 @@ loadDirectories = [
     # "c1838736/Auriga/level5_cgm/h5_standard",
     # "c1838736/Auriga/level5_cgm/h5_2kpc",
     # "c1838736/Auriga/level5_cgm/h5_1kpc",
-    "c1838736/Auriga/level5_cgm/h5_hy-v1",
-    "c1838736/Auriga/level5_cgm/h5_hy-v2",
-    "c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc",
-    "c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc",
-    "spxfv/Auriga/level4_cgm/h5_standard",
+    # "c1838736/Auriga/level5_cgm/h5_hy-v1",
+    # "c1838736/Auriga/level5_cgm/h5_hy-v2",
+    # "c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc",
+    # "c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc",
+    # "spxfv/Auriga/level4_cgm/h5_standard",
     # "c1838736/Auriga/level3_cgm_almost/h5_standard",
     # "spxfv/Auriga/level4_cgm/h5_1kpc",
-    # "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
+    "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
     # "spxfv/surge/level4_cgm/h5_500pc",
     # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
     # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
@@ -161,7 +163,7 @@ imageCmapDict = {
 }
 
 xlimDict = {
-    "R": {"xmin": HYPARAMS["Rinner"], "xmax": HYPARAMS["Router"]},
+    "R": {},#"xmin": HYPARAMS["Rinner"], "xmax": HYPARAMS["Router"]},
     "mass": {"xmin": 4.0, "xmax": 9.0},
     "L": {"xmin": 1.5, "xmax": 4.5},
     "T": {"xmin": 3.5, "xmax": 7.0},
@@ -230,8 +232,10 @@ for entry in deleteParams:
 
 if __name__ == "__main__":
 
-    xlimDict.update({"xmin": HYPARAMS["Rinner"]})
-    xlimDict.update({"xmax": HYPARAMS["Router"]})
+    xlimDict["R"]["xmin"] = HYPARAMS["Rinner"]
+    xlimDict["R"]["xmax"] = HYPARAMS["Router"]
+    if ("R" in HYPARAMS["logParameters"]):
+        xlimDict["R"]['xmax'] = np.log10(xlimDict["R"]['xmax'])
 
     for (loadpath,savePathBase,savePathBaseFigureData) in zip(simulations,savePaths,savePathsData):
         print(loadpath)
@@ -300,7 +304,7 @@ if __name__ == "__main__":
                 loadonlytype=[0,1,4],#[0, 1, 2, 3, 4, 5],
                 lazy_load=True,
                 subfind=snap_subfind,
-                loadonlyhalo=int(HYPARAMS["HaloID"]),
+                #loadonlyhalo=int(HYPARAMS["HaloID"]),
             )
 
 
@@ -354,13 +358,19 @@ if __name__ == "__main__":
 
             snap.data["R"] = np.linalg.norm(snap.data["pos"], axis=1)
             rvir = (snap_subfind.data["frc2"] * 1e3)[int(0)]
+
+            print(
+                f"[@{int(snapNumber)}]: R_200c = {rvir:2.2f} kpc..."
+            )
+
             boxmax = max([HYPARAMS['boxsize'],HYPARAMS['boxlos'],HYPARAMS['coldenslos']])
 
             print(
                 f"[@{int(snapNumber)}]: Remove beyond {boxmax:2.2f} kpc..."
             )
 
-            whereOutsideBox = np.abs(snap.data["pos"]) > boxmax
+            ## For images we want to expand boxmax (which is given in _radial_ distance) to cover the diagonals of the plotted area (plus 2.5% to remove any fuzziness at corners of image)
+            whereOutsideBox = np.abs(snap.data["pos"]) > boxmax*np.sqrt(2.0)*1.025
 
             snap = cr.remove_selection(
                 snap,
@@ -541,12 +551,12 @@ if __name__ == "__main__":
                                 saveAllAxesImages = HYPARAMS["saveAllAxesImages"],
                                 xsize = HYPARAMS["xsizeImages"],
                                 ysize = HYPARAMS["ysizeImages"],
-                                colourmapMain=HYPARAMS["colourmapMain"],
+                                colourmapMain = HYPARAMS["colourmapMain"],
                                 colourmapsUnique = imageCmapDict,
-                                boxsize=HYPARAMS["boxsize"],
-                                boxlos=HYPARAMS["coldenslos"],
-                                pixreslos=HYPARAMS["pixreslos"],
-                                pixres=HYPARAMS["pixres"],
+                                boxsize = HYPARAMS["boxsize"],
+                                boxlos = HYPARAMS["coldenslos"],
+                                pixreslos = HYPARAMS["pixreslos"],
+                                pixres = HYPARAMS["pixres"],
                                 projection = projection,
                                 DPI = HYPARAMS["DPIimages"],
                                 numthreads=HYPARAMS["numthreads"],
@@ -558,45 +568,76 @@ if __name__ == "__main__":
                                 replotFromData = True,
                             )
 
+                            if tmpdict is not None:
+                                colout.update({param: (copy.deepcopy(tmpdict[param]["grid"])).flatten()})
+                                
+                                # !!
+                                # You !! MUST !! provide type data for data that is no longer snapshot associated and thus
+                                # no longer has type data associated with it. This is to ensure any future selections made from
+                                # the dataset do not break the type length associated logic which is engrained in all of these
+                                # tools, primarily via the ' cr.remove_selection() ' function.
+                                # 
+                                # You may choose if you wish to discard/mask
+                                # a subset of your data from future figures by setting it to a non-zero integer value for type
+                                # but beware, this is an untested use-case and (especially for pre-existing types between 0-6)
+                                # the tools provided here may exhibit unexpected behaviours!
+                                # !!
+                                newShape = np.shape(colout[param])
+                                colout.update({"type": np.full(shape=newShape, fill_value=0)})
 
-                        colout.update({param: (copy.deepcopy(tmpdict[param]["grid"])).reshape(-1)})
-                        
-                        # !!
-                        # You !! MUST !! provide type data for data that is no longer snapshot associated and thus
-                        # no longer has type data associated with it. This is to ensure any future selections made from
-                        # the dataset do not break the type length associated logic which is engrained in all of these
-                        # tools, primarily via the ' cr.remove_selection() ' function.
-                        # 
-                        # You may choose if you wish to discard/mask
-                        # a subset of your data from future figures by setting it to a non-zero integer value for type
-                        # but beware, this is an untested use-case and (especially for pre-existing types between 0-6)
-                        # the tools provided here may exhibit unexpected behaviours!
-                        # !!
-                        newShape = np.shape(colout[param])
-                        colout.update({"type": np.full(shape=newShape, fill_value=0)})
 
-                        if (HYPARAMS["xParam"] == "R") & (HYPARAMS["xParam"] not in list(colout.keys())):
-                            xx = (copy.deepcopy(tmpdict[param]["x"])).reshape(-1)
-                            xx = np.array(
-                                [
-                                    (x1 + x2) / 2.0
-                                    for (x1, x2) in zip(xx[:-1], xx[1:])
-                                ]
-                            )
-                            yy = (copy.deepcopy(tmpdict[param]["y"])).reshape(-1)
-                            yy = np.array(
-                                [
-                                    (x1 + x2) / 2.0
-                                    for (x1, x2) in zip(yy[:-1], yy[1:])
-                                ]
-                            )
-                            values = np.linalg.norm(np.asarray(np.meshgrid(xx,yy)), axis=0).reshape(-1)
-                            colout.update({"R": copy.deepcopy(values/rvir)})
+                                if HYPARAMS["averageAcrossAxes"] is True:
+                                    xx = (copy.deepcopy(tmpdict[param]["x"]))[:,0]
+                                    yy = (copy.deepcopy(tmpdict[param]["y"]))[:,0]
+                                else:
+                                    xx = (copy.deepcopy(tmpdict[param]["x"]))[0]
+                                    yy = (copy.deepcopy(tmpdict[param]["y"]))[0]
+
+                                xx = np.array(
+                                    [
+                                        (x1 + x2) / 2.0
+                                        for (x1, x2) in zip(xx[:-1], xx[1:])
+                                    ]
+                                )
+                                
+                                yy = np.array(
+                                    [
+                                        (x1 + x2) / 2.0
+                                        for (x1, x2) in zip(yy[:-1], yy[1:])
+                                    ]
+                                )
+
+                                coordGrid = np.asarray(np.meshgrid(xx,yy))
+                                values = np.linalg.norm(coordGrid, axis=0).flatten()
+                                if HYPARAMS["averageAcrossAxes"] is True:
+                                    tmp = copy.deepcopy(values)
+                                    values = np.stack((values,values,values),axis=0)
+                                    tmpxx = copy.deepcopy(coordGrid[0,:,:])
+                                    tmpyy = copy.deepcopy(coordGrid[1,:,:])
+                                    xx = np.stack((tmpxx,tmpxx,tmpxx),axis=0)
+                                    yy = np.stack((tmpyy,tmpyy,tmpyy),axis=0)
+                                
+                                colout.update({"R": (copy.deepcopy(values/rvir)).flatten(order="F")})
+                                colout.update({"x": (copy.deepcopy(xx/rvir)).flatten(order="F")})
+                                colout.update({"y": (copy.deepcopy(yy/rvir)).flatten(order="F")})
+                                
+                    
                     else:
                         print(
                             "\n"+f"[@{int(snapNumber)}]: Calculate {param} map..."
                         )
+                        paramSplitList = param.split("_")
 
+                        if paramSplitList[-1] == "col":
+                            ## If _col variant is called we want to calculate a projection of the non-col parameter
+                            ## Thus, we force projection to now be true, and incorporate a dummy variable tmpsliceParam
+                            ## to force plots to generate non-col variants but save output as column density version
+
+                            tmpsliceParam = "_".join(paramSplitList[:-1])
+                            projection = True
+                        else:
+                            tmpsliceParam = param
+                            projection = False
                         # By default, we set projection here to False. This ensures any weighting maps are
                         # slices (projection versions were found to produce unphysical and unreliable results).
                         # However, any _col parameters are forced into Projection=True inside apt.plot_slices().
@@ -617,7 +658,7 @@ if __name__ == "__main__":
                             boxlos=HYPARAMS["coldenslos"],
                             pixreslos=HYPARAMS["pixreslos"],
                             pixres=HYPARAMS["pixres"],
-                            projection = False,
+                            projection = projection,
                             DPI = HYPARAMS["DPIimages"],
                             numthreads=HYPARAMS["numthreads"],
                             savePathBase = savePathBase,
@@ -628,47 +669,76 @@ if __name__ == "__main__":
                             replotFromData = True,
                         )
 
-                        colout.update({param: (copy.deepcopy(tmpdict[param]["grid"])).reshape(-1)})
-                        
-                        # !!
-                        # You !! MUST !! provide type data for data that is no longer snapshot associated and thus
-                        # no longer has type data associated with it. This is to ensure any future selections made from
-                        # the dataset do not break the type length associated logic which is engrained in all of these
-                        # tools, primarily via the ' cr.remove_selection() ' function.
-                        # 
-                        # You may choose if you wish to discard/mask
-                        # a subset of your data from future figures by setting it to a non-zero integer value for type
-                        # but beware, this is an untested use-case and (especially for pre-existing types between 0-6)
-                        # the tools provided here may exhibit unexpected behaviours!
-                        # !!
-                        newShape = np.shape(colout[param])
-                        colout.update({"type": np.full(shape=newShape, fill_value=0)})
+                        if tmpdict is not None:
+                            colout.update({param: (copy.deepcopy(tmpdict[param]["grid"])).flatten()})
+                            
+                            # !!
+                            # You !! MUST !! provide type data for data that is no longer snapshot associated and thus
+                            # no longer has type data associated with it. This is to ensure any future selections made from
+                            # the dataset do not break the type length associated logic which is engrained in all of these
+                            # tools, primarily via the ' cr.remove_selection() ' function.
+                            # 
+                            # You may choose if you wish to discard/mask
+                            # a subset of your data from future figures by setting it to a non-zero integer value for type
+                            # but beware, this is an untested use-case and (especially for pre-existing types between 0-6)
+                            # the tools provided here may exhibit unexpected behaviours!
+                            # !!
+                            newShape = np.shape(colout[param])
+                            colout.update({"type": np.full(shape=newShape, fill_value=0)})
 
-                        if (HYPARAMS["xParam"] == "R") & (HYPARAMS["xParam"] not in list(colout.keys())):
-                            xx = (copy.deepcopy(tmpdict[param]["x"])).reshape(-1)
+
+                            if HYPARAMS["averageAcrossAxes"] is True:
+                                xx = (copy.deepcopy(tmpdict[param]["x"]))[:,0]
+                                yy = (copy.deepcopy(tmpdict[param]["y"]))[:,0]
+                            else:
+                                xx = (copy.deepcopy(tmpdict[param]["x"]))[0]
+                                yy = (copy.deepcopy(tmpdict[param]["y"]))[0]
+
                             xx = np.array(
                                 [
                                     (x1 + x2) / 2.0
                                     for (x1, x2) in zip(xx[:-1], xx[1:])
                                 ]
                             )
-                            yy = (copy.deepcopy(tmpdict[param]["y"])).reshape(-1)
+                            
                             yy = np.array(
                                 [
                                     (x1 + x2) / 2.0
                                     for (x1, x2) in zip(yy[:-1], yy[1:])
                                 ]
                             )
-                            values = np.linalg.norm(np.asarray(np.meshgrid(xx,yy)), axis=0).reshape(-1)
-                            colout.update({"R": copy.deepcopy(values/rvir)})
 
+                            coordGrid = np.asarray(np.meshgrid(xx,yy))
+                            values = np.linalg.norm(coordGrid, axis=0).flatten()
+                            if HYPARAMS["averageAcrossAxes"] is True:
+                                tmp = copy.deepcopy(values)
+                                values = np.stack((values,values,values),axis=0)
+                                tmpxx = copy.deepcopy(coordGrid[0,:,:])
+                                tmpyy = copy.deepcopy(coordGrid[1,:,:])
+                                xx = np.stack((tmpxx,tmpxx,tmpxx),axis=0)
+                                yy = np.stack((tmpyy,tmpyy,tmpyy),axis=0)
+                            
+                            colout.update({"R": (copy.deepcopy(values/rvir)).flatten(order="F")})
+                            colout.update({"x": (copy.deepcopy(xx/rvir)).flatten(order="F")})
+                            colout.update({"y": (copy.deepcopy(yy/rvir)).flatten(order="F")})
 
-
+                            savePath = savePathBaseFigureData + f"Data_{int(snapNumber)}_colDict.h5"
+                            print(f"[@{int(snapNumber)}]: saving full column density data as {savePath}")
+                            saveColDict = {(baseResLevel, haloLabel): colout}
+                            tr.hdf5_save(savePath,saveColDict)                          
+  
             # -----------------------------------------------#
             #           
             #              images
             #
             # -----------------------------------------------#
+
+            ## Check that radii are still being stored in units of Rvir...
+            if np.all(snap.data["R"][np.where(np.linalg.norm(snap.data["pos"],axis=1)<=HYPARAMS["Router"]*rvir)[0]]<=HYPARAMS["Router"]): 
+                pass
+            else:
+                ## if radii are not in units of rvir, set that now...
+                snap.data["R"] = snap.data["R"]/rvir
 
             if HYPARAMS["restartFlag"] == False:
 
@@ -720,6 +790,12 @@ if __name__ == "__main__":
                         saveFigure = True,
                         inplace = inplace,
                     )
+                    ## Check that radii are still being stored in units of Rvir...
+                    if np.all(snap.data["R"][np.where(np.linalg.norm(snap.data["pos"],axis=1)<=HYPARAMS["Router"]*rvir)[0]]<=HYPARAMS["Router"]): 
+                        pass
+                    else:
+                        ## if radii are not in units of rvir, set that now...
+                        snap.data["R"] = snap.data["R"]/rvir
             else:
                 print(
                     "\n"
@@ -1031,13 +1107,17 @@ if __name__ == "__main__":
                f"[@{int(snapNumber)}]: PDF of col dens gas plot"
             )
 
+            for excl in singleValueKeys:
+                if excl in list(colout.keys()):
+                    colout.pop(excl)
+
             apt.pdf_versus_plot(
                 copy.deepcopy(colout),
                 ylabel,
                 xlimDict,
                 HYPARAMS["logParameters"],
                 snapNumber,
-                weightKeys = HYPARAMS['nonMassWeightDict'], #<<<< Need to rerun these with vol weights
+                weightKeys = HYPARAMS['nonMassWeightDict'],
                 xParams = HYPARAMS["colParams"],
                 titleBool=HYPARAMS["titleBool"],
                 DPI=HYPARAMS["DPI"],
@@ -1052,7 +1132,6 @@ if __name__ == "__main__":
                 savePathBaseFigureData = savePathBaseFigureData,
                 saveFigureData = True,
                 SFR = False,
-                
                 forceLogPDF = HYPARAMS["forceLogPDF"],
                 normalise = False,
                 verbose = DEBUG,
@@ -1111,7 +1190,7 @@ if __name__ == "__main__":
                 # Auriga halo number.
 
                 ## Empty data checks ## 
-                if bool(statsDict) is False:
+                if (len(HYPARAMS["mediansParams"])==0) | (bool(statsDict) is False):
                     print("\n"
                         +f"[@{int(snapNumber)}]: WARNING! statsDict is empty! Skipping save ..."
                         +"\n"
@@ -1151,7 +1230,7 @@ if __name__ == "__main__":
                     xlimDict=xlimDict,
                     printpercent=2.5,
                     exclusions = exclusions,
-                    weightedStatsBool = True,
+                    weightedStatsBool = False,
                 )
                 ## Empty data checks ## 
                 if bool(colstatsDict) is False:
