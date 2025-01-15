@@ -47,13 +47,13 @@ loadDirectories = [
 
     # "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/",
     # "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/",
-    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/",
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/",
     # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/",
     # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/",
     # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/",
-    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/",
-    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/",
-    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/",
+    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/",
+    # "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/",
     # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/",
     # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc/",
     # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/",
@@ -164,8 +164,8 @@ ylabel = {
 }
 
 colImagexlimDict ={
-    "n_H_col": {"xmin": 19.0, "xmax": 21.5},
-    "n_HI_col" : {"xmin": 14.0, "xmax": 21.5},
+    "n_H_col": {"xmin": 19.0, "xmax": 22.0},
+    "n_HI_col" : {"xmin": 14.0, "xmax": 22.0},
     "n_H": {"xmin": -5.5, "xmax": -2.5},
     }
 
@@ -186,8 +186,8 @@ xlimDict = {
     "T": {"xmin": 3.5, "xmax": 7.0},
     "n_H": {"xmin": -6.0, "xmax": 1.0},
     "n_HI" : {"xmin": -13.0, "xmax": 0.0},
-    "n_H_col": {"xmin": 19.0, "xmax": 21.5},
-    "n_HI_col" : {"xmin": 12.0, "xmax": 21.5},
+    "n_H_col": {"xmin": 19.0, "xmax": 22.0},
+    "n_HI_col" : {"xmin": 14.0, "xmax": 22.0},
     "B": {"xmin": -2.5, "xmax": 1.0},
     "vrad": {"xmin": -200.0, "xmax": 200.0},
     "vrad_in": {"xmin": -200.0, "xmax": 200.0},
@@ -304,8 +304,8 @@ if __name__ == "__main__":
 
     snapNumber=snapRange[-1]
 
-    sliceAndProjComparisonKey = [("std","L5")]
-    sliceAndProjComparisonPath =  ["/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/"]
+    sliceAndProjComparisonKey = [("hy","500pc","final","L4")]
+    sliceAndProjComparisonPath =  ["/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/"]
 
     # loadpath = HYPARAMS["savepathdata"]
     
@@ -314,9 +314,9 @@ if __name__ == "__main__":
         sliceAndProjComparisonPath,
         PARAMS = HYPARAMSHALO,
         snapNumber = snapNumber,
-        sliceParam = ["T","n_H"],
-        Axes = HYPARAMS["Axes"][-1::-1],
-        projection=[False,False],
+        sliceParam = ["n_H_col","n_HI_col"],
+        Axes = HYPARAMS["Axes"],#[-1::-1],
+        projection=[True,True],
         loadPathBase = loadPathBase,
         loadPathSuffix = "",
         selectKeyLen=1,
@@ -334,67 +334,67 @@ if __name__ == "__main__":
             orderedData.update({key : copy.deepcopy(tmp[key])})
 
  
-    sliceAndProjComparisonKey = [("std","L4")]
-    sliceAndProjComparisonPath =  ["/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/"]
+    # sliceAndProjComparisonKey = [("hy","1kpc","final","L4")]
+    # sliceAndProjComparisonPath =  ["/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/"]
+    # # loadpath = HYPARAMS["savepathdata"]
+    
+    # tmp2 = apt.hy_load_slice_plot_data(
+    #     sliceAndProjComparisonKey,
+    #     sliceAndProjComparisonPath,
+    #     PARAMS = HYPARAMSHALO,
+    #     snapNumber = snapNumber,
+    #     sliceParam = ["T","n_H"],
+    #     Axes = HYPARAMS["Axes"][-1::-1],
+    #     projection=[False,False],
+    #     loadPathBase = loadPathBase,
+    #     loadPathSuffix = "",
+    #     selectKeyLen=1,
+    #     delimiter="-",
+    #     stack = None,
+    #     allowFindOtherAxesData = True,
+    #     allowNoAxes = True,
+    #     verbose = DEBUG,
+    #     hush = ~ DEBUG,
+    #     )
+    
+    # orderedData = {}
+    # for key in ordering:
+    #     if key in list(tmp2.keys()):
+    #         orderedData.update({key : copy.deepcopy(tmp2[key])})
+    
+    # sliceAndProjComparisonKey = [("surge","500pc","L4")]
+    # sliceAndProjComparisonPath =  ["/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/"]
+
     # loadpath = HYPARAMS["savepathdata"]
     
-    tmp2 = apt.hy_load_slice_plot_data(
-        sliceAndProjComparisonKey,
-        sliceAndProjComparisonPath,
-        PARAMS = HYPARAMSHALO,
-        snapNumber = snapNumber,
-        sliceParam = ["T","n_H"],
-        Axes = HYPARAMS["Axes"][-1::-1],
-        projection=[False,False],
-        loadPathBase = loadPathBase,
-        loadPathSuffix = "",
-        selectKeyLen=1,
-        delimiter="-",
-        stack = None,
-        allowFindOtherAxesData = True,
-        allowNoAxes = True,
-        verbose = DEBUG,
-        hush = ~ DEBUG,
-        )
-    
-    orderedData = {}
-    for key in ordering:
-        if key in list(tmp2.keys()):
-            orderedData.update({key : copy.deepcopy(tmp2[key])})
-    
-    sliceAndProjComparisonKey = [("std","L3")]
-    sliceAndProjComparisonPath =  ["/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/" ]
-
-    loadpath = HYPARAMS["savepathdata"]
-    
-    tmp3 = apt.hy_load_slice_plot_data(
-        sliceAndProjComparisonKey,
-        sliceAndProjComparisonPath,
-        PARAMS = HYPARAMSHALO,
-        snapNumber = snapNumber,
-        sliceParam = ["T","n_H"],
-        Axes = HYPARAMS["Axes"][-1::-1],
-        projection=[False,False],
-        loadPathBase = loadPathBase,
-        loadPathSuffix = "",
-        selectKeyLen=1,
-        delimiter="-",
-        stack = None,
-        allowFindOtherAxesData = True,
-        allowNoAxes = True,
-        verbose = DEBUG,
-        hush = ~ DEBUG,
-        )
+    # tmp3 = apt.hy_load_slice_plot_data(
+    #     sliceAndProjComparisonKey,
+    #     sliceAndProjComparisonPath,
+    #     PARAMS = HYPARAMSHALO,
+    #     snapNumber = snapNumber,
+    #     sliceParam = ["T","n_H"],
+    #     Axes = HYPARAMS["Axes"][-1::-1],
+    #     projection=[False,False],
+    #     loadPathBase = loadPathBase,
+    #     loadPathSuffix = "",
+    #     selectKeyLen=1,
+    #     delimiter="-",
+    #     stack = None,
+    #     allowFindOtherAxesData = True,
+    #     allowNoAxes = True,
+    #     verbose = DEBUG,
+    #     hush = ~ DEBUG,
+    #     )
 
 
-    orderedData = {}
-    for key in ordering:
-        if key in list(tmp.keys()):
-            orderedData.update({key : copy.deepcopy(tmp[key])})
-        elif key in list(tmp2.keys()):
-            orderedData.update({key : copy.deepcopy(tmp2[key])})
-        elif key in list(tmp3.keys()):
-            orderedData.update({key : copy.deepcopy(tmp3[key])})
+    # orderedData = {}
+    # for key in ordering:
+    #     if key in list(tmp.keys()):
+    #         orderedData.update({key : copy.deepcopy(tmp[key])})
+    #     elif key in list(tmp2.keys()):
+    #         orderedData.update({key : copy.deepcopy(tmp2[key])})
+    #     elif key in list(tmp3.keys()):
+    #         orderedData.update({key : copy.deepcopy(tmp3[key])})
     # variableAdjust = "2"
 
     # # for key,val in orderedData2.items():
@@ -408,36 +408,37 @@ if __name__ == "__main__":
         xlimDict=xlimDict,
         logParameters = HYPARAMS["logParameters"],
         snapNumber=snapNumber,
-        sliceParam = [["T","n_H"]],
+        sliceParam = [["n_H_col","n_HI_col"]],
         Axes=HYPARAMS["Axes"],
         averageAcrossAxes = False,
         saveAllAxesImages = HYPARAMS["saveAllAxesImages"],
         xsize = HYPARAMS["xsizeImages"]*1.8,#2.8,#*1.8,#*2.5,
         ysize = HYPARAMS["ysizeImages"]*1.8,#2.8,#*1.8,#*1.8,*2.5,
-        fontsize = HYPARAMS["fontsize"]*1.5,#2.5,
+        fontsize = HYPARAMS["fontsize"]*1.4,#2.5,
         colourmapMain = HYPARAMS["colourmapMain"],
         colourmapsUnique = imageCmapDict,
         boxsize = HYPARAMS["boxsize"],
         boxlos = HYPARAMS["boxlos"],
         pixreslos = HYPARAMS["pixreslos"],
         pixres = HYPARAMS["pixres"],
-        projection = [[False,False]],
-        DPI = HYPARAMS["DPI"],
+        projection = [[True,True]],
+        DPI = 500,#HYPARAMS["DPI"],
         numthreads=HYPARAMS["numthreads"],
         savePathBase = HYPARAMS["savepathfigures"],
         savePathBaseFigureData = HYPARAMS["savepathdata"],
         saveFigureData = False,
         saveFigure = HYPARAMS["SaveImages"],
         selectKeysList = None,
-        compareSelectKeysOn = HYPARAMS["compareSelectKeysOn"],
+        compareSelectKeysOn = "horizontal",#HYPARAMS["compareSelectKeysOn"],
         subfigures = True,
         subfigureDatasetLabelsBool = True,
-        subfigureDatasetLabelsDict = {("std","L5"):"Std. L5 Slice",("std","L4"):"Std. L4 Slice",("std","L3"):"Std. L3 Slice"},#("surge","2kpc","L5"):"Surge L5 +2kpc Slice"},#,("surge","500pc","L4"):"Surge L4 +500pc Slice"},
+        subfigureDatasetLabelsDict = {("hy","500pc","final","L4"): "Hy(Final) L4 +500pc +250pc Slice"},
         subfigureOffAlignmentAxisLabels = False,
         offAlignmentAxisLabels = None,
         cbarscale = 0.3,#0.4,
         inplace = False,
         replotFromData = True,
     ) 
-# ("hy","500pc","final","L4"): "Hy(final) L4 +500pc +250pc Slice"},
+# {("surge","1kpc","L4"):"Surge L4 +1kpc Slice",("hy","1kpc","final","L4"): "Hy(final) L4 +1kpc +500pc Slice",("surge","500pc","L4"):"Surge L4 +500pc Slice"},    
+# ("hy","500pc","final","L4"): "Hy(F inal) L4 +500pc +250pc Slice"},
     print("Finished fully! :)")
