@@ -391,7 +391,8 @@ if __name__ == "__main__":
                 f"[@{int(snapNumber)}]: Remove beyond {boxmax:2.2f} kpc..."
             )
 
-            whereOutsideBox = np.abs(snap.data["pos"]) > boxmax
+            ## For images we want to expand boxmax (which is given in _radial_ distance) to cover the diagonals of the plotted area (plus 2.5% to remove any fuzziness at corners of image)
+            whereOutsideBox = np.abs(snap.data["pos"]) > boxmax*np.sqrt(2.0)*1.025
 
             snap = cr.remove_selection(
                 snap,
