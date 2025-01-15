@@ -23,13 +23,18 @@ import os
 
 plt.rcParams.update(matplotlib.rcParamsDefault)
 
-DEBUG = False
 
 # We want to utilise inplace operations to keep memory within RAM limits...
-inplace = True
+inplace = False
 
+stack = True
+DEBUG = False
+
+singleValueKeys = ["Redshift", "Lookback", "Snap", "Rvir", "Rdisc"]
 HYPARAMSPATH = "HYParams.json"
 HYPARAMS = json.load(open(HYPARAMSPATH, "r"))
+
+medianString = "50.00%"
 
 #if "mass" not in HYPARAMS["colParams"]:
 #    HYPARAMS["colParams"]+=["mass"]
@@ -39,57 +44,67 @@ if HYPARAMS["ageWindow"] is not None:
 else:
     HYPARAMS["SFRBins"]  = HYPARAMS["Nbins"] 
 
-AxesLabels = ["z","x","y"]
-
-
-loadPathBase = "/home/cosmos/"
+loadPathBase = "/home/universe/c1838736/Hybrid_Refinement/"
 loadDirectories = [
-    # "c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc",
-    # "c1838736/Auriga/spxfv/Auriga/level4_cgm/h5_500pc",
-    # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc",
-    # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition",
-    # "c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition",
-    # "c1838736/Auriga/level3_cgm_almost/h5_standard",
-    # "spxfv/Auriga/level4_cgm/h5_1kpc",
-    # "spxfv/Auriga/level4_cgm/h5_standard",
-    #"h5_standard",
-    #"c1838736/Auriga/level5_cgm/h5_2kpc",
-    #"h5_1kpc",
-    #"c1838736/Auriga/level5_cgm/snapshot-restart-of-2kpc/h5_1kpc_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-2kpc/h5_hy_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-2kpc/h5_hy-v2_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-2kpc/h5_hy-v3-nH_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-2kpc/h5_hy-v4-nH",
-    # "snapshot-restart-of-2kpc/h5_hy-v5-nH",
-    # "snapshot-restart-of-2kpc/h5_hy-v6-nH",
-    # "snapshot-restart-of-2kpc/h5_hy-v7-ndens",
-    # "snapshot-restart-of-2kpc/h5_hy-v8-ndens",
-    # "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext",
-    # "snapshot-restart-of-2kpc/h5_hy-v6-ndens-ext-v2",
-    # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4",
-    # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v2",
-    # "snapshot-restart-of-2kpc/h5_hy-v4-ndens-+l4-v3",
-    #"snapshot-restart-of-2kpc/h5_hy-v5-ndens-proper-mass-res-transition",
-    "c1838736/Auriga/level5_cgm/h5_standard",
-    "c1838736/Auriga/level5_cgm/h5_2kpc",
-    "c1838736/Auriga/level5_cgm/h5_1kpc",
-    "c1838736/Auriga/level5_cgm/h5_hy-v1",
-    "c1838736/Auriga/level5_cgm/h5_hy-v2",
-    "c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc",
-    "c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc",
-    #"snapshot-restart-of-standard/h5_2kpc",
-    #"snapshot-restart-of-standard/h5_1kpc",
-    #"snapshot-restart-of-standard/h5_500pc",
-    # "high-time-resolution/h5_1kpc_snapshot-restart-of-2kpc",
-    # "high-time-resolution/h5_2kpc_snapshot-restart-of-2kpc",
-    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-2kpc",
-    # "high-time-resolution/h5_1kpc_snapshot-restart-of-1kpc",
-    # "high-time-resolution/h5_hy-v2_snapshot-restart-of-1kpc",
-    # "h5_hy-v2",
-     #"c1838736/Auriga/level5_cgm/snapshot-restart-of-2kpc/no-self-shielding/h5_1kpc_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-2kpc/no-self-shielding/h5_hy-v2_snapshot-restart-of-2kpc",
-    # "snapshot-restart-of-1kpc/h5_hy-v2_snapshot-restart-of-1kpc",
+
+    # "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/",
+    # "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/",
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/",
+    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/",
+    # # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/",
+    # # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/",
+    # "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/",
+    # "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v1/",
+    # "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v2/",
     ]
+
+styleDictGroupingKeys = {
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_standard/" : ("std","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc/" : ("surge","2kpc","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc/" : ("surge","1kpc","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_2kpc-hy-1kpc/" : ("hy","2kpc","final","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_1kpc-hy-500pc/" : ("hy","1kpc","final","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v1/" : ("hy","2kpc","V1","L5"),
+    "/level5/level5_cgm/apt-figures/V2-0/c1838736/Auriga/level5_cgm/h5_hy-v2/" : ("hy","2kpc","V2","L5"),
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_standard/" : ("std","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level3_cgm_almost/h5_standard/" : ("std","L3"),
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/surge/level4_cgm/h5_500pc/" : ("surge","500pc","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/spxfv/Auriga/level4_cgm/h5_1kpc/" : ("surge","1kpc","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc/" : ("hy","1kpc","final","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-hard-res-transition/" : ("hy","1kpc","hard","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_1kpc-hy-500pc-l3-mass-res-transition/" : ("hy","1kpc","l3-mass","L4"),
+    "/level4/level4_cgm/apt-figures/V2-0/c1838736/Auriga/level4_cgm/h5_500pc-hy-250pc/" : ("hy","500pc","final","L4")
+}
+
+ordering = [
+    ("L5","standard"), ("L5","2kpc"), ("L5","1kpc"), ("L5","hy_v1"), ("L5","hy_v2"), ("L5","2kpc_hy_1kpc"),  ("L5","1kpc_hy_500pc"), ("L4","standard"), ("L4","1kpc"), ("L4","500pc"), ("L4","1kpc_hy_500pc"),  ("L4","1kpc_hy_500pc_l3_mass"),  ("L4","1kpc_hy_500pc_hard"), ("L4","500pc_hy_250pc"), ("L3","standard")
+]
+
+customLegendLabels = {
+    ("L5","standard"):"Std. L5",
+    ("L5","2kpc"):"Surge L5 +2kpc",
+    ("L5","1kpc"):"Surge L5 +1kpc",
+    ("L5","2kpc_hy_1kpc"):"Hy(Final) L5 +2kpc +1kpc",
+    ("L5","1kpc_hy_500pc"):"Hy(Final) L5 +1kpc +500pc",
+    ("L5","hy_v1"):"Hy(V1) L5 +2kpc +1kpc",
+    ("L5","hy_v2"):"Hy(V2) L5 +2kpc +1kpc",
+    ("L4","standard"):"Std. L4",
+    ("L3","standard"):"Std. L3",
+    ("L4","500pc"):"Surge L4 +500pc",
+    ("L4","1kpc"):"Surge L4 +1kpc",
+    ("L4","1kpc_hy_500pc"):"Hy(Final) L4 +1kpc +500pc",
+    ("L4","1kpc_hy_500pc_hard"):"Hy(No Res. Transition)"+"\n"+"L4 +1kpc +500pc",
+    ("L4","1kpc_hy_500pc_l3_mass"):"Hy(L3 Transition)"+"\n"+"L4 +1kpc +500pc",
+    ("L4","500pc_hy_250pc"):"Hy(Final) L4 +500pc +250pc",
+ }
+
+keepPercentiles = []
 
 simulations = []
 savePaths = []
@@ -99,7 +114,7 @@ for dir in loadDirectories:
     loadpath = loadPathBase+dir+"/output/"
     simulations.append(loadpath)
     savepath = HYPARAMS["savepathfigures"] + dir + "/"
-    savepathdata = HYPARAMS["savepathdata"] + dir + "/"
+    savepathdata = loadPathBase + dir + "/"
     savePaths.append(savepath)
     savePathsData.append(savepathdata)
 
@@ -114,46 +129,48 @@ snapRange = [
         )
     ]
 
-
 ylabel = {
-    "T": r"Temperature (K)",
-    "R": r"Radius (kpc)",
+    "T": r"T (K)",
+    "R": r"R/R$_{\mathrm{200c}}$",
     "n_H": r"n$_{\mathrm{H}}$ (cm$^{-3}$)",
-    "n_H_col": r"n$_{\mathrm{H}}$ (cm$^{-2}$)",
+    "n_H_col": r"N$_{\mathrm{H}}$ (cm$^{-2}$)",
     "n_HI": r"n$_{\mathrm{HI}}$ (cm$^{-3}$)",
-    "n_HI_col": r"n$_{\mathrm{HI}}$ (cm$^{-2}$)",
+    "n_HI_col": r"N$_{\mathrm{HI}}$ (cm$^{-2}$)",
     "nh": r"Neutral Hydrogen Fraction",
     "B": r"|B| ($ \mu $G)",
-    "vrad": r"Radial Velocity (km s$^{-1}$)",
-    "gz": r"Metallicity Z$_{\odot}$",
-    "L": r"Specific Angular Momentum" + "\n" + r"(kpc km s$^{-1}$)",
-    "P_thermal": r"P$_{Thermal}$ (erg cm$^{-3}$)",
-    "P_magnetic": r"P$_{Magnetic}$ (erg cm$^{-3}$)",
-    "P_kinetic": r"P$_{Kinetic}$ (erg cm$^{-3}$)",
+    "vrad": r"$v_{\mathrm{r}}$ (km s$^{-1}$)",
+    "vrad_in": r"$v_{\mathrm{r}}$ (km s$^{-1}$)",
+    "vrad_out": r"$v_{\mathrm{r}}$ (km s$^{-1}$)",
+    "gz": r"Z/Z$_{\odot}$",
+    "L": r"L (kpc km s$^{-1}$)",
+    "Pressure": r"P (erg cm$^{-3}$)",
+    "P_thermal": r"P$_{\mathrm{Th}}$ (erg cm$^{-3}$)",
+    "P_magnetic": r"P$_{\mathrm{B}}$ (erg cm$^{-3}$)",
+    "P_kinetic": r"P$_{\mathrm{Kin}}$(erg cm$^{-3}$)",
     "P_tot": r"P$_{\mathrm{Tot}}$ (erg cm$^{-3}$)",
     "P_tot+k": r"P$_{\mathrm{Tot}}$ (erg cm$^{-3}$)",
-    "Pthermal_Pmagnetic": r"P$_{thermal}$/P$_{magnetic}$",
+    "Pthermal_Pmagnetic": r"P$_{\mathrm{Th}}$/P$_{\mathrm{B}}$",
     "P_CR": r"P$_{\mathrm{CR}}$ (erg cm$^{-3}$)",
-    "PCR_Pmagnetic" : r"P$_{\mathrm{CR}}$/P$_{magnetic}$",
-    "PCR_Pthermal": r"(X$_{\mathrm{CR}}$ = P$_{\mathrm{CR}}$/P$_{Thermal}$)",
-    "gah": r"Alfven Gas Heating (erg s$^{-1}$)",
-    "bfld": r"||B-Field|| ($ \mu $G)",
-    "Grad_T": r"||Temperature Gradient|| (K kpc$^{-1}$)",
-    "Grad_n_H": r"||n$_{\mathrm{H}}$ Gradient|| (cm$^{-3}$ kpc$^{-1}$)",
-    "Grad_bfld": r"||B-Field Gradient|| ($ \mu $G kpc$^{-1}$)",
-    "Grad_P_CR": r"||P$_{\mathrm{CR}}$ Gradient|| (erg kpc$^{-4}$)",
-    "gima" : r"Star Formation Rate (M$_{\odot}$ yr$^{-1}$)",
-    # "crac" : r"Alfven CR Cooling (erg s$^{-1}$)",
-    "tcool": r"Cooling Time (Gyr)",
-    "theat": r"Heating Time (Gyr)",
-    "tcross": r"Sound Crossing Cell Time (Gyr)",
-    "tff": r"Free Fall Time (Gyr)",
-    "tcool_tff": r"t$_{\mathrm{Cool}}$/t$_{FreeFall}$",
-    "csound": r"Sound Speed (km s$^{-1}$)",
+    "PCR_Pmagnetic" : r"P$_{\mathrm{CR}}$/P$_{\mathrm{B}}$",
+    "PCR_Pthermal": r"P$_{\mathrm{CR}}$/P$_{\mathrm{Th}}$",
+    "gah": r"Alfvén Gas Heating (erg s$^{-1}$)",
+    "bfld": r"$\mathbf{B}$ ($ \mu $G)",
+    "Grad_T": r"||$\nabla$ T|| (K kpc$^{-1}$)",
+    "Grad_n_H": r"||$\nabla$ n$_{\mathrm{H}}$|| (cm$^{-3}$ kpc$^{-1}$)",
+    "Grad_bfld": r"||$\nabla$ $\mathrm{B}$|| ($ \mu $G kpc$^{-1}$)",
+    "Grad_P_CR": r"||P$_{\mathrm{CR}}$|| (erg kpc$^{-4}$)",
+    "gima" : r"SFR (M$_{\odot}$ yr$^{-1}$)",
+    # "crac" : r"Alfvén CR Cooling (erg s$^{-1}$)",
+    "tcool": r"t$_{\mathrm{Cool}}$ (Gyr)",
+    "theat": r"t$_{\mathrm{Heat}}$ (Gyr)",
+    "tcross": r"t$_{\mathrm{Sound}}$ (Gyr)",
+    "tff": r"t$_{\mathrm{FF}}$ (Gyr)",
+    "tcool_tff": r"t$_{\mathrm{Cool}}$/t$_{\mathrm{FF}}$",
+    "csound": r"c$_{\mathrm{s}}$ (km s$^{-1}$)",
     "rho_rhomean": r"$\rho / \langle \rho \rangle$",
-    "rho": r"Density (M$_{\odot}$ kpc$^{-3}$)",
-    "dens": r"Density (g cm$^{-3}$)",
-    "ndens": r"Number density (cm$^{-3}$)",
+    "rho": r"$\rho$ (M$_{\odot}$ kpc$^{-3}$)",
+    "dens": r"$\rho$  (g cm$^{-3}$)",
+    "ndens": r"n (cm$^{-3}$)",
     "mass": r"Mass (M$_{\odot}$)",
     "vol": r"Volume (kpc$^{3}$)",
     "age": "Lookback Time (Gyr)",
@@ -163,8 +180,8 @@ ylabel = {
     "x": r"x (kpc)",
     "y": r"y (kpc)",
     "z": r"z (kpc)",
-    "count": r"Number of data points per pixel",
-    "e_CR": r"Cosmic Ray Energy Density (eV cm$^{-3}$)",
+    "count": r"Count per pixel",
+    "e_CR": r"$\epsilon_{\mathrm{CR}}$ (eV cm$^{-3}$)",
 }
 
 colImagexlimDict ={
@@ -183,34 +200,45 @@ imageCmapDict = {
     "n_H_col": (HYPARAMS["colourmapMain"].split("_"))[0],
     "n_HI_col": (HYPARAMS["colourmapMain"].split("_"))[0],
 }
+
+yaxisZeroLineDict = {
+    "gz": True,
+    "vrad": True,
+    "Pthermal_Pmagnetic": True,
+    "PCR_Pthermal": True,
+    "PCR_Pmagnetic": True,
+}
+
 xlimDict = {
-    "R": {"xmin": 0.0, "xmax": 200.0},
+    "R": {"xmin": 0.0, "xmax": HYPARAMS["Router"]},
     "mass": {"xmin": 4.0, "xmax": 9.0},
     "L": {"xmin": 1.5, "xmax": 4.5},
-    "T": {"xmin": 3.5, "xmax": 7.0},
-    "n_H": {"xmin": -6.0, "xmax": 1.0},
+    "T": {"xmin": 4.0, "xmax": 6.5},
+    "n_H": {"xmin": -6.0, "xmax": -2.5},
     "n_HI" : {"xmin": -13.0, "xmax": 0.0},
     "n_H_col": {"xmin": 19.0, "xmax": 21.5},
     "n_HI_col" : {"xmin": 12.0, "xmax": 21.5},
     "B": {"xmin": -2.5, "xmax": 1.0},
-    "vrad": {"xmin": -100.0, "xmax": 100.0},
-    "gz": {"xmin": -2.0, "xmax": 1.0},
-    "P_thermal": {"xmin": -19.5, "xmax": -10.0},
-    "P_CR": {"xmin": -19.5, "xmax": -10.0},
+    "vrad": {"xmin": -200.0, "xmax": 200.0},
+    "vrad_in": {"xmin": -200.0, "xmax": 200.0},
+    "vrad_out": {"xmin": -200.0, "xmax": 200.0},
+    "gz": {"xmin": -1.0, "xmax": 2.0},
+    "P_thermal": {"xmin": -17.0, "xmax": -10.0},
+    "P_CR": {"xmin": -17.0, "xmax": -10.0},
     "PCR_Pthermal": {"xmin": -4.0, "xmax": 1.0},
     "PCR_Pmagnetic": {"xmin": -3.0, "xmax": 3.0},
     "Pthermal_Pmagnetic": {"xmin": -2.0, "xmax": 4.0},
-    "P_magnetic": {"xmin": -19.5, "xmax": -10.0},
-    "P_kinetic": {"xmin": -19.5, "xmax": -10.0},
-    "P_tot": {"xmin": -19.5, "xmax": -10.0},
-    "P_tot+k": {"xmin": -19.5, "xmax": -10.0},
+    "P_magnetic": {"xmin": -17.0, "xmax": -10.0},
+    "P_kinetic": {"xmin": -17.0, "xmax": -10.0},
+    "P_tot": {"xmin": -17.0, "xmax": -10.0},
+    "P_tot+k": {"xmin": -17.0, "xmax": -10.0},
     "tcool": {"xmin": -4.0, "xmax": 4.0},
     "theat": {"xmin": -4.0, "xmax": 4.0},
     "tff": {"xmin": -1.5, "xmax": 0.75},
     "tcool_tff": {"xmin": -2.5, "xmax": 2.0},
     "rho_rhomean": {"xmin": 1.5, "xmax": 6.0},
     "dens": {"xmin": -30.0, "xmax": -22.0},
-    "ndens": {"xmin": -6.0, "xmax": 2.0},
+    "ndens": {"xmin": -6.0, "xmax": 0.0},
     "rho_rhomean": {"xmin": 0.25, "xmax": 6.5},
     "rho" : {"xmin": 2.0, "xmax": 7.0},
     "vol": {"xmin": -2.0, "xmax" : 3.0},
@@ -222,8 +250,18 @@ xlimDict = {
 
 
 
+# ==============================================================================#
+#
+#          Main
+#
+# ==============================================================================#
+
+
+
 for entry in HYPARAMS["logParameters"]:
-    ylabel[entry] = r"$\mathrm{Log_{10}}$" + ylabel[entry]
+    ylabel[entry] = r"$\mathrm{Log_{10}}$ " + ylabel[entry]
+    ylabel[entry] = ylabel[entry].replace("(","[")
+    ylabel[entry] = ylabel[entry].replace(")","]")
 
 #   Perform forbidden log of Grad check
 deleteParams = []
@@ -432,16 +470,16 @@ if __name__ == "__main__":
                         projection = projection,
                         DPI = HYPARAMS["DPIimages"],
                         numthreads=HYPARAMS["numthreads"],
-                        savePathBase = savePathBase,
-                        savePathBaseFigureData = savePathBaseFigureData,
+                        savePathBase = HYPARAMS["savepathfigures"],
+                        savePathBaseFigureData = HYPARAMS["savepathdata"],
                         saveFigureData = True,
                         saveFigure = True,
                         inplace = inplace,
                         replotFromData = True,
                     )
 
-                for param in HYPARAMS["imageParams"]:
-                        
+            for param in HYPARAMS["imageParams"]:
+                for projection in [True,False]:        
                     tmpdict = apt.hy_load_individual_slice_plot_data(
                         HYPARAMS,
                         snapNumber,
@@ -457,7 +495,7 @@ if __name__ == "__main__":
                         allowFindOtherAxesData = True,
                         verbose = DEBUG,
                         hush = not DEBUG
-                     )      
+                        )      
                     
                     _ = apt.plot_slices(
                         tmpdict,
@@ -475,11 +513,11 @@ if __name__ == "__main__":
                         boxlos=HYPARAMS["boxlos"],
                         pixreslos=HYPARAMS["pixreslos"],
                         pixres=HYPARAMS["pixres"],
-                        projection = HYPARAMS["projections"],
+                        projection = projection,
                         DPI = HYPARAMS["DPIimages"],
                         numthreads=HYPARAMS["numthreads"],
-                        savePathBase = savePathBase ,
-                        savePathBaseFigureData = savePathBaseFigureData ,
+                        savePathBase = HYPARAMS["savepathfigures"] ,
+                        savePathBaseFigureData = HYPARAMS["savepathdata"],
                         saveFigureData = True,
                         saveFigure = True,
                         inplace = inplace,
